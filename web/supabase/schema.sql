@@ -45,19 +45,30 @@ create table if not exists public.membership_content (
   updated_at timestamptz not null default now()
 );
 
--- Trigger para perfil automático al registrarse
+-- Trigger para perfil automático al registrarse.
+-- IMPORTANTE: está marcado SECURITY DEFINER + grant execute a anon/authenticated.
+-- Si se crea como rol postgres normal, Supabase lo envuelve en un "migrated function"
+-- con search_path='' y el INSERT falla en silencio -> el registro nunca crea el perfil.
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
 begin
-  insert into public.profiles (id, email, full_name, plan_status, trial_start_date, trial_end_date)
+  insert into public.profiles (id, email, full_name, plan_status, trial_start_date, trial_end_date, is_admin)
   values (
     new.id, new.email,
     coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email,'@',1)),
-    'trial', now(), now() + interval '3 days'
+    'trial', now(), now() + interval '3 days',
+    -- Los correos de administración NUNCA entran como miembros trial
+    case when lower(coalesce(new.email,'')) in ('admin@vivipressonfit.com') then true else false end
   )
   on conflict (id) do update set email = excluded.email;
   return new;
 end $$;
+
+grant execute on function public.handle_new_user() to anon, authenticated, service_role;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
@@ -133,5 +144,23 @@ insert into public.landing_config (key, value) values
   ('membresias_title', '"Tu Membresía Mensual Todo Incluido"')
 on conflict (key) do nothing;
 
--- 4) ACTIVAR CUENTA ADMIN (reemplaza el uuid por el id real de tu usuario)
--- update public.profiles set is_admin = true where email = 'admin@vivipressonfit.com';
+-- 4) DIAGNÓSTICO: ¿por qué no se inscriben nuevos miembros?
+-- Si el registro crea la cuenta auth pero NO el perfil, revisa esto en Supabase SQL Editor:
+
+-- a) ¿Existe el trigger y la función?
+-- select tgname from pg_trigger where tgrelid = 'auth.users'::regclass and tgname = 'on_auth_user_created';
+-- select proname, prosecdef from pg_proc where proname = 'handle_new_user';
+
+-- b) Perfiles huérfanos (usuarios auth sin perfil) -> créalos/repara con:
+-- insert into public.profiles (id, email, full_name, plan_status, trial_start_date, trial_end_date)
+-- select u.id, u.email, split_part(u.email,'@',1), 'trial', now(), now() + interval '3 days'
+-- from auth.users u
+-- left join public.profiles p on p.id = u.id
+-- where p.id is null
+-- on conflict (id) do update set plan_status='trial', trial_start_date=now(), trial_end_date=now() + interval '3 days';
+
+-- c) ¿Confirmación de email activada? En Supabase: Authentication → Providers → Email.
+--    Si "Confirm email" está ON, el alta solo se completa tras confirmar el correo.
+
+-- 5) ACTIVAR CUENTA ADMIN (reemplaza el uuid por el id real de tu usuario)
+-- update public.profiles set is_admin = true, plan_status = 'active' where email = 'admin@vivipressonfit.com';
