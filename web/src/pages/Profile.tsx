@@ -13,7 +13,6 @@ export default function Profile() {
   const { changePassword } = useAuth();
 
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
-  const [phone, setPhone] = useState(profile?.phone_number ?? '');
   const [newPass, setNewPass] = useState('');
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -23,7 +22,7 @@ export default function Profile() {
     setSaving(true); setMsg(null);
     const { data, error } = await supabase
       .from('profiles')
-      .update({ full_name: fullName, phone_number: phone })
+      .update({ full_name: fullName })
       .eq('id', profile!.id)
       .select()
       .maybeSingle();
@@ -56,7 +55,6 @@ export default function Profile() {
         <h2 className="font-bold mb-4">Datos personales</h2>
         <form onSubmit={saveData}>
           <Input label="Nombre completo" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-          <Input label="WhatsApp" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <Input label="Email (no editable)" value={profile?.email ?? ''} disabled />
           <Button loading={saving} type="submit">Guardar datos</Button>
         </form>

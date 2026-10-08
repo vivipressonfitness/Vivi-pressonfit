@@ -32,14 +32,9 @@ export function RegisterForm() {
         setError('Revisa tu correo para confirmar la cuenta antes de continuar.');
         return;
       }
-      // Upsert del perfil (RLS permite insert sobre su propio id por trigger/handle_new_user)
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: data.user!.id,
-        email,
-        full_name: fullName,
-        phone_number: phone,
-      });
-      if (profileError) console.warn('Perfil no creado aún:', profileError.message);
+      // El perfil lo crea automáticamente el trigger handle_new_user (trial 3 días).
+      // No se hace upsert manual: la RLS de INSERT solo permite auth.uid()=id y
+      // columnas como phone_number no existen en la tabla real.
       navigate('/membresia', { state: { justRegistered: true } });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo completar el registro');

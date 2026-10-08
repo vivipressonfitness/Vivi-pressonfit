@@ -1,17 +1,16 @@
 // Tipos alineados con database/schema.sql (regenerar con `supabase gen types typescript`)
-export type PlanStatus = 'active' | 'canceled' | 'past_due' | 'inactive' | 'trial';
+export type PlanStatus = 'active' | 'canceled' | 'past_due' | 'inactive' | 'trial' | 'expired';
 
+// Alineado al esquema real de Supabase (web/supabase/schema.sql · tabla profiles)
 export interface Profile {
   id: string;
   email: string;
   full_name: string | null;
-  phone_number: string | null;
+  avatar_url: string | null;
   is_admin: boolean;
   stripe_customer_id: string | null;
-  stripe_sub_id: string | null;
+  stripe_subscription_id: string | null;
   plan_status: PlanStatus;
-  plan_tier: string;
-  current_period_end: string | null;
   trial_start_date: string | null;
   trial_end_date: string | null;
   created_at: string;

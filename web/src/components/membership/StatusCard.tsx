@@ -8,9 +8,16 @@ import { MembershipBadge } from './MembershipBadge';
 // Portal de cliente Stripe: la URL la genera la Edge Function stripe-portal
 // (ver "CAMBIOS REQUERIDOS EN BACKEND"). Fallback: instrucción por WhatsApp.
 export function StatusCard() {
-  const { status, currentPeriodEnd } = useMembershipStore();
+  const { status, trialEndDate } = useMembershipStore();
   const isAdmin = useMembershipStore((s) => s.isAdmin);
   const navigate = useNavigate();
+
+  // Trial vigente: calcular días restantes desde profiles.trial_end_date (esquema real)
+  const trialDaysLeft = (() => {
+    if (status !== 'trial' || !trialEndDate) return null;
+    const ms = new Date(trialEndDate).getTime() - Date.now();
+    return Math.max(0, Math.ceil(ms / 86400000));
+  })();
 
   async function openPortal() {
     const { data } = await supabase.functions
@@ -27,9 +34,9 @@ export function StatusCard() {
         <h3 className="font-bold">Estado de tu suscripción</h3>
         <MembershipBadge status={status} />
       </div>
-      {currentPeriodEnd && (
+      {trialDaysLeft !== null && (
         <p className="text-sm text-text-secondary">
-          Próximo cobro / vence: <strong className="text-text-primary">{new Date(currentPeriodEnd).toLocaleDateString('es-BO')}</strong>
+          Prueba gratuita: <strong className="text-accent">{trialDaysLeft} día{trialDaysLeft === 1 ? '' : 's'} restante{trialDaysLeft === 1 ? '' : 's'}</strong>
         </p>
       )}
       {status === 'active' || status === 'trial' || status === 'past_due' ? (
