@@ -1,65 +1,37 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { PlanCard } from '../components/membership/PlanCard';
-import { useStripe } from '../hooks/useStripe';
-import type { LandingConfigValue } from '../types';
+import { useLandingConfig } from '../hooks/useLandingConfig';
+import { Hero, Marquee } from '../components/landing/Hero';
+import { Pilares, Clases, Educativo } from '../components/landing/Sections';
+import { Membresia, Faq } from '../components/landing/MembresiaFaq';
 
+// Landing pública — réplica del diseño del archivo EJEMPLO (VIVIPREFIT).
+// Textos, precio e imágenes provienen de landing_config (editable desde Admin).
 export default function Home() {
-  const [config, setConfig] = useState<LandingConfigValue | null>(null);
-  const { startCheckout, loading, error } = useStripe();
-
-  // landing_config alimenta precio/título editables desde el panel admin actual
-  useEffect(() => {
-    supabase
-      .from('landing_config')
-      .select('key, value')
-      .then(({ data }) => {
-        const map: Record<string, LandingConfigValue> = {};
-        (data ?? []).forEach((r: { key: string; value: LandingConfigValue }) => { map[r.key] = r.value; });
-        setConfig(map.monthly_price ?? map.main ?? null);
-      });
-  }, []);
+  const { config } = useLandingConfig();
 
   return (
     <div>
-      {/* Hero */}
-      <section className="mx-auto max-w-6xl px-4 pt-20 pb-16 text-center">
-        <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight">
-          {config?.program_title ?? 'Entrenamiento y Estilo de Vida Saludable'}
-        </h1>
-        <p className="mt-4 text-lg text-text-secondary max-w-2xl mx-auto">
-          Un programa mensual con videos guiados, planes de entrenamiento y acompañamiento real.
-          Transforma tu cuerpo y tus hábitos con VIVIPREFIT.
-        </p>
-        <div className="mt-8 flex justify-center gap-4">
-          <Link to="/registro" className="btn-accent">Comienza hoy — $us. {config?.price ?? 40}/mes</Link>
-          <Link to="/login" className="border border-border rounded-pill px-6 py-3 text-text-secondary hover:text-text-primary transition">
-            Ya soy miembro
-          </Link>
-        </div>
-      </section>
-
-      {/* Beneficios */}
-      <section className="mx-auto max-w-6xl px-4 grid gap-6 sm:grid-cols-3">
-        {[
-          ['🏋️', 'Programa mensual', 'Rutinas nuevas cada ciclo, progresivas y guiadas en video.'],
-          ['🥗', 'Estilo de vida', 'Guías de nutrición y hábitos que sostienen tus resultados.'],
-          ['💬', 'Acompañamiento', 'Soporte directo por WhatsApp durante toda tu membresía.'],
-        ].map(([icon, title, desc]) => (
-          <div key={title} className="card-surface text-center">
-            <div className="text-3xl mb-3">{icon}</div>
-            <h3 className="font-bold mb-2">{title}</h3>
-            <p className="text-sm text-text-secondary">{desc}</p>
-          </div>
-        ))}
-      </section>
-
-      {/* Precio */}
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        {error && <p className="text-red-400 text-center mb-4 text-sm">{error}</p>}
-        <PlanCard price={config?.price ?? 40} onSubscribe={startCheckout} loading={loading} />
+      <Hero config={config} />
+      <Marquee />
+      <Pilares config={config} />
+      <Clases />
+      <Educativo config={config} />
+      <Membresia config={config} />
+      <Faq />
+      {/* CTA final hacia el registro */}
+      <section className="py-16 bg-background text-center border-t border-border">
+        <h2 className="font-heading text-2xl md:text-3xl font-bold text-text-primary">
+          ¿Lista para empezar tu transformación?
+        </h2>
+        <p className="text-text-secondary mt-2 mb-6">Únete al programa y entrena con propósito desde hoy.</p>
+        <Link
+          to="/registro"
+          className="inline-block bg-accent text-background px-8 py-4 rounded-full font-bold hover:bg-white transition-all shadow-lg shadow-accent/20"
+        >
+          Crear mi cuenta — $us. {config.monthly_price}/mes
+        </Link>
       </section>
     </div>
   );
 }
+
