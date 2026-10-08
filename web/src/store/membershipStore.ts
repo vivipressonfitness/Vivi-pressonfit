@@ -1,30 +1,34 @@
 import { create } from 'zustand';
-import type { PlanStatus } from '../types';
+import type { PlanStatus, Profile } from '../types';
 
 interface MembershipState {
   status: PlanStatus | null;
-  currentPeriodEnd: string | null;
+  trialEndDate: string | null;
   isAdmin: boolean;
   loading: boolean;
-  setFromProfile: (p: { plan_status: PlanStatus; current_period_end: string | null; is_admin: boolean } | null) => void;
+  setFromProfile: (p: Profile | null) => void;
   reset: () => void;
 }
 
 export const useMembershipStore = create<MembershipState>((set) => ({
   status: null,
-  currentPeriodEnd: null,
+  trialEndDate: null,
   isAdmin: false,
   loading: true,
 
   setFromProfile: (p) =>
     set({
-      status: p?.plan_status ?? 'inactive',
-      currentPeriodEnd: p?.current_period_end ?? null,
+      // El trial solo cuenta si no venció (coherente con la RLS de membership_content)
+      status:
+        p?.plan_status === 'trial' && p.trial_end_date && new Date(p.trial_end_date) < new Date()
+          ? 'expired'
+          : (p?.plan_status ?? 'inactive'),
+      trialEndDate: p?.trial_end_date ?? null,
       isAdmin: p?.is_admin ?? false,
       loading: false,
     }),
 
-  reset: () => set({ status: null, currentPeriodEnd: null, isAdmin: false, loading: false }),
+  reset: () => set({ status: null, trialEndDate: null, isAdmin: false, loading: false }),
 }));
 
 // Estado derivado: acceso = trial o active (past_due aún permite acceso mientras Stripe reintenta)

@@ -5,6 +5,7 @@ const map: Record<PlanStatus, { label: string; cls: string }> = {
   trial:    { label: 'Prueba',    cls: 'bg-sky-500/15 text-sky-400' },
   past_due: { label: 'Pago vencido', cls: 'bg-amber-500/15 text-amber-400' },
   canceled: { label: 'Cancelada', cls: 'bg-red-500/15 text-red-400' },
+  expired:  { label: 'Prueba vencida', cls: 'bg-red-500/15 text-red-400' },
   inactive: { label: 'Sin membresía', cls: 'bg-neutral-500/15 text-neutral-400' },
 };
 

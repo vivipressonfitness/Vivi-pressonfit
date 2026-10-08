@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useMembership } from '../hooks/useMembership';
 import { useVideos } from '../hooks/useVideos';
+import { useLandingConfig } from '../hooks/useLandingConfig';
 import { Card } from '../components/ui/Card';
 import { MembershipBadge } from '../components/membership/MembershipBadge';
 import { StatusCard } from '../components/membership/StatusCard';
@@ -10,6 +11,7 @@ export default function Dashboard() {
   const profile = useAuthStore((s) => s.profile);
   const { hasAccess, status } = useMembership();
   const { videos, loading } = useVideos();
+  const { config } = useLandingConfig();
 
   const firstName = profile?.full_name?.split(' ')[0] ?? '';
   const recommended = videos.slice(0, 3);
@@ -34,7 +36,7 @@ export default function Dashboard() {
         ) : !hasAccess && status !== null ? (
           <p className="text-amber-400 text-sm">
             Activa tu membresía para desbloquear los videos del mes.{' '}
-            <Link to="/membresia" className="underline">Suscribirme $us. 40/mes</Link>
+            <Link to="/membresia" className="underline">Suscribirme ${config.monthly_price}/mes</Link>
           </p>
         ) : recommended.length === 0 ? (
           <p className="text-text-secondary text-sm">Aún no hay videos publicados en este ciclo.</p>
@@ -66,7 +68,7 @@ export default function Dashboard() {
       </Card>
 
       <a
-        href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER ?? '59178000000'}`}
+        href={`https://wa.me/${config.whatsapp_number || import.meta.env.VITE_WHATSAPP_NUMBER || '59178000000'}`}
         target="_blank"
         rel="noreferrer"
         className="block bg-whatsapp-green hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-pill text-center transition"

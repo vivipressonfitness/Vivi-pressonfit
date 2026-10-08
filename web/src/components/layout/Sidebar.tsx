@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useMembershipStore } from '../../store/membershipStore';
 
 const links = [
   { to: '/dashboard', label: 'Inicio' },
@@ -8,10 +9,13 @@ const links = [
   { to: '/perfil', label: 'Perfil' },
 ];
 
-// Sidebar del área privada (colapsa en móvil)
+// Sidebar del área privada (colapsa en móvil). La entrada "Panel Admin"
+// solo se muestra si profiles.is_admin = true (Admin.tsx + RLS re-validan).
 export function Sidebar() {
   const { pathname } = useLocation();
+  const isAdmin = useMembershipStore((s) => s.isAdmin);
   const [open, setOpen] = useState(false);
+  const allLinks = isAdmin ? [...links, { to: '/admin', label: '⚙️ Panel Admin' }] : links;
   return (
     <div className="lg:w-56 shrink-0">
       <button
@@ -21,7 +25,7 @@ export function Sidebar() {
         Menú {open ? '▲' : '▼'}
       </button>
       <aside className={`${open ? 'block' : 'hidden'} lg:block card-surface !p-3 sticky top-24 space-y-1`}>
-        {links.map((l) => (
+        {allLinks.map((l) => (
           <Link
             key={l.to}
             to={l.to}
