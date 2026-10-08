@@ -19,6 +19,9 @@ export function ProtectedRoute({ children, requireMembership = true }: Props) {
   if (!session) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
+  if (session && !profile && location.pathname !== '/membresia') {
+    return <Navigate to="/membresia" state={{ from: location.pathname }} replace />;
+  }
   if (requireMembership && !profile?.is_admin && !hasActiveAccess(profile?.plan_status ?? null)) {
     return <Navigate to="/membresia" replace />;
   }

@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types';
@@ -41,11 +41,21 @@ export function initAuthListener() {
   supabase.auth.onAuthStateChange((_event, session) => {
     setSession(session);
     if (session?.user) loadProfile(session.user.id);
-    else setProfile(null);
+    else { setProfile(null); console.debug('authState: signed out'); }
   });
 }
 
 async function loadProfile(userId: string) {
-  const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
-  useAuthStore.getState().setProfile(data as Profile | null);
+  console.debug('loadProfile start for', userId);
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+
+  if (error) {
+    console.warn('No se pudo cargar el perfil del usuario:', error.message);
+    useAuthStore.getState().setProfile(null);
+    return;
+  }
+
+  console.debug('loadProfile result:', data);
+  useAuthStore.getState().setProfile((data ?? null) as Profile | null);
 }
+

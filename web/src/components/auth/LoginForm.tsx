@@ -1,7 +1,8 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useAuthStore } from '../../store/authStore';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 
@@ -19,7 +20,25 @@ export function LoginForm() {
     setError(null);
     try {
       await signIn(email, password);
-      navigate('/dashboard');
+
+      const { user } = useAuthStore.getState();
+      console.debug('post-signIn user:', user);
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+
+      const { data: profile, error: profileError } = await import('../../lib/supabase').then(({ supabase }) =>
+        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
+      );
+
+      console.debug('post-signIn profile fetch:', profile, profileError);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      navigate(profile?.is_admin ? '/admin' : '/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
     } finally {
