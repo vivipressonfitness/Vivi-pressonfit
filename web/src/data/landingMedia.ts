@@ -2,8 +2,8 @@ import type { ClaseItem } from '../hooks/useLandingConfig';
 
 // ============================================================
 // CONTENIDO PROMOCIONAL PÚBLICO del Landing (sin login)
-// Archivos fuente: web/src/components/video/* (exports de Instagram @viviprefit)
-// Servidos desde /public/landing/* — reemplázalos por los definitivos del coach.
+// Originales: exports de Instagram @viviprefit, copiados a web/public/landing/*
+// Servidos como estáticos de Vite (/landing/...) — reemplázalos por los definitivos del coach.
 // ============================================================
 
 export const LANDING_IMAGES = {

@@ -184,7 +184,7 @@ export function FreeVideoModal({ item, onClose }: Props) {
 
         {isLocalDemo && (
           <p className="px-6 pb-4 -mt-1 text-[11px] leading-relaxed text-text-secondary">
-            📌 Demo local tomada de <code className="text-accent">web/src/components/video/</code>. Para producción:
+            📌 Demo local servida desde <code className="text-accent">web/public/landing/</code>. Para producción:
             subí esta clase a Bunny Stream y publicá la clave{' '}
             <code className="text-accent">clases_items</code> en Admin → Landing Config (se reproduce con token
             público vía <code className="text-accent">bunny-token-public</code>).
