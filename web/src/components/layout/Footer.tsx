@@ -18,10 +18,10 @@ export function Footer() {
           <div>
             <h4 className="font-bold mb-4 text-text-primary text-sm uppercase tracking-wider">Estructura</h4>
             <ul className="space-y-3 text-text-secondary text-sm">
-              <li><Link to="/#clases" className="hover:text-accent transition-colors">Clases Grabadas</Link></li>
+              <li><Link to="/#adelantos" className="hover:text-accent transition-colors">Adelantos Gratis</Link></li>
               <li><Link to="/#pilares" className="hover:text-accent transition-colors">Plan de Fuerza 3x</Link></li>
               <li><Link to="/#educativo" className="hover:text-accent transition-colors">Educación Alimentaria</Link></li>
-              <li><Link to="/#membresia" className="hover:text-accent transition-colors">Membresía $us. 40</Link></li>
+              <li><Link to="/membresia" className="hover:text-accent transition-colors">Membresía $us. 40</Link></li>
             </ul>
           </div>
           <div>

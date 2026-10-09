@@ -1,4 +1,4 @@
-import type { ClaseItem } from '../hooks/useLandingConfig';
+import type { PreviewItem } from '../hooks/useLandingConfig';
 
 // ============================================================
 // CONTENIDO PROMOCIONAL PÚBLICO del Landing (sin login)
@@ -22,41 +22,99 @@ export const LANDING_VIDEOS = {
   demoClase: '/landing/demo-clase.mp4',     // 720x1280 · 13s
 };
 
-// Clases de la sección "Biblioteca de Clases" (#clases).
-// Estructura compatible con landing_config.clases_items (editable desde Admin):
-// cuando exista esa clave, el Admin puede sobreescribir esta lista y reproducir
-// videos reales vía Bunny Stream (bunny_video_id) o YouTube/Vimeo (video_url).
-export const LANDING_CLASES: ClaseItem[] = [
+// ============================================================
+// PORTAL DE ADELANTOS (landing tipo portal, sin login)
+// Todo lo que una visitante puede ver gratis ANTES de suscribirse.
+// El Admin puede sobreescribir estas listas publicando en landing_config
+// las claves jsonb `preview_clases` / `preview_recursos`.
+// Cada item reproduce vía Bunny Stream (bunny_video_id → HLS público),
+// YouTube/Vimeo (video_url embed) o mp4 local (video_url /landing/...).
+// ============================================================
+
+// Adelanto de la Biblioteca de Clases Grabadas (demo corto de cada categoría).
+export const LANDING_CLASES: PreviewItem[] = [
   {
-    tag: 'Firmeza',
+    category: 'Firmeza',
     title: 'GAP',
     desc: 'Glúteos, Abdomen y Piernas: firmeza y tonificación muscular.',
     bunny_video_id: null,
     video_url: LANDING_VIDEOS.demoFuerza,
     thumbnail_url: LANDING_IMAGES.thumbGap,
+    duration: '19s · adelanto',
+    locked: false,
   },
   {
-    tag: 'Global',
+    category: 'Global',
     title: 'Full Body',
     desc: 'Trabajo integral de cada grupo muscular.',
     bunny_video_id: null,
     video_url: LANDING_VIDEOS.demoCardio,
     thumbnail_url: LANDING_IMAGES.thumbFullBody,
+    duration: '29s · adelanto',
+    locked: false,
   },
   {
-    tag: 'Intensidad',
+    category: 'Intensidad',
     title: 'Cardio HIIT',
     desc: 'Quema calórica y resistencia cardiovascular.',
     bunny_video_id: null,
     video_url: LANDING_VIDEOS.demoVertical,
     thumbnail_url: LANDING_IMAGES.thumbCardio,
+    duration: '60s · adelanto',
+    locked: false,
   },
   {
-    tag: 'Híbrido',
+    category: 'Híbrido',
     title: 'Fuerza + Aeróbico',
     desc: 'Resistencia muscular y capacidad aeróbica.',
     bunny_video_id: null,
     video_url: LANDING_VIDEOS.demoClase,
     thumbnail_url: LANDING_IMAGES.thumbGap,
+    duration: '13s · adelanto',
+    locked: false,
+  },
+];
+
+// Muestras gratuitas del área Educativa / Nutrición.
+export const LANDING_EDUCATIVO: PreviewItem[] = [
+  {
+    category: 'Nutrición',
+    title: 'Empieza hoy: plato balanceado',
+    desc: 'Mini guía para armar tus comidas sin dietas imposibles.',
+    bunny_video_id: null,
+    video_url: LANDING_VIDEOS.demoCardio,
+    thumbnail_url: LANDING_IMAGES.thumbCardio,
+    duration: 'adelanto',
+    locked: false,
+  },
+  {
+    category: 'Rutinas',
+    title: 'Calentamiento en casa (sin equipo)',
+    desc: 'Vista previa de las rutinas de fuerza 3x por semana.',
+    bunny_video_id: null,
+    video_url: LANDING_VIDEOS.demoFuerza,
+    thumbnail_url: LANDING_IMAGES.thumbFullBody,
+    duration: 'adelanto',
+    locked: false,
+  },
+  {
+    category: 'Membresía',
+    title: 'Plan completo de nutrición mensual',
+    desc: 'Se libera al suscribirte — dentro del portal privado.',
+    bunny_video_id: null,
+    video_url: null,
+    thumbnail_url: LANDING_IMAGES.thumbGap,
+    duration: null,
+    locked: true,
+  },
+  {
+    category: 'Membresía',
+    title: 'Clases completas GAP / Full Body',
+    desc: 'Versiones largas de 30-45 min solo para miembros.',
+    bunny_video_id: null,
+    video_url: null,
+    thumbnail_url: LANDING_IMAGES.thumbCardio,
+    duration: null,
+    locked: true,
   },
 ];

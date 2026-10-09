@@ -1,7 +1,7 @@
 import type { LandingConfig } from '../../hooks/useLandingConfig';
 
-// Hero replica del diseño EJEMPLO: badge rosa, título Montserrat, CTA pink + outline,
-// imagen 3/4 con overlay y tarjeta flotante "Membresía Mensual".
+// Hero del PORTAL público: invita a VER contenido gratis primero (adelanto de la
+// membresía), no a comprar directo. Imagen 3/4 con overlay y tarjeta flotante.
 export function Hero({ config }: { config: LandingConfig }) {
   return (
     <header id="inicio" className="relative min-h-[92vh] flex items-center pt-28 pb-16 overflow-hidden bg-background">
@@ -11,7 +11,7 @@ export function Hero({ config }: { config: LandingConfig }) {
         <div className="space-y-8">
           <span className="inline-flex items-center gap-2 bg-accent/10 border border-accent/30 text-accent px-4 py-1.5 rounded-full font-semibold tracking-widest uppercase text-xs">
             <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-            Renovación Mensual Continua
+            Portal de Adelantos · Acceso Gratis
           </span>
           <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight text-text-primary">
             {config.hero_title} <br />
@@ -20,16 +20,16 @@ export function Hero({ config }: { config: LandingConfig }) {
           <p className="text-text-secondary text-lg leading-relaxed max-w-lg">{config.hero_sub}</p>
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             <a
-              href="#membresia"
+              href="#adelantos"
               className="inline-block bg-accent text-background px-8 py-4 rounded-full font-bold hover:bg-text-primary transition-all text-center shadow-lg shadow-accent/25 cursor-pointer"
             >
-              Inscribirme por $us. {config.monthly_price} / mes
+              Ver contenido gratis ▶
             </a>
             <a
-              href="#pilares"
+              href="/membresia"
               className="inline-block border border-border text-text-primary px-8 py-4 rounded-full font-bold hover:border-accent hover:text-accent transition-all text-center"
             >
-              Explorar Contenido
+              Hazte miembro — $us. {config.monthly_price}/mes
             </a>
           </div>
           <div className="flex items-center gap-6 pt-2 text-xs text-text-secondary">
