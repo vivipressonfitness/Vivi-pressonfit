@@ -1,10 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL as string;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const url = (import.meta.env.VITE_SUPABASE_URL ?? 'https://tu-proyecto.supabase.co').trim();
+const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? 'tu-anon-key-publica').trim();
+const isConfigured = Boolean(
+  import.meta.env.VITE_SUPABASE_URL &&
+  import.meta.env.VITE_SUPABASE_ANON_KEY &&
+  !import.meta.env.VITE_SUPABASE_URL.includes('TU-PROYECTO') &&
+  !import.meta.env.VITE_SUPABASE_ANON_KEY.includes('tu-anon-key-publica')
+);
 
-if (!url || !anonKey) {
-  throw new Error('Faltan VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY (ver web/.env.example)');
+if (!isConfigured) {
+  console.warn('Supabase no configurado: crea web/.env.local con VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY para habilitar login y datos reales.');
 }
 
 // IMPORTANTE: solo la ANON KEY. La autorización real vive en RLS;

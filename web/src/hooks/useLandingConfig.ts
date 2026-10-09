@@ -15,6 +15,14 @@ export interface LandingConfig {
   educacion_image: string;
 }
 
+export interface ClaseItem {
+  tag: string;
+  title: string;
+  desc: string;
+  bunny_video_id: string | null;
+  video_url: string | null;
+}
+
 export const DEFAULT_CONFIG: LandingConfig = {
   monthly_price: 40,
   whatsapp_number: '59178000000',
