@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { LANDING_CLASES } from '../data/landingMedia';
+import { LANDING_CLASES, LANDING_EDUCATIVO } from '../data/landingMedia';
 
 // Config editable desde el panel Admin (tabla landing_config: key -> value jsonb).
-// Claves usadas por la landing, con defaults tomados del diseño EJEMPLO.
+// Claves usadas por la landing tipo PORTAL, con defaults tomados del diseño EJEMPLO.
 export interface LandingConfig {
   monthly_price: number;
   whatsapp_number: string;
@@ -16,13 +16,46 @@ export interface LandingConfig {
   educacion_image: string;
 }
 
-export interface ClaseItem {
-  tag: string;
+// Item de contenido GRATIS del portal público (adelanto de la membresía).
+export interface PreviewItem {
+  category: string;      // categoría/etiqueta (ej. "Firmeza", "Nutrición")
   title: string;
   desc: string;
-  bunny_video_id: string | null;
-  video_url: string | null;
+  bunny_video_id: string | null; // HLS público vía Bunny Stream
+  video_url: string | null;      // mp4 local (/landing/...) o embed YouTube/Vimeo
   thumbnail_url?: string | null;
+  duration?: string | null;      // ej. "19s · adelanto"
+  locked?: boolean;              // true → se muestra como "solo miembros" (sin reproducir)
+}
+
+/** @deprecated alias histórico de PreviewItem (campo `tag` → `category`). */
+export type ClaseItem = PreviewItem & { tag?: string };
+
+// Convierte items legados ({tag}) al formato portal ({category}).
+function normalizeItem(raw: Record<string, unknown>): PreviewItem {
+  return {
+    category: (raw.category as string) ?? (raw.tag as string) ?? 'Clase',
+    title: (raw.title as string) ?? '',
+    desc: (raw.desc as string) ?? '',
+    bunny_video_id: (raw.bunny_video_id as string) ?? null,
+    video_url: (raw.video_url as string) ?? null,
+    thumbnail_url: (raw.thumbnail_url as string) ?? null,
+    duration: (raw.duration as string) ?? null,
+    locked: Boolean(raw.locked),
+  };
+}
+
+function parseItems(value: unknown): PreviewItem[] | null {
+  let items: unknown = value;
+  if (typeof value === 'string') {
+    try {
+      items = JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  if (!Array.isArray(items) || items.length === 0) return null;
+  return items.map((i) => normalizeItem(i as Record<string, unknown>));
 }
 
 export const DEFAULT_CONFIG: LandingConfig = {
@@ -44,9 +77,10 @@ const CONFIG_KEYS = Object.keys(DEFAULT_CONFIG) as Array<keyof LandingConfig>;
 
 export function useLandingConfig() {
   const [config, setConfig] = useState<LandingConfig>(DEFAULT_CONFIG);
-  // Lista de clases promocionales del landing: defaults locales hasta que el
-  // admin publique la clave jsonb `clases_items` en landing_config.
-  const [clases, setClases] = useState<ClaseItem[]>(LANDING_CLASES);
+  // Adelantos gratuitos del portal: defaults locales (landingMedia.ts) hasta que
+  // el admin publique las claves jsonb `preview_clases` / `preview_recursos`.
+  const [clases, setClases] = useState<PreviewItem[]>(LANDING_CLASES);
+  const [recursos, setRecursos] = useState<PreviewItem[]>(LANDING_EDUCATIVO);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,7 +93,8 @@ export function useLandingConfig() {
         const rows = (data ?? []) as Array<{ key: string; value: unknown }>;
         const next: LandingConfig = { ...DEFAULT_CONFIG };
         for (const row of rows) {
-          if (row.key === 'clases_items') continue; // se procesa aparte (jsonb array)
+          // Las claves de listas jsonb se procesan aparte.
+          if (row.key === 'preview_clases' || row.key === 'preview_recursos' || row.key === 'clases_items') continue;
           if ((CONFIG_KEYS as string[]).includes(row.key)) {
             const raw = typeof row.value === 'string' ? row.value : JSON.stringify(row.value);
             // La SPA vanilla guardaba valores planos en jsonb; tolerar ambos formatos.
@@ -73,14 +108,16 @@ export function useLandingConfig() {
             }
           }
         }
-        // clases_items → ClaseItem[] (acepta objeto jsonb o string JSON)
-        const rawItems = rows.find((r) => r.key === 'clases_items')?.value;
-        let items: unknown = rawItems;
-        if (typeof rawItems === 'string') {
-          try { items = JSON.parse(rawItems); } catch { items = null; }
-        }
-        const parsed = Array.isArray(items) ? (items as ClaseItem[]) : null;
-        if (parsed && parsed.length > 0) setClases(parsed);
+        // Adelantos de clases: `preview_clases` (nuevo) con fallback a `clases_items` (legado).
+        const rawClases =
+          rows.find((r) => r.key === 'preview_clases')?.value ??
+          rows.find((r) => r.key === 'clases_items')?.value;
+        const parsedClases = parseItems(rawClases);
+        if (parsedClases) setClases(parsedClases);
+
+        // Recursos educativos gratis: `preview_recursos`.
+        const parsedRecursos = parseItems(rows.find((r) => r.key === 'preview_recursos')?.value);
+        if (parsedRecursos) setRecursos(parsedRecursos);
 
         setConfig(next);
         setLoading(false);
@@ -90,5 +127,5 @@ export function useLandingConfig() {
     };
   }, []);
 
-  return { config, clases, loading };
+  return { config, clases, recursos, loading };
 }

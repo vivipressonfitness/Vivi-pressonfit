@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Hls from 'hls.js';
-import type { ClaseItem } from '../../hooks/useLandingConfig';
+import type { PreviewItem } from '../../hooks/useLandingConfig';
 
-// Modal de video PROMOCIONAL FREE en el landing (visible sin login).
-// Fuentes soportadas por card de clases_items:
+// Modal de video PROMOCIONAL FREE en el portal público (visible sin login).
+// Fuentes soportadas por item de preview_clases / preview_recursos:
 //  - bunny_video_id → HLS de Bunny Stream. El token se pide a la Edge Function
 //    pública bunny-token-public (no requiere sesión; verificar-membership=false).
 //  - video_url      → mp4/mov directo, o embed de YouTube/Vimeo.
 
 interface Props {
-  item: ClaseItem;
+  item: PreviewItem;
   onClose: () => void;
 }
 
@@ -111,7 +112,7 @@ export function FreeVideoModal({ item, onClose }: Props) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
             <span className="inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-1">
-              {item.tag} · CLASE GRATIS
+              {item.category} · ADELANTO GRATIS
             </span>
             <h3 className="font-heading text-xl font-bold text-text-primary">{item.title}</h3>
           </div>
@@ -173,20 +174,20 @@ export function FreeVideoModal({ item, onClose }: Props) {
 
         <div className="px-6 py-4 flex items-center justify-between gap-4">
           <p className="text-sm text-text-secondary line-clamp-2">{item.desc}</p>
-          <a
-            href="#membresia"
+          <Link
+            to="/membresia"
             onClick={onClose}
             className="shrink-0 bg-accent hover:bg-white text-background text-sm font-bold px-4 py-2 rounded-pill transition"
           >
             Quiero todas las clases
-          </a>
+          </Link>
         </div>
 
         {isLocalDemo && (
           <p className="px-6 pb-4 -mt-1 text-[11px] leading-relaxed text-text-secondary">
             📌 Demo local servida desde <code className="text-accent">web/public/landing/</code>. Para producción:
             subí esta clase a Bunny Stream y publicá la clave{' '}
-            <code className="text-accent">clases_items</code> en Admin → Landing Config (se reproduce con token
+            <code className="text-accent">preview_clases</code> en Admin → Landing Config (se reproduce con token
             público vía <code className="text-accent">bunny-token-public</code>).
           </p>
         )}

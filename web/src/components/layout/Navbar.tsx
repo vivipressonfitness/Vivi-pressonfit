@@ -4,11 +4,11 @@ import { useAuthStore } from '../../store/authStore';
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-2 text-sm transition ${isActive ? 'text-accent font-semibold' : 'text-text-secondary hover:text-text-primary'}`;
 
-// Anclas de la landing (scroll suave a secciones) — visibles solo en "/"
+// Anclas del portal público (scroll suave a secciones) — visibles solo en "/"
 const landingAnchors = [
   { href: '/#pilares', label: 'El Programa' },
-  { href: '/#clases', label: 'Clases' },
-  { href: '/#membresia', label: 'Membresía' },
+  { href: '/#adelantos', label: 'Gratis' },
+  { href: '/#educativo', label: 'Nutrición' },
   { href: '/#faq', label: 'FAQ' },
 ];
 
@@ -54,10 +54,10 @@ export function Navbar() {
             <>
               <NavLink to="/login" className={navLinkCls}>Entrar</NavLink>
               <Link
-                to="/registro"
+                to="/membresia"
                 className="bg-accent hover:bg-white text-background font-bold !px-4 !py-2 ml-2 rounded-pill text-sm transition"
               >
-                Únete ya
+                Hazte miembro
               </Link>
             </>
           )}
