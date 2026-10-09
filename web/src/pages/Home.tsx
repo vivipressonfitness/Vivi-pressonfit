@@ -7,14 +7,14 @@ import { Membresia, Faq } from '../components/landing/MembresiaFaq';
 // Landing pública — réplica del diseño del archivo EJEMPLO (VIVIPREFIT).
 // Textos, precio e imágenes provienen de landing_config (editable desde Admin).
 export default function Home() {
-  const { config } = useLandingConfig();
+  const { config, clases } = useLandingConfig();
 
   return (
     <div>
       <Hero config={config} />
       <Marquee />
       <Pilares config={config} />
-      <Clases />
+      <Clases config={config} clases={clases} />
       <Educativo config={config} />
       <Membresia config={config} />
       <Faq />

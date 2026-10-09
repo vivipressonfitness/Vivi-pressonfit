@@ -47,6 +47,14 @@ export function Hero({ config }: { config: LandingConfig }) {
           <div className="aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border border-border relative group">
             <img
               src={config.hero_image}
+              onError={(e) => {
+                // Si la URL remota del admin muere, caer en la imagen local del repo.
+                const img = e.currentTarget;
+                if (!img.dataset.fallback) {
+                  img.dataset.fallback = '1';
+                  img.src = '/landing/coach-whatsapp.jpg';
+                }
+              }}
               alt="Entrenamiento ViviPreFit"
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />

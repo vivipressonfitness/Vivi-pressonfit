@@ -1,4 +1,7 @@
-import type { LandingConfig } from '../../hooks/useLandingConfig';
+import { useState } from 'react';
+import type { ClaseItem, LandingConfig } from '../../hooks/useLandingConfig';
+import { FreeVideoModal } from './FreeVideoModal';
+import { LANDING_CLASES } from '../../data/landingMedia';
 
 // Secciones Pilares / Clases / Educativo — réplica del diseño EJEMPLO.
 
@@ -87,14 +90,11 @@ export function Pilares({ config }: { config: LandingConfig }) {
   );
 }
 
-const CLASES = [
-  { tag: 'Firmeza', title: 'GAP', desc: 'Glúteos, Abdomen y Piernas: firmeza y tonificación muscular.' },
-  { tag: 'Global', title: 'Full Body', desc: 'Trabajo integral de cada grupo muscular.' },
-  { tag: 'Intensidad', title: 'Cardio HIIT', desc: 'Quema calórica y resistencia cardiovascular.' },
-  { tag: 'Híbrido', title: 'Fuerza + Aeróbico', desc: 'Resistencia muscular y capacidad aeróbica.' },
-];
+// Clases por defecto: LANDING_CLASES (con thumbnail + video demo local).
+// Si el admin publica landing_config.clases_items, esa lista tiene prioridad.
+export function Clases({ clases = LANDING_CLASES }: { config: LandingConfig; clases?: ClaseItem[] }) {
+  const [playing, setPlaying] = useState<ClaseItem | null>(null);
 
-export function Clases() {
   return (
     <section id="clases" className="py-24 bg-background border-t border-border">
       <div className="container mx-auto px-6">
@@ -113,17 +113,61 @@ export function Clases() {
           </a>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {CLASES.map((c) => (
-            <div key={c.title} className="bg-surface p-6 rounded-2xl border border-border">
-              <span className="inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-4">
-                {c.tag}
-              </span>
-              <h3 className="font-heading text-2xl font-bold mb-2 text-text-primary">{c.title}</h3>
-              <p className="text-text-secondary text-sm">{c.desc}</p>
-            </div>
-          ))}
+          {clases.map((c) => {
+            const hasVideo = Boolean(c.bunny_video_id || c.video_url);
+            const card = (
+              <>
+                {c.thumbnail_url && (
+                  <div className="relative -m-6 mb-4 rounded-t-2xl overflow-hidden aspect-[4/3] group/thumb">
+                    <img
+                      src={c.thumbnail_url}
+                      alt={c.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                    {hasVideo && (
+                      <span className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-accent text-background flex items-center justify-center shadow-lg shadow-accent/30 opacity-90 group-hover/card:opacity-100 transition">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 ml-0.5"><path d="M8 5v14l11-7L8 5Z" /></svg>
+                      </span>
+                    )}
+                    {hasVideo && (
+                      <span className="absolute top-3 right-3 bg-whatsapp-green text-black text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-full">
+                        Clase gratis
+                      </span>
+                    )}
+                  </div>
+                )}
+                <span className="inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-4">
+                  {c.tag}
+                </span>
+                <h3 className="font-heading text-2xl font-bold mb-2 text-text-primary">{c.title}</h3>
+                <p className="text-text-secondary text-sm">{c.desc}</p>
+                {hasVideo && (
+                  <span className="mt-4 inline-flex items-center gap-2 text-accent text-sm font-bold group-hover/card:underline">
+                    Ver clase gratis →
+                  </span>
+                )}
+              </>
+            );
+            return hasVideo ? (
+              <button
+                key={c.title}
+                type="button"
+                onClick={() => setPlaying(c)}
+                className="bg-surface p-6 rounded-2xl border border-border hover:border-accent transition text-left group/card cursor-pointer"
+              >
+                {card}
+              </button>
+            ) : (
+              <div key={c.title} className="bg-surface p-6 rounded-2xl border border-border group/card">
+                {card}
+              </div>
+            );
+          })}
         </div>
       </div>
+      {playing && <FreeVideoModal item={playing} onClose={() => setPlaying(null)} />}
     </section>
   );
 }

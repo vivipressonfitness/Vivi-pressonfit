@@ -30,6 +30,7 @@ export function FreeVideoModal({ item, onClose }: Props) {
     : null;
   const directUrl =
     item.video_url && !ytEmbed && !vimeoEmbed ? item.video_url : null;
+  const isLocalDemo = Boolean(directUrl && directUrl.startsWith('/landing/'));
 
   // Cerrar con Escape + bloquear scroll del fondo
   useEffect(() => {
@@ -155,7 +156,14 @@ export function FreeVideoModal({ item, onClose }: Props) {
               className="w-full h-full"
             />
           ) : directUrl ? (
-            <video src={directUrl} controls autoPlay playsInline className="w-full h-full" />
+            <video
+              src={directUrl}
+              controls
+              autoPlay={!isLocalDemo}
+              playsInline
+              poster={item.thumbnail_url ?? undefined}
+              className="w-full h-full"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-text-secondary text-sm">
               Sin video configurado
@@ -173,6 +181,15 @@ export function FreeVideoModal({ item, onClose }: Props) {
             Quiero todas las clases
           </a>
         </div>
+
+        {isLocalDemo && (
+          <p className="px-6 pb-4 -mt-1 text-[11px] leading-relaxed text-text-secondary">
+            📌 Demo local servida desde <code className="text-accent">web/public/landing/</code>. Para producción:
+            subí esta clase a Bunny Stream y publicá la clave{' '}
+            <code className="text-accent">clases_items</code> en Admin → Landing Config (se reproduce con token
+            público vía <code className="text-accent">bunny-token-public</code>).
+          </p>
+        )}
       </div>
     </div>
   );
