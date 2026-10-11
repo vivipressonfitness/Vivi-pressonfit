@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { LandingConfig, PreviewItem } from '../../hooks/useLandingConfig';
 import { FreeVideoModal } from './FreeVideoModal';
 import { HoverVideoPreview } from './HoverVideoPreview';
+import { HaloBadge } from '../ui/HaloBadge';
 import { LANDING_CLASES, LANDING_EDUCATIVO } from '../../data/landingMedia';
 
 // ============================================================
@@ -135,15 +136,15 @@ export function PreviewCard({
             </button>
           )}
           {hasVideo && (
-            <span className="absolute top-3 right-3 bg-whatsapp-green text-black text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-full">
+            <HaloBadge variant="free" className="absolute top-3 right-3">
               Gratis
-            </span>
+            </HaloBadge>
           )}
           {item.locked && (
-            <span className="absolute top-3 right-3 bg-black/70 text-white text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-full flex items-center gap-1">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2Zm-9-2a3 3 0 0 1 6 0v2H9V6Z" /></svg>
+            <HaloBadge variant="members" className="absolute top-3 right-3">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="size-3"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2Zm-9-2a3 3 0 0 1 6 0v2H9V6Z" /></svg>
               Solo miembros
-            </span>
+            </HaloBadge>
           )}
         </div>
       )}
