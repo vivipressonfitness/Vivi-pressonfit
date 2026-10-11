@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useStripe } from '../hooks/useStripe';
 import { useMembership } from '../hooks/useMembership';
 import { useLandingConfig } from '../hooks/useLandingConfig';
@@ -11,10 +11,8 @@ import { Card } from '../components/ui/Card';
 // comparativa "adelanto vs. membresía", el plan con Stripe y el estado de suscripción.
 export default function Membership() {
   const { startCheckout, loading, error } = useStripe();
-  const { hasAccess } = useMembership();
+  const { hasAccess, status } = useMembership();
   const { config } = useLandingConfig();
-  const location = useLocation();
-  const portalMissing = new URLSearchParams(location.search).get('portal') === 'missing';
 
   const incluye = [
     ['Clases completas en video', 'GAP, Full Body, Cardio HIIT y Fuerza + Aeróbico de 30-45 min, sin límite.'],
@@ -51,15 +49,6 @@ export default function Membership() {
 
       <StatusCard />
 
-      {portalMissing && (
-        <Card className="border-amber-500/40">
-          <p className="text-sm text-amber-400">
-            El portal de autogestión aún no está disponible (falta la Edge Function{' '}
-            <code>stripe-portal</code>). Para cancelar o actualizar tu tarjeta, escríbenos por WhatsApp.
-          </p>
-        </Card>
-      )}
-
       {/* Comparativa adelanto vs. membresía */}
       <Card>
         <h2 className="font-bold text-lg mb-4">Adelanto gratuito vs. membresía</h2>
@@ -83,7 +72,7 @@ export default function Membership() {
       </Card>
 
       {/* Oferta / pago */}
-      {!hasAccess && (
+      {(!hasAccess || status === 'trial') && (
         <>
           {error && <p className="text-red-400 text-sm text-center">{error}</p>}
           <PlanCard price={config.monthly_price} onSubscribe={startCheckout} loading={loading} />

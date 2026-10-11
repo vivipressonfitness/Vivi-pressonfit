@@ -68,6 +68,8 @@ src/
   router.tsx      rutas públicas + protegidas (code-splitting)
 ```
 
+Consulta `supabase/STRIPE_SETUP.md` para desplegar las funciones de Checkout, portal y webhook, y configurar sus secrets.
+
 ## Backend pendiente (recomendado)
 
 Para activar cobro y autogestión 100% desde React se necesitan dos Edge Functions nuevas
