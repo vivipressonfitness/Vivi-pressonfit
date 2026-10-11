@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useAuthStore } from '../../store/authStore';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
