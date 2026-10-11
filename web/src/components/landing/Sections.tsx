@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { LandingConfig, PreviewItem } from '../../hooks/useLandingConfig';
 import { FreeVideoModal } from './FreeVideoModal';
+import { HoverVideoPreview } from './HoverVideoPreview';
 import { LANDING_CLASES, LANDING_EDUCATIVO } from '../../data/landingMedia';
 
 // ============================================================
@@ -119,6 +120,9 @@ export function PreviewCard({
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105"
           />
+          {hasVideo && item.video_url && !item.bunny_video_id && !/youtube\\.com|youtu\\.be|vimeo\\.com/.test(item.video_url) && (
+            <HoverVideoPreview src={item.video_url} poster={item.thumbnail_url} alt={item.title} />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
           {hasVideo && (
             <button
