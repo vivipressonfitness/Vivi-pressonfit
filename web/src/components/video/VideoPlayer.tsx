@@ -11,7 +11,7 @@ interface Props {
 // Reproductor HLS con token firmado obtenido de la Edge Function bunny-token.
 // El token dura 120 min; si el usuario sigue viendo cerca de la expiración,
 // se renueva automáticamente (onError con tipo networkError suele indicar 403).
-export function VideoPlayer({ bunnyVideoId, title, autoplay = true }: Props) {
+export function VideoPlayer({ bunnyVideoId, title, autoplay = false }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [error, setError] = useState<string | null>(null);

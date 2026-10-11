@@ -9,6 +9,7 @@ export function StatusCard() {
   const { status, trialEndDate, stripeCustomerId, stripeSubscriptionId } = useMembershipStore();
   const isAdmin = useMembershipStore((s) => s.isAdmin);
   const [portalError, setPortalError] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
   const hasStripeSubscription = /^cus_[A-Za-z0-9]+$/.test(stripeCustomerId ?? '') && /^sub_[A-Za-z0-9]+$/.test(stripeSubscriptionId ?? '');
 
   const trialDaysLeft = (() => {
@@ -18,6 +19,15 @@ export function StatusCard() {
 
   async function openPortal() {
     setPortalError(null);
+    setPortalLoading(true);
+    try {
+      await invokePortal();
+    } finally {
+      setPortalLoading(false);
+    }
+  }
+
+  async function invokePortal() {
     const { data, error } = await supabase.functions.invoke('stripe-portal', { body: {} });
     if (error) {
       const context = error.context;
@@ -33,10 +43,24 @@ export function StatusCard() {
     else setPortalError('Stripe no devolvió el enlace del portal.');
   }
 
+  const stateCopy: Record<string, string> = {
+    active: 'Tu acceso está activo. Puedes entrenar todo el contenido del ciclo actual.',
+    trial: 'Estás en la prueba gratuita con acceso completo al contenido.',
+    past_due: 'El último pago no se completó. Gestiona tu suscripción para evitar interrupciones.',
+    canceled: 'Tu suscripción está cancelada. Suscríbete de nuevo para retomar el acceso.',
+    expired: 'La prueba gratuita terminó. Suscríbete para continuar entrenando.',
+    inactive: 'Aún no tienes membresía. Suscríbete para desbloquear las clases completas.',
+  };
+
   return (
-    <Card className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="font-bold">Estado de tu suscripción</h3>
+    <Card className="space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h3 className="text-lg font-bold leading-tight">Estado de tu suscripción</h3>
+          <p id="membership-state-copy" className="text-sm text-text-secondary">
+            {stateCopy[status ?? 'inactive'] ?? stateCopy.inactive}
+          </p>
+        </div>
         <MembershipBadge status={status} />
       </div>
       {trialDaysLeft !== null && (
@@ -45,7 +69,15 @@ export function StatusCard() {
         </p>
       )}
       {(status === 'active' || status === 'past_due') && hasStripeSubscription ? (
-        <Button variant="outline" onClick={openPortal}>Gestionar / cancelar suscripción</Button>
+        <Button
+          variant="outline"
+          onClick={openPortal}
+          loading={portalLoading}
+          aria-describedby="membership-state-copy"
+          className="w-full sm:w-auto min-h-[48px]"
+        >
+          Gestionar / cancelar suscripción
+        </Button>
       ) : status === 'trial' ? (
         <p className="text-sm text-text-secondary">La prueba gratuita no tiene una suscripción de Stripe para gestionar. Puedes iniciar tu suscripción desde esta página.</p>
       ) : (status === 'active' || status === 'past_due') && !hasStripeSubscription && !isAdmin ? (
@@ -53,7 +85,18 @@ export function StatusCard() {
       ) : !isAdmin && (
         <p className="text-sm text-amber-400">Tu membresía no está activa. Reactívala para ver los videos del mes.</p>
       )}
-      {portalError && <p role="alert" className="text-sm text-amber-400">{portalError}</p>}
+      {portalError && (
+        <div role="alert" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
+          <p className="text-sm text-amber-400">{portalError}</p>
+          <button
+            type="button"
+            onClick={openPortal}
+            className="mt-2 text-sm font-semibold text-amber-400 underline underline-offset-2 hover:text-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
     </Card>
   );
 }
