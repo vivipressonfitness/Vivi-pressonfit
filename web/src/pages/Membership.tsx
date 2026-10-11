@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useStripe } from '../hooks/useStripe';
 import { useMembership } from '../hooks/useMembership';
 import { useLandingConfig } from '../hooks/useLandingConfig';
+import { useMembershipStore } from '../store/membershipStore';
 import { PlanCard } from '../components/membership/PlanCard';
 import { StatusCard } from '../components/membership/StatusCard';
 import { Card } from '../components/ui/Card';
@@ -12,6 +13,7 @@ import { Card } from '../components/ui/Card';
 export default function Membership() {
   const { startCheckout, loading, error } = useStripe();
   const { hasAccess, status } = useMembership();
+  const stripeSubscriptionId = useMembershipStore((s) => s.stripeSubscriptionId);
   const { config } = useLandingConfig();
 
   const incluye = [
@@ -22,19 +24,36 @@ export default function Membership() {
     ['Contenido nuevo cada ciclo', 'Renovación mensual: siempre hay clases y recursos frescos.'],
   ];
 
+  // Para un miembro ya gestionable (active/past_due con suscripción), la acción
+  // primaria es administrar su plan; la oferta se mantiene accesible pero secundaria.
+  const isManaging =
+    (status === 'active' || status === 'past_due') &&
+    /^sub_[A-Za-z0-9]+$/.test(stripeSubscriptionId ?? '');
+
   return (
-    <div className="space-y-10 max-w-3xl mx-auto py-6">
-      {/* Encabezado de la oferta */}
-      <div className="text-center space-y-3">
-        <span className="inline-block bg-accent/10 border border-accent/30 text-accent px-4 py-1.5 rounded-full font-semibold tracking-widest uppercase text-xs">
-          Membresía Mensual
+    <div className="space-y-8 max-w-3xl mx-auto py-6">
+      {/* Encabezado: claro para miembros, promocional para quien aún no lo es */}
+      <div className={isManaging ? 'space-y-1' : 'text-center space-y-3'}>
+        <span
+          className={`inline-block bg-accent/10 border border-accent/30 text-accent px-4 py-1.5 rounded-full font-semibold tracking-widest uppercase text-xs ${
+            isManaging ? '' : 'mx-auto'
+          }`}
+        >
+          {isManaging ? 'Mi plan' : 'Membresía Mensual'}
         </span>
-        <h1 className="text-3xl md:text-4xl font-extrabold">
-          Todo lo que viste gratis, ahora <span className="text-accent">completo</span>
+        <h1 className={`text-3xl md:text-4xl font-extrabold ${isManaging ? '' : 'mx-auto max-w-xl'}`}>
+          {isManaging ? (
+            'Tu membresía'
+          ) : (
+            <>
+              Todo lo que viste gratis, ahora <span className="text-accent">completo</span>
+            </>
+          )}
         </h1>
-        <p className="text-text-secondary max-w-xl mx-auto">
-          En el portal probaste los adelantos. Como miembro accedes a las versiones completas,
-          las rutinas del mes, las guías de nutrición y el acompañamiento directo.
+        <p className={`text-text-secondary ${isManaging ? '' : 'max-w-xl mx-auto'}`}>
+          {isManaging
+            ? 'Revisa tu estado y gestiona tu suscripción cuando quieras.'
+            : 'En el portal probaste los adelantos. Como miembro accedes a las versiones completas, las rutinas del mes, las guías de nutrición y el acompañamiento directo.'}
         </p>
         {!hasAccess && (
           <p className="text-sm text-text-secondary pt-2">
@@ -49,10 +68,27 @@ export default function Membership() {
 
       <StatusCard />
 
+      {isManaging && (
+        <div className="text-sm text-text-secondary">
+          ¿Quieres repasar qué incluye la membresía?{' '}
+          <a href="#incluye" className="text-accent font-semibold hover:underline">
+            Ver beneficios
+          </a>
+        </div>
+      )}
+
+      {/* Oferta / pago: se muestra junto al estado para quien aún no puede gestionar */}
+      {(!hasAccess || status === 'trial') && (
+        <div className="space-y-3">
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+          <PlanCard price={config.monthly_price} onSubscribe={startCheckout} loading={loading} />
+        </div>
+      )}
+
       {/* Comparativa adelanto vs. membresía */}
-      <Card>
+      <Card id="incluye">
         <h2 className="font-bold text-lg mb-4">Adelanto gratuito vs. membresía</h2>
-        <ul className="space-y-4">
+        <ul className="grid gap-4 sm:grid-cols-2">
           {incluye.map(([title, desc]) => (
             <li key={title} className="flex gap-3 items-start">
               <span className="shrink-0 w-6 h-6 rounded-full bg-accent/15 text-accent flex items-center justify-center text-sm font-bold">
@@ -71,12 +107,21 @@ export default function Membership() {
         </p>
       </Card>
 
-      {/* Oferta / pago */}
-      {(!hasAccess || status === 'trial') && (
-        <>
+      {isManaging && (
+        <div className="text-sm text-text-secondary">
+          ¿Necesitas revisar la oferta otra vez?{' '}
+          <a href="#oferta" className="text-accent font-semibold hover:underline">
+            Ver el plan y suscribirse
+          </a>
+        </div>
+      )}
+
+      {/* Oferta para quien ya gestiona su plan: disponible pero fuera del foco principal */}
+      {isManaging && (
+        <div id="oferta" className="scroll-mt-24 space-y-3">
           {error && <p className="text-red-400 text-sm text-center">{error}</p>}
           <PlanCard price={config.monthly_price} onSubscribe={startCheckout} loading={loading} />
-        </>
+        </div>
       )}
 
       <div className="text-center text-sm text-text-secondary">
