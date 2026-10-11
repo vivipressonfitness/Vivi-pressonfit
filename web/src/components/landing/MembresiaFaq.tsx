@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ExpandableCard } from './ExpandableCard';
 
 // FAQ del portal público. La oferta/suscripción ahora vive en la página /membresia
 // (componente PlanCard), no en el landing.
@@ -31,21 +32,15 @@ export function Faq() {
         </div>
         <div className="space-y-4">
           {FAQ_ITEMS.map((f, i) => (
-            <div
+            <ExpandableCard
               key={f.q}
-              onClick={() => setOpen(open === i ? null : i)}
-              className="border border-border bg-raised rounded-2xl p-5 cursor-pointer"
+              id={`faq-${i}`}
+              title={f.q}
+              expanded={open === i}
+              onToggle={() => setOpen(open === i ? null : i)}
             >
-              <button className="w-full flex justify-between items-center text-left font-semibold text-base md:text-lg text-text-primary">
-                {f.q}
-                <span className="text-accent transition-transform ml-4 text-xl leading-none">
-                  {open === i ? '−' : '+'}
-                </span>
-              </button>
-              {open === i && (
-                <p className="pt-4 text-text-secondary text-sm leading-relaxed">{f.a}</p>
-              )}
-            </div>
+              {f.a}
+            </ExpandableCard>
           ))}
         </div>
       </div>
