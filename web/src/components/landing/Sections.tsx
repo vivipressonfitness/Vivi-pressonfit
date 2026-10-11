@@ -3,6 +3,7 @@ import type { LandingConfig, PreviewItem } from '../../hooks/useLandingConfig';
 import { FreeVideoModal } from './FreeVideoModal';
 import { HoverVideoPreview } from './HoverVideoPreview';
 import { HaloBadge } from '../ui/HaloBadge';
+import { FeatureCarousel } from './FeatureCarousel';
 import { LANDING_CLASES, LANDING_EDUCATIVO } from '../../data/landingMedia';
 
 // ============================================================
@@ -203,11 +204,13 @@ export function AdelantoClases({ clases = LANDING_CLASES }: { clases?: PreviewIt
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8Z"/></svg>
           </a>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <FeatureCarousel label="Adelantos gratuitos de clases">
           {clases.map((c) => (
-            <PreviewCard key={c.title} item={c} onPlay={setPlaying} />
+            <div key={c.title} className="snap-start">
+              <PreviewCard item={c} onPlay={setPlaying} />
+            </div>
           ))}
-        </div>
+        </FeatureCarousel>
       </div>
       {playing && <FreeVideoModal item={playing} onClose={() => setPlaying(null)} />}
     </section>
