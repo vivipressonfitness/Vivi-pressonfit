@@ -17,10 +17,10 @@ export function AnalyticsChart({ members }: { members: MemberCreatedAt[] }) {
     const months = Array.from({ length: 6 }, (_, index) =>
       new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5 + index, 1)),
     );
-    const counts = new Map(months.map((month) => [
+    const counts = new Map<string, number>(months.map((month) => [
       `${month.getUTCFullYear()}-${month.getUTCMonth()}`,
       0,
-    ]));
+    ] as const));
 
     members.filter((member) => !member.is_admin).forEach((member) => {
       const createdAt = new Date(member.created_at);
@@ -79,7 +79,7 @@ export function AnalyticsChart({ members }: { members: MemberCreatedAt[] }) {
                 <circle cx={point.x} cy={point.y} r="5" fill="currentColor" stroke="var(--surface)" strokeWidth="3">
                   <title>{point.label}: {point.value} altas</title>
                 </circle>
-                <text x={point.x} y="190" textAnchor="middle" className="fill-text-secondary text-[12px]">
+                <text x={point.x} y="190" textAnchor="middle" className="text-text-secondary" fill="currentColor">
                   {point.label}
                 </text>
               </g>
