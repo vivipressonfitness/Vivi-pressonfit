@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { getStripe } from '../lib/stripe';
 
 // NOTA DE ARQUITECTURA: la SPA actual crea el Checkout Session en el cliente,
 // lo cual NO es seguro. Este hook asume la Edge Function `stripe-checkout`
@@ -14,24 +13,18 @@ export function useStripe() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await supabase.functions
-        .invoke('stripe-checkout', { body: {} })
-        .then(({ data, error }) => {
-          if (error) throw new Error(error.message);
-          return { data: data as { url?: string; missing?: boolean } };
-        })
-        .catch((e: Error) => ({ data: { missing: /Function not found/i.test(e.message) } as { url?: string; missing?: boolean } }));
-
-      if (data?.missing) {
-        throw new Error(
-          'Falta la Edge Function stripe-checkout. Configúrala antes de cobrar suscripciones.',
-        );
+      const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', { body: {} });
+      if (invokeError) {
+        const context = invokeError.context;
+        if (context instanceof Response) {
+          const body = await context.clone().json().catch(() => null);
+          throw new Error(body?.error ?? invokeError.message);
+        }
+        throw new Error(invokeError.message);
       }
       if (!data?.url) throw new Error('No se recibió URL de Stripe Checkout');
 
-      const stripe = await getStripe();
-      const result = await stripe!.redirectToCheckout({ sessionId: extractSessionId(data.url) });
-      if (result.error) setError(result.error.message ?? 'No se pudo abrir Stripe');
+      window.location.assign(data.url);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error iniciando checkout');
     } finally {
@@ -40,11 +33,4 @@ export function useStripe() {
   }, []);
 
   return { startCheckout, loading, error };
-}
-
-function extractSessionId(url: string): string {
-  // Acepta tanto una URL de checkout como un id cs_... directo
-  const match = url.match(/cs_[A-Za-z0-9]+/);
-  if (!match) throw new Error('URL de Checkout inválida');
-  return match[0];
 }

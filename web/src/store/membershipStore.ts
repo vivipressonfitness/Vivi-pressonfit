@@ -4,6 +4,8 @@ import type { PlanStatus, Profile } from '../types';
 interface MembershipState {
   status: PlanStatus | null;
   trialEndDate: string | null;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
   isAdmin: boolean;
   loading: boolean;
   setFromProfile: (p: Profile | null) => void;
@@ -13,6 +15,8 @@ interface MembershipState {
 export const useMembershipStore = create<MembershipState>((set) => ({
   status: null,
   trialEndDate: null,
+  stripeCustomerId: null,
+  stripeSubscriptionId: null,
   isAdmin: false,
   loading: true,
 
@@ -24,11 +28,13 @@ export const useMembershipStore = create<MembershipState>((set) => ({
           ? 'expired'
           : (p?.plan_status ?? 'inactive'),
       trialEndDate: p?.trial_end_date ?? null,
+      stripeCustomerId: p?.stripe_customer_id ?? null,
+      stripeSubscriptionId: p?.stripe_subscription_id ?? null,
       isAdmin: p?.is_admin ?? false,
       loading: false,
     }),
 
-  reset: () => set({ status: null, trialEndDate: null, isAdmin: false, loading: false }),
+  reset: () => set({ status: null, trialEndDate: null, stripeCustomerId: null, stripeSubscriptionId: null, isAdmin: false, loading: false }),
 }));
 
 // Estado derivado: acceso = trial o active (past_due aún permite acceso mientras Stripe reintenta)
