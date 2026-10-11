@@ -5,6 +5,7 @@ import { useMembershipStore } from '../store/membershipStore';
 import { Card } from '../components/ui/Card';
 import { LandingConfigEditor } from '../components/admin/LandingConfigEditor';
 import { ContentManager } from '../components/admin/ContentManager';
+import { AnalyticsChart } from '../components/admin/AnalyticsChart';
 
 // Panel admin con autonomía plena: 3 pestañas.
 // - Contenido: CRUD de membership_content (clases/rutinas del mes)
@@ -95,7 +96,9 @@ export default function Admin() {
       )}
 
       {tab === 'members' && (
-        <Card className="overflow-x-auto !p-0">
+        <div className="space-y-6">
+          <AnalyticsChart members={profiles} />
+          <Card className="overflow-x-auto !p-0">
           {roleError && <p className="p-4 pb-0 text-red-400 text-sm">{roleError}</p>}
           {loadingMembers ? (
             <p className="p-4 text-text-secondary">Cargando miembros…</p>
@@ -136,7 +139,8 @@ export default function Admin() {
               </tbody>
             </table>
           )}
-        </Card>
+          </Card>
+        </div>
       )}
     </div>
   );
