@@ -20,7 +20,7 @@ export function Navbar() {
   const onHome = typeof window !== 'undefined' && window.location.pathname === '/';
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <nav className="container mx-auto flex items-center justify-between px-6 h-20">
         <Link to="/" className="font-heading font-extrabold tracking-tight text-2xl">
           VIVI<span className="text-accent">PREFIT</span>
