@@ -1,119 +1,68 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 
+const navLinkCls = ({ isActive }: { isActive: boolean }) =>
+  `px-3 py-2 text-sm transition ${isActive ? 'text-accent font-semibold' : 'text-text-secondary hover:text-text-primary'}`;
+
+// Anclas del portal público (scroll suave a secciones) — visibles solo en "/"
+const landingAnchors = [
+  { href: '/#pilares', label: 'El Programa' },
+  { href: '/#adelantos', label: 'Gratis' },
+  { href: '/#educativo', label: 'Nutrición' },
+  { href: '/#faq', label: 'FAQ' },
+];
+
 export function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
+  const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
-  const { user, signOut } = useAuthStore();
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
-  const navLinks = [
-    { to: '/videos', label: 'Videos' },
-    { to: '/membership', label: 'Membresía' },
-  ];
+  const onHome = typeof window !== 'undefined' && window.location.pathname === '/';
 
   return (
-    <header className="sticky top-0 inset-x-0 z-50 bg-white/95 backdrop-blur border-b border-gray-200">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20 items-center">
-          <Link to="/" className="flex items-center gap-2" aria-label="Inicio - Bailando en Casa">
-            <span className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white font-bold">B</span>
-            <span className="text-lg sm:text-xl font-extrabold text-gray-900">
-              Bailando <span className="text-pink-600">en Casa</span>
-            </span>
-          </Link>
-
-          {/* Desktop */}
-          <div className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => (
-              <Link key={link.to} to={link.to} className="text-sm font-medium text-gray-700 hover:text-pink-600 transition-colors">
-                {link.label}
-              </Link>
-            ))}
-            {!user ? (
-              <>
-                <Link to="/login" className="text-sm font-medium text-gray-700 hover:text-pink-600 transition-colors">Iniciar sesión</Link>
-                <button
-                  onClick={() => navigate('/signup')}
-                  className="rounded-full bg-pink-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pink-700 transition-colors"
-                >
-                  Empieza gratis
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={handleSignOut}
-                className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+      <nav className="container mx-auto flex items-center justify-between px-6 h-20">
+        <Link to="/" className="font-heading font-extrabold tracking-tight text-2xl">
+          VIVI<span className="text-accent">PREFIT</span>
+        </Link>
+        <div className="flex items-center gap-1">
+          {onHome &&
+            landingAnchors.map((a) => (
+              <a
+                key={a.href}
+                href={a.href}
+                className="px-3 py-2 text-sm text-text-secondary hover:text-accent transition"
               >
-                Cerrar sesión
+                {a.label}
+              </a>
+            ))}
+          {user && <NavLink to="/dashboard" className={navLinkCls}>Dashboard</NavLink>}
+          {user && <NavLink to="/videos" className={navLinkCls}>Videos</NavLink>}
+          {user && <NavLink to="/membresia" className={navLinkCls}>Mi Plan</NavLink>}
+          {profile?.is_admin && <NavLink to="/admin" className={navLinkCls}>Admin</NavLink>}
+          {user ? (
+            <>
+              <NavLink to="/perfil" className={navLinkCls}>Perfil</NavLink>
+              <button
+                onClick={async () => { await signOut(); navigate('/'); }}
+                className="bg-accent hover:bg-white text-background font-bold !px-4 !py-2 ml-2 rounded-pill text-sm transition"
+              >
+                Salir
               </button>
-            )}
-          </div>
-
-          {/* Mobile toggle */}
-          <button
-            className="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-expanded={isMenuOpen}
-            aria-label="Abrir menú"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              {isMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/login" className={navLinkCls}>Entrar</NavLink>
+              <Link
+                to="/membresia"
+                className="bg-accent hover:bg-white text-background font-bold !px-4 !py-2 ml-2 rounded-pill text-sm transition"
+              >
+                Hazte miembro
+              </Link>
+            </>
+          )}
         </div>
       </nav>
-
-      {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white">
-          <div className="space-y-1 px-4 py-3">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setIsMenuOpen(false)}
-                className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-pink-50 hover:text-pink-700"
-              >
-                {link.label}
-              </Link>
-            ))}
-            {!user ? (
-              <>
-                <Link
-                  to="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-pink-50 hover:text-pink-700"
-                >
-                  Iniciar sesión
-                </Link>
-                <button
-                  onClick={() => { setIsMenuOpen(false); navigate('/signup'); }}
-                  className="mt-2 w-full rounded-full bg-pink-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-pink-700"
-                >
-                  Empieza gratis
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => { setIsMenuOpen(false); handleSignOut(); }}
-                className="mt-2 w-full rounded-full border border-gray-300 px-5 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50"
-              >
-                Cerrar sesión
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   );
 }
