@@ -16,6 +16,7 @@ export function ExpandableCard({ title, expanded, onToggle, children, id }: Prop
       <h3>
         <button
           type="button"
+          id={`${id}-title`}
           aria-expanded={expanded}
           aria-controls={panelId}
           onClick={onToggle}
@@ -28,7 +29,7 @@ export function ExpandableCard({ title, expanded, onToggle, children, id }: Prop
         </button>
       </h3>
       <div id={panelId} role="region" aria-labelledby={`${id}-title`} hidden={!expanded}>
-        <p id={`${id}-title`} className="px-5 pb-5 text-sm leading-relaxed text-text-secondary">
+        <p className="px-5 pb-5 text-sm leading-relaxed text-text-secondary">
           {children}
         </p>
       </div>
