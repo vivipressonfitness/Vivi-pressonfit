@@ -71,24 +71,31 @@ Deno.serve(async (req) => {
     const { videoId } = (await req.json().catch(() => ({}))) as { videoId?: string };
     if (!videoId) return json({ error: 'Falta videoId' }, 400);
 
-    // 4) Obtener la guía del video desde la API de Bunny.
-    const res = await fetch(
-      `https://api.bunny.net/library/${integrationId}/video/${videoId}`,
-      { headers: { AccessKey: streamApiKey } },
-    );
-    if (!res.ok) {
-      return json({ error: `Video no encontrado en Bunny (HTTP ${res.status})` }, 404);
+    // 4) Obtener la guía del video o usar directamente el videoId si ya es un GUID.
+    let guid = videoId;
+    try {
+      const res = await fetch(
+        `https://video.bunnycdn.com/library/${integrationId}/videos/${videoId}`,
+        { headers: { AccessKey: streamApiKey } },
+      );
+      if (res.ok) {
+        const video = (await res.json()) as { guid?: string; Guid?: string };
+        guid = video.guid ?? video.Guid ?? videoId;
+      }
+    } catch {
+      // Si la API falla temporalmente pero ya tenemos el guid, continuamos
     }
-    const video = (await res.json()) as { Guid?: string };
-    const guid = video.Guid ?? videoId;
 
-    // 5) Firmar token SHA-256: hash de "{guid}-{expiry}-{tokenKey}" (formato Bunny).
+    // 5) Firmar token SHA-256 según la especificación oficial de Bunny Stream:
+    // SHA256_HEX(tokenKey + guid + expiry)
     const expiry = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
-    const digest = await sha256Hex(`${guid}-${expiry}-${tokenKey}`);
+    const digest = await sha256Hex(`${tokenKey}${guid}${expiry}`);
 
-    const hlsUrl =
-      `https://bunnystream.com/manifest/${guid}/${guid}_f.mp4.m3u8?token=${digest}&expires=${expiry}`;
-    return json({ hlsUrl, expiresAt: expiry * 1000 }, 200);
+    // URL oficial del reproductor Bunny (con controles profesionales y adaptive bitrate)
+    const embedUrl = `https://player.mediadelivery.net/embed/${integrationId}/${guid}?token=${digest}&expires=${expiry}`;
+    const hlsUrl = embedUrl;
+
+    return json({ hlsUrl, embedUrl, expiresAt: expiry * 1000 }, 200);
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : 'Error interno' }, 500);
   }

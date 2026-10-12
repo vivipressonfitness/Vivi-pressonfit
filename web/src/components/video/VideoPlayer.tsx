@@ -16,6 +16,7 @@ export function VideoPlayer({ bunnyVideoId, title, autoplay = false }: Props) {
   const hlsRef = useRef<Hls | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [iframeSrc, setIframeSrc] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,10 +24,20 @@ export function VideoPlayer({ bunnyVideoId, title, autoplay = false }: Props) {
     async function load() {
       setLoading(true);
       setError(null);
+      setIframeSrc(null);
       try {
-        const { hlsUrl } = await requestBunnyToken(bunnyVideoId);
-        if (cancelled || !videoRef.current) return;
-        attachSource(hlsUrl);
+        const resp = await requestBunnyToken(bunnyVideoId);
+        if (cancelled) return;
+
+        // Si tenemos embedUrl oficial de Bunny, usamos el iframe oficial (más rápido, seguro y con todos los controles optimizados)
+        if (resp.embedUrl || (resp.hlsUrl && resp.hlsUrl.includes('player.mediadelivery.net'))) {
+          setIframeSrc(resp.embedUrl || resp.hlsUrl);
+          setLoading(false);
+          return;
+        }
+
+        if (!videoRef.current) return;
+        attachSource(resp.hlsUrl);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Error cargando video');
       } finally {
@@ -82,7 +93,17 @@ export function VideoPlayer({ bunnyVideoId, title, autoplay = false }: Props) {
             {error}
           </div>
         )}
-        <video ref={videoRef} controls playsInline className="w-full h-full" />
+        {iframeSrc ? (
+          <iframe
+            src={iframeSrc}
+            loading="lazy"
+            className="w-full h-full border-0"
+            allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;"
+            allowFullScreen
+          />
+        ) : (
+          <video ref={videoRef} controls playsInline className="w-full h-full" />
+        )}
       </div>
     </div>
   );
