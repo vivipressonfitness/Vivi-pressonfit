@@ -22,14 +22,26 @@ export function RegisterForm() {
     setError(null);
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
+        email: email.trim().toLowerCase(),
         password,
-        options: { data: { full_name: fullName } },
+        options: { data: { full_name: fullName.trim() } },
       });
-      if (signUpError) throw signUpError;
+
+      if (signUpError) {
+        if (signUpError.message.toLowerCase().includes('already registered') || signUpError.status === 422) {
+          setError('Este correo ya está registrado en el programa (como suscriptor o miembro VIP). Por favor inicia sesión con tu contraseña.');
+          return;
+        }
+        throw signUpError;
+      }
+
+      // Supabase devuelve data.user con identities vacío [] si el correo YA existía previamente
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        setError('Este correo ya está registrado en el programa (como suscriptor en prueba o miembro VIP). Por favor inicia sesión con tu contraseña.');
+        return;
+      }
 
       // Diagnóstico del perfil: el trigger handle_new_user debe crearlo automáticamente.
-      // Si no existe, es porque el trigger/function no está desplegado en Supabase o falló.
       let profileOk = false;
       if (data.user) {
         for (const wait of [0, 400, 900]) {
@@ -42,24 +54,28 @@ export function RegisterForm() {
       if (!data.session) {
         setError(
           profileOk
-            ? 'Revisa tu correo para confirmar la cuenta antes de continuar.'
-            : 'Casi listo: revisa tu correo para confirmar la cuenta. (Si tras confirmar no entra, avisa a la administradora: falta el trigger handle_new_user en Supabase.)'
+            ? 'Cuenta creada con éxito. Si no inicia sesión automáticamente, revisa tu correo o inicia sesión.'
+            : 'Casi listo: tu cuenta fue creada. Inicia sesión para acceder a tu membresía.'
         );
         return;
       }
+
       if (!profileOk) {
         setError(
-          'La cuenta se creó pero no se generó tu perfil de miembro. Vuelve a intentar en unos segundos; si persiste, contacta a la administradora (falta ejecutar web/supabase/schema.sql en Supabase).'
+          'La cuenta se creó pero no se generó tu perfil de miembro. Vuelve a intentar en unos segundos o contacta a soporte.'
         );
         setLoading(false);
         return;
       }
-      // El perfil lo crea automáticamente el trigger handle_new_user (trial 3 días).
-      // No se hace upsert manual: la RLS de INSERT solo permite auth.uid()=id y
-      // columnas como phone_number no existen en la tabla real.
+
       navigate('/membresia', { state: { justRegistered: true } });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo completar el registro');
+      const msg = err instanceof Error ? err.message : 'No se pudo completar el registro';
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('user already exists')) {
+        setError('Este correo ya está registrado en el programa (como suscriptor en prueba o miembro VIP). Por favor inicia sesión.');
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
