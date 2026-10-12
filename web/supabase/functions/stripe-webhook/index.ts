@@ -71,6 +71,32 @@ Deno.serve(async (req) => {
           if (error) throw error;
         }
       }
+    } else if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object;
+      const customerId = typeof invoice.customer === 'string' ? invoice.customer : null;
+      const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : null;
+
+      if (customerId) {
+        // Marcar al miembro como past_due (pago pendiente / tarjeta rechazada)
+        const updateData: Record<string, unknown> = {
+          plan_status: 'past_due',
+          updated_at: new Date().toISOString(),
+        };
+        if (subscriptionId) {
+          updateData.stripe_subscription_id = subscriptionId;
+        }
+
+        const { error } = await supabase
+          .from('profiles')
+          .update(updateData)
+          .eq('stripe_customer_id', customerId);
+
+        if (error) {
+          console.error('Error al actualizar profile en invoice.payment_failed:', error);
+          throw error;
+        }
+        console.log(`invoice.payment_failed: cliente ${customerId} marcado como past_due.`);
+      }
     }
 
     return json({ received: true });
