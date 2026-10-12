@@ -7,8 +7,8 @@ const navLinkCls = ({ isActive }: { isActive: boolean }) =>
 
 // Anclas del portal público (scroll suave a secciones) — visibles solo en "/"
 const landingAnchors = [
-  { href: '/#pilares', label: 'El Programa' },
-  { href: '/#galeria', label: 'El Método' },
+  { href: '/#pilares', label: 'Programas' },
+  { href: '/#galeria', label: 'Métodos' },
   { href: '/#quien-soy', label: '¿Quién Soy?' },
   { href: '/#adelantos', label: 'Gratis' },
   { href: '/#educativo', label: 'Nutrición' },
