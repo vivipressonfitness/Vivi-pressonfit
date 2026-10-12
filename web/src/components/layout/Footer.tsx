@@ -1,15 +1,22 @@
 import { Link } from 'react-router-dom';
+import { useLandingConfig } from '../../hooks/useLandingConfig';
 
 // Footer réplica del diseño EJEMPLO: 4 columnas (marca / estructura / contacto).
 export function Footer() {
-  const wa = (import.meta.env.VITE_WHATSAPP_NUMBER as string) ?? '59178000000';
+  const { config } = useLandingConfig();
+  const wa = config.whatsapp_number || ((import.meta.env.VITE_WHATSAPP_NUMBER as string) ?? '59178000000');
   return (
     <footer id="unete" className="bg-background pt-20 pb-12 border-t border-border">
       <div className="container mx-auto px-6">
         <div className="grid md:grid-cols-4 gap-12 mb-16">
           <div className="md:col-span-2 space-y-4">
-            <Link to="/" className="font-heading font-extrabold tracking-tight text-3xl">
-              VIVI<span className="text-accent">PREFIT</span>
+            <Link to="/" className="inline-block group">
+              <img
+                src={config.logo_url || '/landing/logo-vivifit.jpg'}
+                alt="VIVIFIT"
+                style={{ height: `${Math.round((config.logo_height || 44) * 1.2)}px` }}
+                className="w-auto object-contain transition-transform group-hover:scale-105"
+              />
             </Link>
             <p className="text-text-secondary max-w-sm text-sm">
               Programa de Entrenamiento y Estilo de Vida Saludable. Tu espacio integral para entrenar con propósito.
@@ -18,6 +25,8 @@ export function Footer() {
           <div>
             <h4 className="font-bold mb-4 text-text-primary text-sm uppercase tracking-wider">Estructura</h4>
             <ul className="space-y-3 text-text-secondary text-sm">
+              <li><Link to="/#quien-soy" className="hover:text-accent transition-colors">¿Quién Soy?</Link></li>
+              <li><Link to="/#galeria" className="hover:text-accent transition-colors">El Método</Link></li>
               <li><Link to="/#adelantos" className="hover:text-accent transition-colors">Adelantos Gratis</Link></li>
               <li><Link to="/#pilares" className="hover:text-accent transition-colors">Plan de Fuerza 3x</Link></li>
               <li><Link to="/#educativo" className="hover:text-accent transition-colors">Educación Alimentaria</Link></li>
@@ -44,7 +53,7 @@ export function Footer() {
           </div>
         </div>
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-border text-xs text-text-secondary">
-          <p>© {new Date().getFullYear()} VIVIPREFIT. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} VIVIFIT. Todos los derechos reservados.</p>
           <p className="mt-2 md:mt-0">Suscripción mensual $us. 40.- / mes</p>
         </div>
       </div>

@@ -1,7 +1,8 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types';
+import { useMembershipStore } from './membershipStore';
 
 interface AuthState {
   user: User | null;
@@ -24,6 +25,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     await supabase.auth.signOut();
+    useMembershipStore.getState().reset();
     set({ session: null, user: null, profile: null });
   },
 }));
@@ -41,7 +43,11 @@ export function initAuthListener() {
   supabase.auth.onAuthStateChange((_event, session) => {
     setSession(session);
     if (session?.user) loadProfile(session.user.id);
-    else { setProfile(null); console.debug('authState: signed out'); }
+    else {
+      setProfile(null);
+      useMembershipStore.getState().reset();
+      console.debug('authState: signed out');
+    }
   });
 }
 
@@ -52,10 +58,13 @@ async function loadProfile(userId: string) {
   if (error) {
     console.warn('No se pudo cargar el perfil del usuario:', error.message);
     useAuthStore.getState().setProfile(null);
+    useMembershipStore.getState().reset();
     return;
   }
 
   console.debug('loadProfile result:', data);
-  useAuthStore.getState().setProfile((data ?? null) as Profile | null);
+  const prof = (data ?? null) as Profile | null;
+  useAuthStore.getState().setProfile(prof);
+  useMembershipStore.getState().setFromProfile(prof);
 }
 

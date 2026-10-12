@@ -218,7 +218,13 @@ export function AdelantoClases({ clases = LANDING_CLASES }: { clases?: PreviewIt
 }
 
 // Zona Educativa/Nutrición: muestras gratis + teasers bloqueados.
-export function AdelantoEducativo({ recursos = LANDING_EDUCATIVO }: { recursos?: PreviewItem[] }) {
+export function AdelantoEducativo({
+  recursos = LANDING_EDUCATIVO,
+  config,
+}: {
+  recursos?: PreviewItem[];
+  config?: LandingConfig;
+}) {
   const [playing, setPlaying] = useState<PreviewItem | null>(null);
 
   return (
@@ -228,8 +234,8 @@ export function AdelantoEducativo({ recursos = LANDING_EDUCATIVO }: { recursos?:
           <div className="relative order-2 md:order-1">
             <div className="aspect-square rounded-3xl overflow-hidden border border-border shadow-2xl">
               <img
-                src="/landing/thumb-cardio.jpg"
-                alt="Nutrición ViviPreFit"
+                src={config?.educacion_image || '/landing/thumb-cardio.jpg'}
+                alt="Nutrición ViviFit"
                 className="w-full h-full object-cover"
               />
             </div>

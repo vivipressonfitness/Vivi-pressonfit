@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -36,6 +36,12 @@ export function LoginForm() {
 
       if (profileError) {
         throw profileError;
+      }
+
+      if (profile) {
+        useAuthStore.getState().setProfile(profile);
+        const { useMembershipStore } = await import('../../store/membershipStore');
+        useMembershipStore.getState().setFromProfile(profile);
       }
 
       navigate(profile?.is_admin ? '/admin' : '/dashboard');

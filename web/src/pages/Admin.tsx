@@ -24,7 +24,11 @@ interface MemberRow {
 }
 
 export default function Admin() {
-  const isAdmin = useMembershipStore((s) => s.isAdmin);
+  const isStoreAdmin = useMembershipStore((s) => s.isAdmin);
+  const profile = useAuthStore((s) => s.profile);
+  const initializing = useAuthStore((s) => s.initializing);
+  const membershipLoading = useMembershipStore((s) => s.loading);
+  const isAdmin = isStoreAdmin || Boolean(profile?.is_admin);
   const myId = useAuthStore((s) => s.user?.id);
   const [profiles, setProfiles] = useState<MemberRow[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
@@ -63,7 +67,23 @@ export default function Admin() {
     setUpdatingId(null);
   }
 
-  if (!isAdmin) return <p className="text-text-secondary py-10">No tienes permisos de administrador.</p>;
+  if (initializing || (membershipLoading && !profile)) {
+    return (
+      <div className="py-20 text-center text-text-secondary flex flex-col items-center justify-center gap-3">
+        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <span>Verificando credenciales de administrador…</span>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="py-20 text-center text-text-secondary">
+        <p className="text-accent font-semibold text-lg mb-2">Acceso restringido</p>
+        <p>Esta sección está reservada exclusivamente para la administración del portal.</p>
+      </div>
+    );
+  }
 
   const adminsCount = profiles.filter((p) => p.is_admin).length;
   const tabs: Array<{ id: Tab; label: string }> = [
