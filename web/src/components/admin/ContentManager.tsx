@@ -543,22 +543,22 @@ export function ContentManager() {
           {items.map((c) => (
             <div
               key={c.id}
-              className="bg-raised border border-border hover:border-accent/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 transition"
+              className="bg-raised border border-border hover:border-accent/30 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3.5 transition"
             >
-              <div className="min-w-0 flex-1 space-y-1">
+              <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-bold text-text-primary text-base truncate">{c.title}</p>
-                  <span className="text-[11px] bg-background border border-border px-2 py-0.5 rounded-md text-text-secondary font-mono">
+                  <p className="font-bold text-text-primary text-sm sm:text-base break-words">{c.title}</p>
+                  <span className="text-[10px] sm:text-[11px] bg-background border border-border px-2 py-0.5 rounded-md text-text-secondary font-mono shrink-0">
                     {c.category}
                   </span>
                   {c.target_mode && (
-                    <span className="text-[11px] bg-background border border-border px-2 py-0.5 rounded-md text-text-secondary">
+                    <span className="text-[10px] sm:text-[11px] bg-background border border-border px-2 py-0.5 rounded-md text-text-secondary shrink-0">
                       {c.target_mode}
                     </span>
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-text-secondary">
                   <span>📅 {c.month_year ?? c.cycle_date}</span>
                   <span>•</span>
                   {c.private_video_url || c.content_url ? (
@@ -577,53 +577,54 @@ export function ContentManager() {
                 </div>
               </div>
 
-              {/* Indicadores de exposición: Público vs Privado */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => toggleLanding(c)}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-full border transition flex items-center gap-1.5 ${
-                    c.show_in_landing
-                      ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30'
-                      : 'bg-background border-border text-gray-500 hover:text-white'
-                  }`}
-                  title="Haz clic para alternar si se muestra en el Landing público"
-                >
-                  <span>🌐</span>
-                  <span>{c.show_in_landing ? 'En Landing' : 'Oculto en Landing'}</span>
-                </button>
+              {/* Indicadores de exposición y Botones de acción adaptables */}
+              <div className="flex flex-wrap items-center justify-between md:justify-end gap-2 pt-2 md:pt-0 border-t border-border/40 md:border-t-0">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => toggleLanding(c)}
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 ${
+                      c.show_in_landing
+                        ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30'
+                        : 'bg-background border-border text-gray-500 hover:text-white'
+                    }`}
+                    title="Haz clic para alternar si se muestra en el Landing público"
+                  >
+                    <span>🌐</span>
+                    <span>{c.show_in_landing ? 'En Landing' : 'Oculto'}</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => togglePub(c)}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-full border transition flex items-center gap-1.5 ${
-                    c.is_published
-                      ? 'bg-green-500/15 border-green-500/40 text-green-300 hover:bg-green-500/25'
-                      : 'bg-yellow-500/15 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/25'
-                  }`}
-                  title="Haz clic para alternar si está visible para miembros"
-                >
-                  <span>🔒</span>
-                  <span>{c.is_published ? 'Miembros Activo' : 'Borrador'}</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => togglePub(c)}
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 ${
+                      c.is_published
+                        ? 'bg-green-500/15 border-green-500/40 text-green-300 hover:bg-green-500/25'
+                        : 'bg-yellow-500/15 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/25'
+                    }`}
+                    title="Haz clic para alternar si está visible para miembros"
+                  >
+                    <span>🔒</span>
+                    <span>{c.is_published ? 'Activo' : 'Borrador'}</span>
+                  </button>
+                </div>
 
-              {/* Botones de acción */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => edit(c)}
-                  className="text-xs bg-background hover:bg-accent hover:text-background border border-border px-3.5 py-1.5 rounded-pill font-semibold text-text-primary transition"
-                >
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => remove(c.id)}
-                  className="text-xs bg-background hover:bg-red-500/20 text-red-400 hover:border-red-400 border border-border px-3 py-1.5 rounded-pill transition"
-                >
-                  Eliminar
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => edit(c)}
+                    className="text-xs bg-background hover:bg-accent hover:text-background border border-border px-3 py-1 rounded-pill font-semibold text-text-primary transition"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(c.id)}
+                    className="text-xs bg-background hover:bg-red-500/20 text-red-400 hover:border-red-400 border border-border px-3 py-1 rounded-pill transition"
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </div>
             </div>
           ))}

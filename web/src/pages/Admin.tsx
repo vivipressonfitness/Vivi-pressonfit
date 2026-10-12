@@ -98,12 +98,12 @@ export default function Admin() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-extrabold">Panel Admin</h1>
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none -mx-2 px-2 sm:mx-0 sm:px-0">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-pill text-sm font-bold transition ${tab === t.id ? 'bg-accent text-white' : 'border border-border text-text-secondary hover:text-white'}`}
+            className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-pill text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 ${tab === t.id ? 'bg-accent text-white' : 'border border-border text-text-secondary hover:text-white'}`}
           >
             {t.label}
           </button>
@@ -128,41 +128,43 @@ export default function Admin() {
           {loadingMembers ? (
             <p className="p-4 text-text-secondary">Cargando miembros…</p>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="text-left text-text-secondary border-b border-border">
-                <tr>
-                  <th className="p-4">Nombre</th>
-                  <th className="p-4">Email</th>
-                  <th className="p-4">Plan</th>
-                  <th className="p-4">Rol</th>
-                  <th className="p-4 text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {profiles.map((p) => (
-                  <tr key={p.id} className="border-b border-border/50">
-                    <td className="p-4">{p.full_name ?? '—'}</td>
-                    <td className="p-4 text-text-secondary">{p.email}</td>
-                    <td className="p-4">{p.plan_status}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-pill text-xs font-bold ${p.is_admin ? 'bg-accent/20 text-accent' : 'bg-white/10 text-text-secondary'}`}>
-                        {p.is_admin ? 'Administrador' : 'Miembro'}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => toggleRole(p)}
-                        disabled={updatingId === p.id || p.id === myId}
-                        title={p.id === myId ? 'No puedes cambiar tu propio rol' : undefined}
-                        className="px-3 py-1 rounded-pill text-xs font-bold border border-border hover:border-accent disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        {updatingId === p.id ? 'Guardando…' : p.is_admin ? 'Retroceder a Miembro' : 'Hacer Administrador'}
-                      </button>
-                    </td>
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-xs sm:text-sm min-w-[580px]">
+                <thead className="text-left text-text-secondary border-b border-border">
+                  <tr>
+                    <th className="p-3 sm:p-4">Nombre</th>
+                    <th className="p-3 sm:p-4">Email</th>
+                    <th className="p-3 sm:p-4">Plan</th>
+                    <th className="p-3 sm:p-4">Rol</th>
+                    <th className="p-3 sm:p-4 text-right">Acción</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {profiles.map((p) => (
+                    <tr key={p.id} className="border-b border-border/50">
+                      <td className="p-3 sm:p-4 font-medium">{p.full_name ?? '—'}</td>
+                      <td className="p-3 sm:p-4 text-text-secondary truncate max-w-[160px]">{p.email}</td>
+                      <td className="p-3 sm:p-4">{p.plan_status}</td>
+                      <td className="p-3 sm:p-4">
+                        <span className={`px-2 py-0.5 rounded-pill text-[10px] sm:text-xs font-bold ${p.is_admin ? 'bg-accent/20 text-accent' : 'bg-white/10 text-text-secondary'}`}>
+                          {p.is_admin ? 'Administrador' : 'Miembro'}
+                        </span>
+                      </td>
+                      <td className="p-3 sm:p-4 text-right">
+                        <button
+                          onClick={() => toggleRole(p)}
+                          disabled={updatingId === p.id || p.id === myId}
+                          title={p.id === myId ? 'No puedes cambiar tu propio rol' : undefined}
+                          className="px-2.5 py-1 rounded-pill text-[11px] sm:text-xs font-bold border border-border hover:border-accent disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                          {updatingId === p.id ? 'Guardando…' : p.is_admin ? 'Retroceder' : 'Hacer Admin'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
           </Card>
         </div>

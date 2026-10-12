@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useVideos } from '../hooks/useVideos';
 import { VideoList } from '../components/video/VideoList';
 import { VideoPlayer } from '../components/video/VideoPlayer';
@@ -78,8 +78,8 @@ export default function Videos() {
       </header>
 
       {/* Búsqueda y filtros locales */}
-      <div className="flex flex-wrap items-center gap-3" role="search">
-        <label className="relative grow min-w-[220px] max-w-sm">
+      <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3" role="search">
+        <label className="relative grow sm:max-w-sm">
           <span className="sr-only">Buscar clases por título o descripción</span>
           <input
             type="search"
@@ -92,33 +92,35 @@ export default function Videos() {
             🔍
           </span>
         </label>
-        <label className="flex items-center gap-2 text-sm text-text-secondary">
-          <span className="sr-only sm:not-sr-only">Categoría</span>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className={selectCls}>
-            <option value="todas">Todas las categorías</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-2 text-sm text-text-secondary">
-          <span className="sr-only sm:not-sr-only">Ciclo</span>
-          <select value={month} onChange={(e) => setMonth(e.target.value)} className={selectCls}>
-            <option value="todos">Todos los ciclos</option>
-            {months.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        </label>
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="text-sm font-semibold text-accent underline underline-offset-2 hover:text-accent-hover min-h-[40px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            Limpiar filtros
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex-1 sm:flex-initial text-sm text-text-secondary">
+            <span className="sr-only">Categoría</span>
+            <select value={category} onChange={(e) => setCategory(e.target.value)} className={`${selectCls} w-full sm:w-auto`}>
+              <option value="todas">Todas las categorías</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex-1 sm:flex-initial text-sm text-text-secondary">
+            <span className="sr-only">Ciclo</span>
+            <select value={month} onChange={(e) => setMonth(e.target.value)} className={`${selectCls} w-full sm:w-auto`}>
+              <option value="todos">Todos los ciclos</option>
+              {months.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </label>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-xs sm:text-sm font-semibold text-accent underline underline-offset-2 hover:text-accent-hover min-h-[38px] px-2"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
       </div>
 
       <VideoList videos={filtered} loading={loading} error={error} onPlay={handlePlay} />
