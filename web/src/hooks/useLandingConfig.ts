@@ -243,12 +243,32 @@ export function useLandingConfig() {
           } catch {}
         }
 
-        // Adelantos de clases
+        // Adelantos de clases (desde landing_config o por defecto)
         const rawClases =
           rows.find((r) => r.key === 'preview_clases')?.value ??
           rows.find((r) => r.key === 'clases_items')?.value;
         const parsedClases = parseItems(rawClases);
         if (parsedClases) setClases(parsedClases);
+
+        // Si existen programas con show_in_landing = true en membership_content, integrarlos
+        supabase
+          .from('membership_content')
+          .select('*')
+          .eq('show_in_landing', true)
+          .then(({ data: mcData, error: mcError }) => {
+            if (!alive || mcError || !mcData || mcData.length === 0) return;
+            const dynamicItems: PreviewItem[] = mcData.map((m) => ({
+              category: m.category || 'Clase',
+              title: m.title,
+              desc: m.description || '',
+              bunny_video_id: m.bunny_video_id,
+              video_url: m.preview_video_url || m.content_url,
+              thumbnail_url: m.thumbnail_url || (m.preview_video_url ? null : m.storage_path),
+              duration: m.preview_duration || 'Adelanto gratis',
+              locked: false,
+            }));
+            setClases(dynamicItems);
+          });
 
         // Recursos educativos gratis
         const parsedRecursos = parseItems(rows.find((r) => r.key === 'preview_recursos')?.value);

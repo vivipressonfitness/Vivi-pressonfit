@@ -30,6 +30,13 @@ export interface MembershipContent {
   class_type: string | null;
   month_year: string | null;
   is_published: boolean;
+  // Campos para gestión pública (Landing) y privada (Miembros):
+  show_in_landing?: boolean;
+  preview_video_url?: string | null;
+  thumbnail_url?: string | null;
+  preview_duration?: string | null;
+  pdf_url?: string | null;
+  private_video_url?: string | null;
   created_at: string;
   updated_at: string;
 }

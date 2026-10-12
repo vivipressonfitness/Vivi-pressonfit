@@ -7,12 +7,14 @@ import { LandingConfigEditor } from '../components/admin/LandingConfigEditor';
 import { ContentManager } from '../components/admin/ContentManager';
 import { AnalyticsChart } from '../components/admin/AnalyticsChart';
 
-// Panel admin con autonomía plena: 3 pestañas.
-// - Contenido: CRUD de membership_content (clases/rutinas del mes)
+import { MediaBucketManager } from '../components/admin/MediaBucketManager';
+
+// Panel admin con autonomía plena: 4 pestañas.
+// - Contenido: CRUD de membership_content (público para landing y privado para miembros)
+// - Bucket: gestor de archivos multimedia del bucket members-media
 // - Landing: editor de landing_config (precio, WhatsApp, textos hero, imágenes)
 // - Miembros: lista de perfiles con plan + toggle miembro/administrador
-//   (la BD aplica RLS: solo perfiles con is_admin=true pueden leer/escribir)
-type Tab = 'members' | 'content' | 'landing';
+type Tab = 'content' | 'bucket' | 'landing' | 'members';
 
 interface MemberRow {
   id: string;
@@ -87,7 +89,8 @@ export default function Admin() {
 
   const adminsCount = profiles.filter((p) => p.is_admin).length;
   const tabs: Array<{ id: Tab; label: string }> = [
-    { id: 'content', label: 'Contenido del mes' },
+    { id: 'content', label: 'Contenido del mes (Público / Privado)' },
+    { id: 'bucket', label: '📦 Bucket Multimedia' },
     { id: 'landing', label: 'Landing / Precios' },
     { id: 'members', label: `Miembros (${profiles.length - adminsCount})` },
   ];
@@ -108,6 +111,8 @@ export default function Admin() {
       </div>
 
       {tab === 'content' && <ContentManager />}
+
+      {tab === 'bucket' && <MediaBucketManager />}
 
       {tab === 'landing' && (
         <Card>
