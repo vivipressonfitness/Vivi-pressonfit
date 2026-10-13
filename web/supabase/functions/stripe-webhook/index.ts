@@ -1,5 +1,6 @@
 // @ts-nocheck
 // deno-lint-ignore-file
+/* eslint-disable */
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders, json } from '../_shared/stripe.ts';
 

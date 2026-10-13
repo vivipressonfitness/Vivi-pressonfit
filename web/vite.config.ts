@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: { port: 3000 }, // mismo puerto que el dev actual
   build: {
+    target: 'esnext',
     outDir: 'dist',
     sourcemap: false,
     rollupOptions: {

@@ -81,7 +81,7 @@ export default function Dashboard() {
         </p>
         <Link
           to="/videos"
-          className="inline-block text-sm font-semibold text-accent underline underline-offset-2 hover:text-accent-hover min-h-[44px] inline-flex items-center"
+          className="text-sm font-semibold text-accent underline underline-offset-2 hover:text-accent-hover min-h-[44px] inline-flex items-center"
         >
           Explorar las clases disponibles
         </Link>
