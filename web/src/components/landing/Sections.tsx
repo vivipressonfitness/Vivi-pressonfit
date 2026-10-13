@@ -97,6 +97,18 @@ export function Pilares({ config }: { config: LandingConfig }) {
   );
 }
 
+function getYouTubeId(url?: string | null): string | null {
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? m[1] : null;
+}
+
+function getVimeoId(url?: string | null): string | null {
+  if (!url) return null;
+  const m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  return m ? m[1] : null;
+}
+
 // Tarjeta reutilizable de adelanto gratuito / contenido bloqueado (solo miembros).
 export function PreviewCard({
   item,
@@ -110,16 +122,21 @@ export function PreviewCard({
   const [videoError, setVideoError] = useState(false);
   const [imgError, setImgError] = useState(false);
 
+  const ytId = getYouTubeId(item.video_url);
+  const vimeoId = getVimeoId(item.video_url);
+  const isDirectVideo = hasVideo && item.video_url && !ytId && !vimeoId;
+  const thumbnail = item.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null);
+
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !hasVideo || !item.video_url || videoError) return;
+    if (!video || !isDirectVideo || videoError) return;
     video.muted = true;
     video.defaultMuted = true;
     const playPromise = video.play();
     if (playPromise !== undefined) {
       playPromise.catch(() => {});
     }
-  }, [hasVideo, item.video_url, videoError]);
+  }, [isDirectVideo, item.video_url, videoError]);
 
   return (
     <div
@@ -132,11 +149,27 @@ export function PreviewCard({
         onClick={() => hasVideo && onPlay(item)}
         className="relative -m-5 sm:-m-6 mb-4 rounded-t-2xl overflow-hidden aspect-[4/3] bg-black/90 cursor-pointer group/media flex items-center justify-center select-none"
       >
-        {hasVideo && item.video_url && !videoError ? (
+        {ytId ? (
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0`}
+            title={item.title}
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            className="w-full h-full object-cover pointer-events-none scale-110 border-0"
+          />
+        ) : vimeoId ? (
+          <iframe
+            src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1&loop=1&autopause=0&controls=0&background=1`}
+            title={item.title}
+            loading="lazy"
+            allow="autoplay; fullscreen; picture-in-picture"
+            className="w-full h-full object-cover pointer-events-none border-0"
+          />
+        ) : isDirectVideo && !videoError ? (
           <video
             ref={videoRef}
-            src={item.video_url}
-            poster={item.thumbnail_url && !imgError ? item.thumbnail_url : undefined}
+            src={item.video_url!}
+            poster={thumbnail && !imgError ? thumbnail : undefined}
             autoPlay
             muted
             loop
@@ -153,9 +186,9 @@ export function PreviewCard({
             onError={() => setVideoError(true)}
             className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105"
           />
-        ) : item.thumbnail_url && !imgError ? (
+        ) : thumbnail && !imgError ? (
           <img
-            src={item.thumbnail_url}
+            src={thumbnail}
             alt={item.title}
             loading="lazy"
             onError={() => setImgError(true)}
