@@ -114,11 +114,10 @@ export function PreviewCard({
     const video = videoRef.current;
     if (!video || !hasVideo || !item.video_url || videoError) return;
     video.muted = true;
+    video.defaultMuted = true;
     const playPromise = video.play();
     if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        // Autoplay puede requerir visibilidad en ciertos navegadores
-      });
+      playPromise.catch(() => {});
     }
   }, [hasVideo, item.video_url, videoError]);
 
@@ -142,7 +141,15 @@ export function PreviewCard({
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="auto"
+            onLoadedData={(e) => {
+              e.currentTarget.muted = true;
+              void e.currentTarget.play().catch(() => {});
+            }}
+            onCanPlay={(e) => {
+              e.currentTarget.muted = true;
+              void e.currentTarget.play().catch(() => {});
+            }}
             onError={() => setVideoError(true)}
             className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105"
           />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { getMemberMediaUrl } from '../lib/storage';
 import { LANDING_CLASES, LANDING_EDUCATIVO } from '../data/landingMedia';
 
 // Config editable desde el panel Admin (tabla landing_config: key -> value jsonb).
@@ -257,13 +258,19 @@ export function useLandingConfig() {
           .eq('show_in_landing', true)
           .then(({ data: mcData, error: mcError }) => {
             if (!alive || mcError || !mcData || mcData.length === 0) return;
+            const resolveUrl = (val: string | null | undefined) => {
+              if (!val) return null;
+              if (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/landing/')) return val;
+              return getMemberMediaUrl(val);
+            };
+
             const dynamicItems: PreviewItem[] = mcData.map((m) => ({
               category: m.category || 'Clase',
               title: m.title,
               desc: m.description || '',
               bunny_video_id: m.bunny_video_id,
-              video_url: m.preview_video_url || m.content_url,
-              thumbnail_url: m.thumbnail_url || (m.preview_video_url ? null : m.storage_path),
+              video_url: resolveUrl(m.preview_video_url || m.content_url || m.storage_path),
+              thumbnail_url: resolveUrl(m.thumbnail_url || (m.preview_video_url ? null : m.storage_path)),
               duration: m.preview_duration || 'Adelanto gratis',
               locked: false,
             }));
