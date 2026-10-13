@@ -89,6 +89,16 @@ export function RegisterForm() {
       <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
       <Input label="Contraseña" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+      <p className="text-xs text-text-secondary text-center mb-4 leading-relaxed">
+        Al suscribirte, confirmas que has leído y aceptas nuestros{' '}
+        <Link to="/terminos" target="_blank" className="text-accent underline hover:text-accent-hover font-medium">
+          Términos
+        </Link>{' '}
+        y la{' '}
+        <Link to="/privacidad" target="_blank" className="text-accent underline hover:text-accent-hover font-medium">
+          Política de Privacidad
+        </Link>.
+      </p>
       <Button loading={loading} type="submit" className="w-full">Suscribirme por $us. 40 / mes</Button>
       <p className="text-sm text-text-secondary mt-4 text-center">
         ¿Ya eres alumna del programa?{' '}

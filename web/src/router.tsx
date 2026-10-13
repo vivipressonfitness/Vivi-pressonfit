@@ -8,6 +8,7 @@ import Home from './pages/Home';
 // Code-splitting por ruta: el bundle de la landing no carga hls.js ni el área privada
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const Legal = lazy(() => import('./pages/Legal'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Videos = lazy(() => import('./pages/Videos'));
 const Profile = lazy(() => import('./pages/Profile'));
@@ -22,6 +23,11 @@ export const router = createBrowserRouter([
       { path: '/', element: <Home /> },
       { path: '/login', element: <Login /> },
       { path: '/registro', element: <Register /> },
+      { path: '/terminos', element: <Legal defaultSection="terminos" /> },
+      { path: '/privacidad', element: <Legal defaultSection="privacidad" /> },
+      { path: '/cookies', element: <Legal defaultSection="cookies" /> },
+      { path: '/aviso-legal', element: <Legal defaultSection="aviso-legal" /> },
+      { path: '/legal', element: <Legal defaultSection="terminos" /> },
     ],
   },
   // ---- Área privada (requiere login; videos/dashboard requieren membresía o admin) ----

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLandingConfig } from '../../hooks/useLandingConfig';
+import { CookieBanner } from '../ui/CookieBanner';
 
 // Footer réplica del diseño EJEMPLO: 4 columnas (marca / estructura / contacto).
 export function Footer() {
@@ -7,6 +8,7 @@ export function Footer() {
   const wa = config.whatsapp_number || ((import.meta.env.VITE_WHATSAPP_NUMBER as string) ?? '59178000000');
   return (
     <footer id="unete" className="bg-background pt-20 pb-12 border-t border-border">
+      <CookieBanner />
       <div className="container mx-auto px-6">
         <div className="grid md:grid-cols-4 gap-12 mb-16">
           <div className="md:col-span-2 space-y-4">
@@ -47,13 +49,15 @@ export function Footer() {
                   WhatsApp Soporte
                 </a>
               </li>
-              <li><a href="#" className="hover:text-accent transition-colors">Términos del Servicio</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Política de Privacidad</a></li>
+              <li><Link to="/terminos" className="hover:text-accent transition-colors">Términos del Servicio</Link></li>
+              <li><Link to="/privacidad" className="hover:text-accent transition-colors">Política de Privacidad</Link></li>
+              <li><Link to="/cookies" className="hover:text-accent transition-colors">Política de Cookies</Link></li>
+              <li><Link to="/aviso-legal" className="hover:text-accent transition-colors">Aviso Legal</Link></li>
             </ul>
           </div>
         </div>
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-border text-xs text-text-secondary">
-          <p>© {new Date().getFullYear()} VIVIFIT. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} VIVIPRESSONFIT. Todos los derechos reservados.</p>
           <p className="mt-2 md:mt-0">Suscripción mensual $us. 40.- / mes</p>
         </div>
       </div>
