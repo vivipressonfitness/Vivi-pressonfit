@@ -1,52 +1,104 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef, useState, useEffect, type ReactNode } from 'react';
 
 interface Props {
   label: string;
   children: ReactNode;
+  autoSlideInterval?: number; // ms entre desplazamientos (por defecto 3500ms)
 }
 
-/** Touch-friendly feature row on small screens; keeps the full grid on desktop. */
-export function FeatureCarousel({ label, children }: Props) {
+/** Carrusel autodeslizante suave y responsive con soporte táctil y pausa al posar el mouse. */
+export function FeatureCarousel({ label, children, autoSlideInterval = 3500 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
+  // Desplazamiento manual en dirección (-1 o +1)
   const move = (direction: -1 | 1) => {
     const track = trackRef.current;
     if (!track) return;
-    track.scrollBy({
-      left: direction * Math.round(track.clientWidth * 0.85),
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
-    });
+    const cardWidth = Math.min(track.clientWidth * 0.85, 360);
+    const maxScroll = track.scrollWidth - track.clientWidth;
+
+    if (direction === 1 && track.scrollLeft >= maxScroll - 15) {
+      // Si llegó al final, regresa suavemente al inicio
+      track.scrollTo({ left: 0, behavior: 'smooth' });
+    } else if (direction === -1 && track.scrollLeft <= 15) {
+      // Si está al inicio y retrocede, va al final
+      track.scrollTo({ left: maxScroll, behavior: 'smooth' });
+    } else {
+      track.scrollBy({ left: direction * cardWidth, behavior: 'smooth' });
+    }
   };
 
+  // Efecto autodeslizante continuo
+  useEffect(() => {
+    if (isPaused) return;
+
+    // Respetar preferencia de reducción de movimiento del sistema
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const track = trackRef.current;
+      if (!track) return;
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      const cardWidth = Math.min(track.clientWidth * 0.85, 360);
+
+      if (track.scrollLeft >= maxScroll - 20) {
+        track.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        track.scrollBy({ left: cardWidth, behavior: 'smooth' });
+      }
+    }, autoSlideInterval);
+
+    return () => clearInterval(interval);
+  }, [isPaused, autoSlideInterval]);
+
   return (
-    <div>
+    <div
+      className="relative group/carousel"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={() => setIsPaused(true)}
+      onTouchEnd={() => setIsPaused(false)}
+    >
+      {/* Pista de tarjetas deslizantes */}
       <div
         ref={trackRef}
         role="region"
         aria-label={label}
-        aria-roledescription="carrusel"
+        aria-roledescription="carrusel autodeslizante"
         tabIndex={0}
-        className="grid auto-cols-[85%] grid-flow-col snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent md:grid-flow-row md:grid-cols-2 md:overflow-visible md:pb-0 lg:grid-cols-4"
+        className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 pt-1 px-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
-      <div className="mt-2 flex justify-end gap-2 md:hidden">
-        <button
-          type="button"
-          onClick={() => move(-1)}
-          aria-label={`Ver elementos anteriores: ${label}`}
-          className="flex size-10 items-center justify-center rounded-full border border-border text-text-primary transition hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          <span aria-hidden="true">←</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => move(1)}
-          aria-label={`Ver elementos siguientes: ${label}`}
-          className="flex size-10 items-center justify-center rounded-full border border-border text-text-primary transition hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          <span aria-hidden="true">→</span>
-        </button>
+
+      {/* Controles de navegación laterales */}
+      <div className="flex items-center justify-between pt-2">
+        <span className="text-xs text-text-secondary/80 flex items-center gap-1.5 font-medium">
+          <span className={`inline-block size-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'}`} />
+          {isPaused ? 'Pausado (interacción)' : 'Deslizamiento automático'}
+        </span>
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => move(-1)}
+            aria-label={`Ver anteriores: ${label}`}
+            className="flex size-9 sm:size-10 items-center justify-center rounded-full border border-border bg-surface text-text-primary transition hover:border-accent hover:text-accent hover:bg-surface/80 shadow-sm"
+          >
+            <span aria-hidden="true" className="text-base">←</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => move(1)}
+            aria-label={`Ver siguientes: ${label}`}
+            className="flex size-9 sm:size-10 items-center justify-center rounded-full border border-border bg-surface text-text-primary transition hover:border-accent hover:text-accent hover:bg-surface/80 shadow-sm"
+          >
+            <span aria-hidden="true" className="text-base">→</span>
+          </button>
+        </div>
       </div>
     </div>
   );

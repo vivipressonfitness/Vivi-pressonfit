@@ -22,9 +22,9 @@ const FAQ_ITEMS = [
 export function Faq() {
   const [open, setOpen] = useState<number | null>(null);
   return (
-    <section id="faq" className="py-24 bg-surface border-t border-border">
+    <section id="faq" className="py-12 md:py-16 bg-surface border-t border-border">
       <div className="container mx-auto px-6 max-w-3xl">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <span className="text-accent font-semibold tracking-widest uppercase text-xs">Preguntas Frecuentes</span>
           <h2 className="font-heading text-3xl md:text-5xl font-bold mt-2 text-text-primary">
             ¿Tienes alguna duda?

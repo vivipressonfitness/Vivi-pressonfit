@@ -10,13 +10,13 @@ export function AboutMe({ config, images }: AboutMeProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<QuienSoyImageItem | null>(null);
 
   return (
-    <section id="quien-soy" className="py-24 bg-surface border-t border-border relative overflow-hidden">
+    <section id="quien-soy" className="py-12 md:py-16 bg-surface border-t border-border relative overflow-hidden">
       {/* Luz ambiental de fondo */}
       <div className="pointer-events-none absolute -bottom-20 -left-20 w-[450px] h-[450px] rounded-full bg-accent/10 blur-[130px]" />
 
       <div className="container mx-auto px-6 relative z-10">
         {/* Cabecera y Biografía */}
-        <div className="max-w-3xl mx-auto text-center mb-16 space-y-4">
+        <div className="max-w-3xl mx-auto text-center mb-8 md:mb-10 space-y-3">
           <span className="inline-flex items-center gap-2 bg-accent/10 border border-accent/30 text-accent px-4 py-1.5 rounded-full font-semibold tracking-widest uppercase text-xs">
             {config.quien_soy_subtitle || 'Tu Coach & Mentora'}
           </span>

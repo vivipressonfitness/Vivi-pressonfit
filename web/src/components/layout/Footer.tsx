@@ -7,10 +7,10 @@ export function Footer() {
   const { config } = useLandingConfig();
   const wa = config.whatsapp_number || ((import.meta.env.VITE_WHATSAPP_NUMBER as string) ?? '59178000000');
   return (
-    <footer id="unete" className="bg-background pt-20 pb-12 border-t border-border">
+    <footer id="unete" className="bg-background pt-12 pb-8 border-t border-border">
       <CookieBanner />
       <div className="container mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-12 mb-16">
+        <div className="grid md:grid-cols-4 gap-8 md:gap-12 mb-10">
           <div className="md:col-span-2 space-y-4">
             <Link to="/" className="inline-block group">
               <img
