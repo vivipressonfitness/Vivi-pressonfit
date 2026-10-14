@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
       mode: 'subscription',
       'line_items[0][price]': priceId,
       'line_items[0][quantity]': '1',
+      'subscription_data[trial_period_days]': '7',
       success_url: `${returnOrigin}/membresia?checkout=success`,
       cancel_url: `${returnOrigin}/membresia?checkout=cancelled`,
       client_reference_id: user.id,

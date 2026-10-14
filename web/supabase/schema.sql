@@ -60,7 +60,7 @@ begin
   values (
     new.id, new.email,
     coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email,'@',1)),
-    'trial', now(), now() + interval '3 days',
+    'trial', now(), now() + interval '7 days',
     -- Los correos de administración NUNCA entran como miembros trial
     case when lower(coalesce(new.email,'')) in ('admin@vivipressonfit.com') then true else false end
   )

@@ -6,6 +6,10 @@ import { ExpandableCard } from './ExpandableCard';
 
 const FAQ_ITEMS = [
   {
+    q: '¿Cómo funciona la prueba gratuita de 7 días?',
+    a: 'Al registrarte obtienes 7 días de acceso completo a todas las clases grabadas, rutinas de fuerza y guías de alimentación. Puedes cancelar cuando quieras antes de los 7 días sin ningún costo.',
+  },
+  {
     q: '¿Cómo funciona la renovación mensual del contenido?',
     a: 'Cada mes se actualizan las clases (GAP, Full Body, Cardio HIIT, Fuerza), las rutinas 3x y los recursos de alimentación.',
   },

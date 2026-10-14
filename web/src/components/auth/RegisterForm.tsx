@@ -84,7 +84,7 @@ export function RegisterForm() {
   return (
     <form onSubmit={onSubmit} className="card-surface max-w-md mx-auto">
       <h2 className="text-2xl font-bold mb-1">Únete al Programa</h2>
-      <p className="text-sm text-text-secondary mb-6">Membresía Mensual • $us. 40.-/mes</p>
+      <p className="text-sm text-text-secondary mb-6">Membresía Mensual • $us. 40.-/mes (7 días gratis)</p>
       <Input label="Nombre completo" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
       <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
       <Input label="Contraseña" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -99,7 +99,7 @@ export function RegisterForm() {
           Política de Privacidad
         </Link>.
       </p>
-      <Button loading={loading} type="submit" className="w-full">Suscribirme por $us. 40 / mes</Button>
+      <Button loading={loading} type="submit" className="w-full">Comenzar 7 días de prueba gratis</Button>
       <p className="text-sm text-text-secondary mt-4 text-center">
         ¿Ya eres alumna del programa?{' '}
         <Link to="/login" className="text-accent font-semibold hover:underline">Inicia sesión</Link>

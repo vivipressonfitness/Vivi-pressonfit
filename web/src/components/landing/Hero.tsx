@@ -56,7 +56,7 @@ export function Hero({ config }: { config: LandingConfig }) {
           <div>
             <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/40 text-accent px-4 py-1.5 rounded-full font-semibold tracking-widest uppercase text-xs shadow-sm">
               <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-              3 Días de Prueba Gratis · Membresía VIP
+              7 Días de Prueba Gratis · Membresía VIP
             </span>
           </div>
 
@@ -130,7 +130,7 @@ export function Hero({ config }: { config: LandingConfig }) {
           <div className="w-full max-w-xl lg:max-w-2xl bg-black/60 backdrop-blur-xl border border-white/20 hover:border-accent/40 transition-colors rounded-3xl p-10 lg:p-12 shadow-[0_30px_70px_rgba(0,0,0,0.85)] space-y-7">
             <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/40 text-accent px-4 py-1.5 rounded-full font-semibold tracking-widest uppercase text-xs backdrop-blur-md shadow-sm">
               <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-              3 Días de Prueba Gratis · Membresía VIP
+              7 Días de Prueba Gratis · Membresía VIP
             </span>
 
             <h1 className="font-heading text-4xl lg:text-6xl font-bold leading-[1.08] tracking-tight text-white drop-shadow-md">

@@ -16,13 +16,18 @@ export function PlanCard({ price = 40, onSubscribe, loading }: Props) {
     'Cancela cuando quieras',
   ];
   return (
-    <Card className="max-w-sm mx-auto border-accent/40">
-      <h3 className="font-bold text-xl mb-1">Membresía Mensual</h3>
+    <Card className="max-w-sm mx-auto border-accent/40 text-center sm:text-left">
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <h3 className="font-bold text-xl">Membresía Mensual</h3>
+        <span className="bg-accent/20 text-accent text-xs font-bold px-2.5 py-0.5 rounded-full uppercase">
+          7 días gratis
+        </span>
+      </div>
       <p className="text-4xl font-extrabold text-accent my-4">
         $us. {price}
         <span className="text-base font-medium text-text-secondary"> /mes</span>
       </p>
-      <ul className="space-y-2 text-sm text-text-secondary mb-6">
+      <ul className="space-y-2 text-sm text-text-secondary mb-6 text-left">
         {benefits.map((b) => (
           <li key={b} className="flex gap-2">
             <span className="text-accent">✓</span> {b}
@@ -30,8 +35,11 @@ export function PlanCard({ price = 40, onSubscribe, loading }: Props) {
         ))}
       </ul>
       <Button loading={loading} onClick={onSubscribe} className="w-full">
-        Suscribirme $us. {price} / mes
+        Comenzar prueba gratis de 7 días
       </Button>
+      <p className="text-xs text-text-secondary text-center mt-2.5">
+        $0.00 hoy. Cancela cuando quieras antes de los 7 días sin costo.
+      </p>
     </Card>
   );
 }
