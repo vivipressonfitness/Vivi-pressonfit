@@ -20,7 +20,7 @@ export function GallerySection({ cards, title }: GallerySectionProps) {
             Experiencia y Comunidad
           </span>
           <h2 className="font-heading text-3xl md:text-5xl font-bold mt-3 text-text-primary">
-            {title || 'El Método VIVIFIT en Acción'}
+            {title || 'El Método VIVIPRESSONFIT en Acción'}
           </h2>
           <p className="text-text-secondary mt-3 text-base md:text-lg">
             Entrenamiento de fuerza estructurado, movimiento dinámico y hábitos saludables diseñados para tu vida diaria.
