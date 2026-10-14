@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import Hls from 'hls.js';
 import type { PreviewItem } from '../../hooks/useLandingConfig';
 
@@ -110,30 +109,44 @@ export function FreeVideoModal({ item, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 md:bg-black/85 backdrop-blur-sm p-0 md:p-4"
       onClick={onClose}
     >
+      {/* Botón flotante SIEMPRE VISIBLE para regresar en dispositivos móviles */}
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Regresar a la pantalla anterior"
+        className="md:hidden fixed top-3 left-3 z-[90] flex items-center gap-1.5 bg-black/80 hover:bg-black active:scale-95 text-white px-3.5 py-2 rounded-full border border-white/20 backdrop-blur-md shadow-2xl transition cursor-pointer select-none"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+        </svg>
+        <span className="text-xs font-bold tracking-tight">Volver</span>
+      </button>
+
       <div
-        className="relative w-full max-w-3xl bg-surface border border-border rounded-3xl overflow-hidden shadow-2xl"
+        className="relative w-full h-full md:h-auto max-w-3xl bg-surface border-0 md:border md:border-border rounded-none md:rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-center md:block"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div>
-            <span className="inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-1">
-              {item.category} · ADELANTO GRATIS
+        <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 border-b border-border/40 md:border-border">
+          <div className="pl-24 md:pl-0">
+            {/* Solo categoría del programa (sin 'ADELANTO GRATIS') */}
+            <span className="inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-1 uppercase tracking-wider">
+              {item.category}
             </span>
-            <h3 className="font-heading text-xl font-bold text-text-primary">{item.title}</h3>
+            <h3 className="font-heading text-base md:text-xl font-bold text-text-primary line-clamp-1">{item.title}</h3>
           </div>
           <button
             onClick={onClose}
             aria-label="Cerrar"
-            className="text-text-secondary hover:text-white text-2xl leading-none px-2"
+            className="text-text-secondary hover:text-white text-2xl leading-none px-2 cursor-pointer transition-colors"
           >
             ✕
           </button>
         </div>
 
-        <div className="aspect-video bg-black relative">
+        <div className="aspect-video bg-black relative w-full flex-1 md:flex-none flex items-center justify-center">
           {item.bunny_video_id ? (
             <>
               <video ref={videoRef} controls playsInline className="w-full h-full" />
@@ -187,26 +200,6 @@ export function FreeVideoModal({ item, onClose }: Props) {
             </div>
           )}
         </div>
-
-        <div className="px-6 py-4 flex items-center justify-between gap-4">
-          <p className="text-sm text-text-secondary line-clamp-2">{item.desc}</p>
-          <Link
-            to="/membresia"
-            onClick={onClose}
-            className="shrink-0 bg-accent hover:bg-white text-background text-sm font-bold px-4 py-2 rounded-pill transition"
-          >
-            Quiero todas las clases
-          </Link>
-        </div>
-
-        {isLocalDemo && (
-          <p className="px-6 pb-4 -mt-1 text-[11px] leading-relaxed text-text-secondary">
-            📌 Demo local servida desde <code className="text-accent">web/public/landing/</code>. Para producción:
-            subí esta clase a Bunny Stream y publicá la clave{' '}
-            <code className="text-accent">preview_clases</code> en Admin → Landing Config (se reproduce con token
-            público vía <code className="text-accent">bunny-token-public</code>).
-          </p>
-        )}
       </div>
     </div>
   );

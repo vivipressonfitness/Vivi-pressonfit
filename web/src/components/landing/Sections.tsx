@@ -249,16 +249,11 @@ export function PreviewCard({
           </button>
         )}
 
-        {/* Badges de estado: en desktop muestra 'Gratis' / 'Solo miembros'; en móvil el nombre del programa va arriba en lugar de 'Gratis' */}
+        {/* Badges de estado: nombre del programa arriba en el lugar de 'Gratis' tanto en móvil como en desktop */}
         {hasVideo && (
-          <>
-            <HaloBadge variant="free" className="hidden md:inline-flex absolute top-2.5 right-2.5 shadow-md">
-              Gratis
-            </HaloBadge>
-            <span className="md:hidden absolute top-2.5 right-2.5 bg-accent/95 backdrop-blur-md text-background font-extrabold text-[11px] px-2.5 py-1 rounded-full shadow-lg tracking-wider uppercase">
-              {item.category || item.title}
-            </span>
-          </>
+          <span className="absolute top-2.5 sm:top-3 right-2.5 sm:right-3 bg-accent/95 backdrop-blur-md text-background font-extrabold text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 rounded-full shadow-lg tracking-wider uppercase select-none">
+            {item.category || item.title}
+          </span>
         )}
         {item.locked && (
           <HaloBadge variant="members" className="absolute top-2.5 right-2.5 shadow-md">
@@ -268,46 +263,25 @@ export function PreviewCard({
         )}
       </div>
 
-      {/* Categoría: visible debajo en desktop; en móvil se muestra arriba en el video en lugar de Gratis */}
-      <span className="hidden md:inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-3 w-fit">
-        {item.category}
-      </span>
-
-      {/* Título y descripción: adaptables responsivamente al contenido sin forzar espacios muertos en móvil */}
+      {/* Título y descripción: sin repetir categoría abajo, adaptados armónicamente al contenedor */}
       <h3 className="font-heading text-base sm:text-lg md:text-xl font-bold mb-1.5 md:mb-2 text-text-primary line-clamp-2">
         {item.title}
       </h3>
-      <p className="text-text-secondary text-xs sm:text-sm leading-relaxed flex-1 line-clamp-3 md:line-clamp-3">
+      <p className="text-text-secondary text-xs sm:text-sm leading-relaxed flex-1 line-clamp-3">
         {item.desc}
       </p>
 
-      {/* Barra inferior: en móvil se eliminan "Adelanto Gratis" y "Ver adelanto --->"; en desktop se mantienen intactos */}
-      <div className={`mt-3 md:mt-4 pt-2.5 md:pt-3 border-t border-border/50 items-center justify-between gap-2 ${
-        item.locked ? 'flex' : 'hidden md:flex'
-      }`}>
-        {item.duration && (
-          <span className="hidden md:inline text-xs text-text-secondary font-semibold">
-            {item.duration}
-          </span>
-        )}
-        {hasVideo && (
-          <button
-            type="button"
-            onClick={() => onPlay(item)}
-            className="hidden md:inline-flex items-center gap-1.5 text-accent text-sm font-bold hover:underline ml-auto cursor-pointer"
-          >
-            Ver adelanto →
-          </button>
-        )}
-        {item.locked && (
+      {/* Barra inferior: solo si está bloqueado para miembros */}
+      {item.locked && (
+        <div className="mt-3 md:mt-4 pt-2.5 md:pt-3 border-t border-border/50 flex items-center justify-end">
           <a
             href="/membresia"
-            className="ml-auto inline-flex items-center gap-1 text-accent text-sm font-bold hover:underline"
+            className="inline-flex items-center gap-1 text-accent text-sm font-bold hover:underline"
           >
             Desbloquear →
           </a>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
