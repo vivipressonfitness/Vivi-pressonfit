@@ -38,7 +38,7 @@ export const LANDING_CLASES: PreviewItem[] = [
     title: 'GAP',
     desc: 'Glúteos, Abdomen y Piernas: firmeza y tonificación muscular.',
     bunny_video_id: null,
-    video_url: LANDING_VIDEOS.demoFuerza,
+    video_url: 'https://player.mediadelivery.net/play/778975/8fd270e5-d497-4fd5-bdd6-afc46ad46974',
     thumbnail_url: LANDING_IMAGES.thumbGap,
     duration: '19s · adelanto',
     locked: false,
