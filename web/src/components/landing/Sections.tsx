@@ -341,7 +341,7 @@ export function AdelantoEducativo({
             <div className="aspect-square rounded-3xl overflow-hidden border border-border shadow-2xl">
               <img
                 src={config?.educacion_image || '/landing/thumb-cardio.jpg'}
-                alt="Nutrición ViviFit"
+                alt="Nutrición Viviprofit"
                 className="w-full h-full object-cover"
               />
             </div>
