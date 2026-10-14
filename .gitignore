@@ -20,3 +20,9 @@ web/src/components/video/*.mp4
 # Carpeta de pruebas locales (NUNCA subir a GitHub)
 PRUEBA/
 prueba/
+
+# Archivos comprimidos y copias de seguridad
+*.zip
+*.rar
+*.7z
+*.tar.gz
