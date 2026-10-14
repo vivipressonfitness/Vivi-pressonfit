@@ -16,3 +16,7 @@ Thumbs.db
 .temp/
 web/supabase/.temp/
 web/src/components/video/*.mp4
+
+# Carpeta de pruebas locales (NUNCA subir a GitHub)
+PRUEBA/
+prueba/
