@@ -29,8 +29,16 @@ export function FreeVideoModal({ item, onClose }: Props) {
   const vimeoEmbed = item.video_url
     ? (item.video_url.match(/vimeo\.com\/(\d+)/) ?? [])[1] ?? null
     : null;
+  const bunnyMatch = item.video_url
+    ? item.video_url.match(/(?:iframe|player)\.mediadelivery\.net\/(?:play|embed)\/(\d+)\/([\w-]+)/)
+    : null;
+  const bunnyEmbed = bunnyMatch
+    ? `https://iframe.mediadelivery.net/embed/${bunnyMatch[1]}/${bunnyMatch[2]}?autoplay=true`
+    : item.video_url && /iframe\.mediadelivery\.net|video\.bunnycdn\.com/.test(item.video_url)
+      ? `${item.video_url}${item.video_url.includes('?') ? '&' : '?'}autoplay=true`
+      : null;
   const directUrl =
-    item.video_url && !ytEmbed && !vimeoEmbed ? item.video_url : null;
+    item.video_url && !ytEmbed && !vimeoEmbed && !bunnyEmbed ? item.video_url : null;
   const isLocalDemo = Boolean(directUrl && directUrl.startsWith('/landing/'));
 
   // Cerrar con Escape + bloquear scroll del fondo
@@ -155,6 +163,14 @@ export function FreeVideoModal({ item, onClose }: Props) {
               allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
               className="w-full h-full"
+            />
+          ) : bunnyEmbed ? (
+            <iframe
+              title={item.title}
+              src={`${bunnyEmbed}${bunnyEmbed.includes('?') ? '&' : '?'}autoplay=true`}
+              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+              allowFullScreen
+              className="w-full h-full border-0"
             />
           ) : directUrl ? (
             <video

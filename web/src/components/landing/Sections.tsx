@@ -109,6 +109,20 @@ function getVimeoId(url?: string | null): string | null {
   return m ? m[1] : null;
 }
 
+function getBunnyEmbed(url?: string | null): string | null {
+  if (!url) return null;
+  const match = url.match(/(?:iframe|player)\.mediadelivery\.net\/(?:play|embed)\/(\d+)\/([\w-]+)/);
+  if (match) {
+    const [, libId, vidId] = match;
+    return `https://iframe.mediadelivery.net/embed/${libId}/${vidId}?autoplay=true&loop=true&muted=true&preload=true`;
+  }
+  if (/iframe\.mediadelivery\.net|video\.bunnycdn\.com/.test(url)) {
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}autoplay=true&loop=true&muted=true&preload=true`;
+  }
+  return null;
+}
+
 // Tarjeta reutilizable de adelanto gratuito / contenido bloqueado (solo miembros).
 export function PreviewCard({
   item,
@@ -124,7 +138,8 @@ export function PreviewCard({
 
   const ytId = getYouTubeId(item.video_url);
   const vimeoId = getVimeoId(item.video_url);
-  const isDirectVideo = hasVideo && item.video_url && !ytId && !vimeoId;
+  const bunnyEmbed = getBunnyEmbed(item.video_url);
+  const isDirectVideo = hasVideo && item.video_url && !ytId && !vimeoId && !bunnyEmbed;
   const thumbnail = item.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null);
 
   useEffect(() => {
@@ -164,6 +179,14 @@ export function PreviewCard({
             loading="lazy"
             allow="autoplay; fullscreen; picture-in-picture"
             className="w-full h-full object-cover pointer-events-none border-0"
+          />
+        ) : bunnyEmbed ? (
+          <iframe
+            src={bunnyEmbed}
+            title={item.title}
+            loading="lazy"
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+            className="w-full h-full object-cover pointer-events-none scale-105 border-0"
           />
         ) : isDirectVideo && !videoError ? (
           <video
