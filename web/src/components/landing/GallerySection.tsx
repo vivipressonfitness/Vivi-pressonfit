@@ -19,10 +19,10 @@ export function GallerySection({ cards, title }: GallerySectionProps) {
           <span className="inline-flex items-center gap-2 bg-accent/10 border border-accent/30 text-accent px-4 py-1.5 rounded-full font-semibold tracking-widest uppercase text-xs">
             Experiencia y Comunidad
           </span>
-          <h2 className="font-heading text-3xl md:text-5xl font-bold mt-3 text-text-primary">
-            {title || 'El Método VIVIPRESSONFIT en Acción'}
+          <h2 className="font-heading text-2xl sm:text-3xl md:text-5xl font-bold mt-3 text-text-primary">
+            {(title || 'El Método VIVIPRESSONFIT en Acción').replace(/VIVIFIT/gi, 'VIVIPRESSONFIT')}
           </h2>
-          <p className="text-text-secondary mt-3 text-base md:text-lg">
+          <p className="text-text-secondary mt-3 text-sm sm:text-base md:text-lg">
             Entrenamiento de fuerza estructurado, movimiento dinámico y hábitos saludables diseñados para tu vida diaria.
           </p>
         </div>

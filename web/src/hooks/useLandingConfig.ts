@@ -146,9 +146,9 @@ export const DEFAULT_CONFIG: LandingConfig = {
   hero_image: '/landing/vivi.webp',
   educacion_image:
     'https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_bcbde05bb8_c9ad26c2d0ca8065.png',
-  logo_url: '/landing/logo-vivifit.jpg',
+  logo_url: '/landing/logo-vivipressonfit.jpg',
   logo_height: 64,
-  gallery_title: 'El Método VIVIFIT en Acción',
+  gallery_title: 'El Método VIVIPRESSONFIT en Acción',
   quien_soy_title: '¿Quién Soy?',
   quien_soy_subtitle: 'Tu Coach & Mentora',
   quien_soy_bio:
@@ -214,6 +214,8 @@ export function useLandingConfig() {
             } else if (row.key === 'logo_height') {
               const n = Number(val);
               if (!Number.isNaN(n) && n > 0) next.logo_height = n;
+            } else if (row.key === 'gallery_title') {
+              next.gallery_title = val.replace(/VIVIFIT/gi, 'VIVIPRESSONFIT');
             } else {
               (next as unknown as Record<string, string>)[row.key] = val;
             }

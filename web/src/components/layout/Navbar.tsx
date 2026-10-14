@@ -36,8 +36,8 @@ export function Navbar() {
         {/* LOGO */}
         <Link to="/" onClick={closeMenu} className="flex items-center group py-1 flex-shrink-0">
           <img
-            src={config.logo_url || '/landing/logo-vivifit.jpg'}
-            alt="VIVIFIT"
+            src={config.logo_url || '/landing/logo-vivipressonfit.jpg'}
+            alt="VIVIPRESSONFIT"
             style={{ maxHeight: `${config.logo_height || 54}px` }}
             className="w-auto h-11 sm:h-12 md:h-14 object-contain transition-transform group-hover:scale-105"
           />

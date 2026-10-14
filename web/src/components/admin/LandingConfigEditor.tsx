@@ -458,7 +458,7 @@ export function LandingConfigEditor() {
       <div className="bg-raised border border-border rounded-2xl p-6 shadow-sm space-y-6">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div>
-            <h3 className="text-lg font-heading font-bold text-text-primary">3. El Método VIVIFIT en Acción (6 Tarjetas Temáticas)</h3>
+            <h3 className="text-lg font-heading font-bold text-text-primary">3. El Método VIVIPRESSONFIT en Acción (6 Tarjetas Temáticas)</h3>
             <p className="text-xs text-text-secondary">Entrenamientos Guiados, Tonificación, Cardio, Nutrición, etc.</p>
           </div>
           <button

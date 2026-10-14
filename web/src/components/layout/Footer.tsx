@@ -14,8 +14,8 @@ export function Footer() {
           <div className="md:col-span-2 space-y-4">
             <Link to="/" className="inline-block group">
               <img
-                src={config.logo_url || '/landing/logo-vivifit.jpg'}
-                alt="VIVIFIT"
+                src={config.logo_url || '/landing/logo-vivipressonfit.jpg'}
+                alt="VIVIPRESSONFIT"
                 style={{ height: `${Math.round((config.logo_height || 44) * 1.2)}px` }}
                 className="w-auto object-contain transition-transform group-hover:scale-105"
               />
