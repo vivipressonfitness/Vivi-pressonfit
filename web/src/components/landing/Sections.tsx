@@ -155,14 +155,14 @@ export function PreviewCard({
 
   return (
     <div
-      className={`bg-surface p-5 sm:p-6 rounded-2xl border border-border text-left group/card transition relative flex flex-col h-full ${
+      className={`bg-surface p-4 sm:p-5 md:p-6 rounded-2xl border border-border text-left group/card transition relative flex flex-col h-auto md:h-full ${
         hasVideo ? 'hover:border-accent' : 'opacity-95'
       }`}
     >
-      {/* Contenedor del reproductor / media */}
+      {/* Contenedor del reproductor / media: más grande y protagonista en móvil (1:1), 4:3 en desktop */}
       <div
         onClick={() => hasVideo && onPlay(item)}
-        className="relative -m-5 sm:-m-6 mb-4 rounded-t-2xl overflow-hidden aspect-[4/3] bg-black/90 cursor-pointer group/media flex items-center justify-center select-none"
+        className="relative -m-4 sm:-m-5 md:-m-6 mb-3 sm:mb-4 rounded-t-2xl overflow-hidden aspect-[1/1] sm:aspect-[4/3] md:aspect-[4/3] bg-black/90 cursor-pointer group/media flex items-center justify-center select-none"
       >
         {ytId ? (
           <iframe
@@ -170,7 +170,7 @@ export function PreviewCard({
             title={item.title}
             loading="lazy"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            className="w-full h-full object-cover pointer-events-none scale-110 border-0"
+            className="w-full h-full object-cover pointer-events-none scale-125 md:scale-110 border-0"
           />
         ) : vimeoId ? (
           <iframe
@@ -186,7 +186,7 @@ export function PreviewCard({
             title={item.title}
             loading="lazy"
             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-            className="w-full h-full object-cover pointer-events-none scale-105 border-0"
+            className="w-full h-full object-cover pointer-events-none scale-110 md:scale-105 border-0"
           />
         ) : isDirectVideo && !videoError ? (
           <video
@@ -249,11 +249,16 @@ export function PreviewCard({
           </button>
         )}
 
-        {/* Badges de estado */}
+        {/* Badges de estado: en desktop muestra 'Gratis' / 'Solo miembros'; en móvil el nombre del programa va arriba en lugar de 'Gratis' */}
         {hasVideo && (
-          <HaloBadge variant="free" className="absolute top-2.5 right-2.5 shadow-md">
-            Gratis
-          </HaloBadge>
+          <>
+            <HaloBadge variant="free" className="hidden md:inline-flex absolute top-2.5 right-2.5 shadow-md">
+              Gratis
+            </HaloBadge>
+            <span className="md:hidden absolute top-2.5 right-2.5 bg-accent/95 backdrop-blur-md text-background font-extrabold text-[11px] px-2.5 py-1 rounded-full shadow-lg tracking-wider uppercase">
+              {item.category || item.title}
+            </span>
+          </>
         )}
         {item.locked && (
           <HaloBadge variant="members" className="absolute top-2.5 right-2.5 shadow-md">
@@ -263,18 +268,33 @@ export function PreviewCard({
         )}
       </div>
 
-      <span className="inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-3 w-fit">
+      {/* Categoría: visible debajo en desktop; en móvil se muestra arriba en el video en lugar de Gratis */}
+      <span className="hidden md:inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-3 w-fit">
         {item.category}
       </span>
-      <h3 className="font-heading text-lg md:text-xl font-bold mb-2 text-text-primary line-clamp-2">{item.title}</h3>
-      <p className="text-text-secondary text-sm flex-1 line-clamp-3 leading-relaxed">{item.desc}</p>
-      <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between gap-2">
-        {item.duration && <span className="text-xs text-text-secondary font-semibold">{item.duration}</span>}
+
+      {/* Título y descripción: adaptables responsivamente al contenido sin forzar espacios muertos en móvil */}
+      <h3 className="font-heading text-base sm:text-lg md:text-xl font-bold mb-1.5 md:mb-2 text-text-primary line-clamp-2">
+        {item.title}
+      </h3>
+      <p className="text-text-secondary text-xs sm:text-sm leading-relaxed flex-1 line-clamp-3 md:line-clamp-3">
+        {item.desc}
+      </p>
+
+      {/* Barra inferior: en móvil se eliminan "Adelanto Gratis" y "Ver adelanto --->"; en desktop se mantienen intactos */}
+      <div className={`mt-3 md:mt-4 pt-2.5 md:pt-3 border-t border-border/50 items-center justify-between gap-2 ${
+        item.locked ? 'flex' : 'hidden md:flex'
+      }`}>
+        {item.duration && (
+          <span className="hidden md:inline text-xs text-text-secondary font-semibold">
+            {item.duration}
+          </span>
+        )}
         {hasVideo && (
           <button
             type="button"
             onClick={() => onPlay(item)}
-            className="inline-flex items-center gap-1.5 text-accent text-sm font-bold hover:underline ml-auto cursor-pointer"
+            className="hidden md:inline-flex items-center gap-1.5 text-accent text-sm font-bold hover:underline ml-auto cursor-pointer"
           >
             Ver adelanto →
           </button>
@@ -318,7 +338,7 @@ export function AdelantoClases({ clases = LANDING_CLASES }: { clases?: PreviewIt
         </div>
         <FeatureCarousel label="Adelantos gratuitos de clases" autoSlideInterval={3200}>
           {clases.map((c) => (
-            <div key={c.title} className="snap-start w-[280px] sm:w-[320px] md:w-[350px] shrink-0">
+            <div key={c.title} className="snap-start w-[84vw] max-w-[340px] sm:w-[320px] md:w-[350px] shrink-0">
               <PreviewCard item={c} onPlay={setPlaying} />
             </div>
           ))}
