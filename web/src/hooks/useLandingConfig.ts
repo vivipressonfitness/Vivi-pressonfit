@@ -135,7 +135,7 @@ function parseItems(value: unknown): PreviewItem[] | null {
 
 export const DEFAULT_CONFIG: LandingConfig = {
   monthly_price: 40,
-  whatsapp_number: '59178000000',
+  whatsapp_number: '5493415888117',
   hero_title: 'Programa de Entrenamiento y',
   hero_title_sub: 'Estilo de Vida Saludable.',
   hero_sub:
@@ -216,6 +216,9 @@ export function useLandingConfig() {
               if (!Number.isNaN(n) && n > 0) next.logo_height = n;
             } else if (row.key === 'gallery_title') {
               next.gallery_title = val.replace(/VIVIFIT/gi, 'VIVIPRESSONFIT');
+            } else if (row.key === 'whatsapp_number') {
+              const cleanWa = val.replace(/\D/g, '');
+              next.whatsapp_number = cleanWa && cleanWa !== '59178000000' ? cleanWa : '5493415888117';
             } else {
               (next as unknown as Record<string, string>)[row.key] = val;
             }

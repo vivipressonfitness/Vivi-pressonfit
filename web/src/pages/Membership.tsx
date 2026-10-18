@@ -1,20 +1,31 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useStripe } from '../hooks/useStripe';
 import { useMembership } from '../hooks/useMembership';
 import { useLandingConfig } from '../hooks/useLandingConfig';
 import { useMembershipStore } from '../store/membershipStore';
+import { useAuthStore } from '../store/authStore';
 import { PlanCard } from '../components/membership/PlanCard';
 import { StatusCard } from '../components/membership/StatusCard';
 import { Card } from '../components/ui/Card';
 
-// Página de MEMBRESÍA — separada del landing/portal.
-// El portal público (/) muestra solo adelantos gratis; aquí vive la oferta:
+// Página de MEMBRESÍA — accesible públicamente y para miembros.
+// El portal público (/) muestra adelantos gratis; aquí vive la oferta completa:
 // comparativa "adelanto vs. membresía", el plan con Stripe y el estado de suscripción.
 export default function Membership() {
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const { startCheckout, loading, error } = useStripe();
   const { hasAccess, status } = useMembership();
   const stripeSubscriptionId = useMembershipStore((s) => s.stripeSubscriptionId);
   const { config } = useLandingConfig();
+
+  const handleSubscribe = () => {
+    if (!user) {
+      navigate('/registro', { state: { from: '/membresia' } });
+      return;
+    }
+    startCheckout();
+  };
 
   const incluye = [
     ['Clases completas en video', 'GAP, Full Body, Cardio HIIT y Fuerza + Aeróbico de 30-45 min, sin límite.'],
@@ -27,11 +38,12 @@ export default function Membership() {
   // Para un miembro ya gestionable (active/past_due con suscripción), la acción
   // primaria es administrar su plan; la oferta se mantiene accesible pero secundaria.
   const isManaging =
+    Boolean(user) &&
     (status === 'active' || status === 'past_due') &&
     /^sub_[A-Za-z0-9]+$/.test(stripeSubscriptionId ?? '');
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto py-6">
+    <div className="space-y-8 max-w-3xl mx-auto pt-28 sm:pt-36 pb-16 px-4">
       {/* Encabezado: claro para miembros, promocional para quien aún no lo es */}
       <div className={isManaging ? 'space-y-1' : 'text-center space-y-3'}>
         <span
@@ -55,18 +67,32 @@ export default function Membership() {
             ? 'Revisa tu estado y gestiona tu suscripción cuando quieras.'
             : 'En el portal probaste los adelantos. Como miembro accedes a las versiones completas, las rutinas del mes, las guías de nutrición y el acompañamiento directo.'}
         </p>
-        {!hasAccess && (
+        {!user ? (
           <p className="text-sm text-text-secondary pt-2">
-            ¿Aún no tienes cuenta?{' '}
-            <Link to="/registro" className="text-accent font-bold hover:underline">
-              Regístrate primero
+            ¿Ya tienes una cuenta?{' '}
+            <Link to="/login" state={{ from: '/membresia' }} className="text-accent font-bold hover:underline">
+              Inicia sesión
+            </Link>
+            {' o '}
+            <Link to="/registro" state={{ from: '/membresia' }} className="text-accent font-bold hover:underline">
+              regístrate gratis
             </Link>{' '}
-            y luego completa tu suscripción.
+            para activar tus 7 días sin costo.
           </p>
+        ) : (
+          !hasAccess && (
+            <p className="text-sm text-text-secondary pt-2">
+              ¿Aún no tienes cuenta?{' '}
+              <Link to="/registro" className="text-accent font-bold hover:underline">
+                Regístrate primero
+              </Link>{' '}
+              y luego completa tu suscripción.
+            </p>
+          )
         )}
       </div>
 
-      <StatusCard />
+      {user && <StatusCard />}
 
       {isManaging && (
         <div className="text-sm text-text-secondary">
@@ -78,10 +104,10 @@ export default function Membership() {
       )}
 
       {/* Oferta / pago: se muestra junto al estado para quien aún no puede gestionar */}
-      {(!hasAccess || status === 'trial') && (
+      {(!hasAccess || status === 'trial' || !user) && (
         <div className="space-y-3">
           {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-          <PlanCard price={config.monthly_price} onSubscribe={startCheckout} loading={loading} />
+          <PlanCard price={config.monthly_price} onSubscribe={handleSubscribe} loading={loading} />
         </div>
       )}
 
@@ -120,7 +146,7 @@ export default function Membership() {
       {isManaging && (
         <div id="oferta" className="scroll-mt-24 space-y-3">
           {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-          <PlanCard price={config.monthly_price} onSubscribe={startCheckout} loading={loading} />
+          <PlanCard price={config.monthly_price} onSubscribe={handleSubscribe} loading={loading} />
         </div>
       )}
 

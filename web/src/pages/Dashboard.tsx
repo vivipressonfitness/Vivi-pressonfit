@@ -88,9 +88,9 @@ export default function Dashboard() {
       </Card>
 
       <a
-        href={`https://wa.me/${config.whatsapp_number || import.meta.env.VITE_WHATSAPP_NUMBER || '59178000000'}`}
+        href={`https://wa.me/${(config.whatsapp_number && config.whatsapp_number !== '59178000000') ? config.whatsapp_number : '5493415888117'}`}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         className="block bg-whatsapp-green hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-pill text-center transition"
       >
         Chatear por WhatsApp

@@ -152,7 +152,7 @@ export const LEGAL_SECTIONS: Record<string, LegalSection> = {
         list: [
           'Denominación del proyecto: VIVIPRESSONFIT — Programa de Entrenamiento y Estilo de Vida Saludable.',
           'Actividad: Plataforma de entrenamiento físico digital bajo demanda, planes de fuerza y bienestar.',
-          'Canal oficial de atención al cliente y soporte: WhatsApp Soporte Oficial (+591 78000000 o enlace directo habilitado en la web).',
+          'Canal oficial de atención al cliente y soporte: WhatsApp Soporte Oficial (+54 9 341 588-8117 o enlace directo habilitado en la web).',
           'Alojamiento web: Vercel Inc. (San Francisco, CA, USA).',
           'Procesamiento de pagos: Stripe Inc. / Stripe Payments Europe, Ltd.',
         ],

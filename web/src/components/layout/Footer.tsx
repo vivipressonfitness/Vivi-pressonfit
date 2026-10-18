@@ -5,7 +5,9 @@ import { CookieBanner } from '../ui/CookieBanner';
 // Footer réplica del diseño EJEMPLO: 4 columnas (marca / estructura / contacto).
 export function Footer() {
   const { config } = useLandingConfig();
-  const wa = config.whatsapp_number || ((import.meta.env.VITE_WHATSAPP_NUMBER as string) ?? '59178000000');
+  const wa = (config.whatsapp_number && config.whatsapp_number !== '59178000000')
+    ? config.whatsapp_number
+    : ((import.meta.env.VITE_WHATSAPP_NUMBER as string) || '5493415888117');
   return (
     <footer id="unete" className="bg-background pt-12 pb-8 border-t border-border">
       <CookieBanner />

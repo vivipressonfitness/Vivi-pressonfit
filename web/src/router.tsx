@@ -14,6 +14,8 @@ const Videos = lazy(() => import('./pages/Videos'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Membership = lazy(() => import('./pages/Membership'));
 const Admin = lazy(() => import('./pages/Admin'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 export const router = createBrowserRouter([
   // ---- Rutas públicas ----
@@ -21,8 +23,11 @@ export const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { path: '/', element: <Home /> },
+      { path: '/membresia', element: <Membership /> },
       { path: '/login', element: <Login /> },
       { path: '/registro', element: <Register /> },
+      { path: '/recuperar', element: <ForgotPassword /> },
+      { path: '/recuperar-password', element: <ResetPassword /> },
       { path: '/terminos', element: <Legal defaultSection="terminos" /> },
       { path: '/privacidad', element: <Legal defaultSection="privacidad" /> },
       { path: '/cookies', element: <Legal defaultSection="cookies" /> },
@@ -38,8 +43,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      // Membresía y perfil: accesibles con solo login (para poder suscribirse)
-      { path: '/membresia', element: <Membership /> },
+      // Perfil: accesible con solo login
       { path: '/perfil', element: <Profile /> },
     ],
   },

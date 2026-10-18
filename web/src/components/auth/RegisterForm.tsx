@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -9,6 +9,9 @@ import { Button } from '../ui/Button';
 // El cobro real ocurre después vía Stripe Checkout (página Membresía).
 export function RegisterForm() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | undefined)?.from;
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -68,7 +71,8 @@ export function RegisterForm() {
         return;
       }
 
-      navigate('/membresia', { state: { justRegistered: true } });
+      const target = from || '/membresia';
+      navigate(target, { state: { justRegistered: true } });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'No se pudo completar el registro';
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('user already exists')) {
@@ -85,6 +89,16 @@ export function RegisterForm() {
     <form onSubmit={onSubmit} className="card-surface max-w-md mx-auto">
       <h2 className="text-2xl font-bold mb-1">Únete al Programa</h2>
       <p className="text-sm text-text-secondary mb-6">Membresía Mensual • $us. 40.-/mes (7 días gratis)</p>
+
+      {from === '/membresia' && (
+        <div className="mb-5 rounded-xl border border-accent/40 bg-accent/10 p-3.5 text-accent text-sm">
+          <p className="font-semibold">¡Regístrate para activar tus 7 días gratis!</p>
+          <p className="text-text-secondary text-xs mt-1">
+            Crea tu cuenta en 30 segundos. Luego podrás confirmar tu método de pago con Stripe sin costo alguno hoy.
+          </p>
+        </div>
+      )}
+
       <Input label="Nombre completo" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
       <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
       <Input label="Contraseña" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -102,7 +116,7 @@ export function RegisterForm() {
       <Button loading={loading} type="submit" className="w-full">Comenzar 7 días de prueba gratis</Button>
       <p className="text-sm text-text-secondary mt-4 text-center">
         ¿Ya eres alumna del programa?{' '}
-        <Link to="/login" className="text-accent font-semibold hover:underline">Inicia sesión</Link>
+        <Link to="/login" state={{ from }} className="text-accent font-semibold hover:underline">Inicia sesión</Link>
       </p>
     </form>
   );
