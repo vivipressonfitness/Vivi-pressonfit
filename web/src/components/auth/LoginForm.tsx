@@ -57,7 +57,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="card-surface max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-1">Iniciar Sesión</h2>
+      <h1 className="text-2xl font-bold mb-1">Iniciar Sesión</h1>
       <p className="text-sm text-text-secondary mb-6">Accede a tu contenido del mes</p>
 
       {from === '/membresia' && (
@@ -72,8 +72,24 @@ export function LoginForm() {
         </div>
       )}
 
-      <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-      <Input label="Contraseña" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+      <Input
+        label="Email"
+        type="email"
+        name="email"
+        autoComplete="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <Input
+        label="Contraseña"
+        type="password"
+        name="password"
+        autoComplete="current-password"
+        required
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
 
       <div className="flex justify-end -mt-2 mb-4">
         <Link

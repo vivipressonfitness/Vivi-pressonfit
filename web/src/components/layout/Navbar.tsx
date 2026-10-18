@@ -95,6 +95,8 @@ export function Navbar() {
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Abrir menú"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
             className="p-2 rounded-xl text-text-primary hover:bg-white/10 transition focus:outline-none"
           >
             {mobileMenuOpen ? (
@@ -112,7 +114,7 @@ export function Navbar() {
 
       {/* MENÚ MÓVIL DESPLEGABLE */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-background/95 backdrop-blur-xl border-b border-border px-5 py-6 space-y-2 max-h-[85vh] overflow-y-auto animate-fadeIn">
+        <div id="mobile-menu" className="lg:hidden bg-background/95 backdrop-blur-xl border-b border-border px-5 py-6 space-y-2 max-h-[85vh] overflow-y-auto animate-fadeIn">
           {onHome &&
             landingAnchors.map((a) => (
               <a

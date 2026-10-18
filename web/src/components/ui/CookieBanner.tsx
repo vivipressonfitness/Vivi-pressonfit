@@ -20,9 +20,15 @@ export function CookieBanner() {
     }
   }, []);
 
-  function handleAccept() {
+  function saveConsent(allowAnalytics: boolean) {
     try {
-      localStorage.setItem(STORAGE_KEY, 'accepted');
+      const consentRecord = {
+        necessary: true,
+        analytics: allowAnalytics,
+        timestamp: new Date().toISOString(),
+        version: '1.0',
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(consentRecord));
     } catch {
       // Ignorar fallo de storage
     }
@@ -33,38 +39,46 @@ export function CookieBanner() {
 
   return (
     <aside
-      aria-label="Aviso de Cookies"
-      className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-50 animate-fade-in"
+      role="region"
+      aria-label="Consentimiento de cookies"
+      className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-5 sm:max-w-md z-40 animate-fade-in"
     >
-      <div className="bg-surface/95 backdrop-blur-md border border-border/80 shadow-2xl rounded-2xl p-5 text-sm space-y-4">
+      <div className="bg-surface/95 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-4 sm:p-5 text-sm space-y-3">
         <div className="flex items-start gap-3">
           <span className="text-xl select-none" role="img" aria-label="galleta">
             🍪
           </span>
           <div className="space-y-1">
             <h4 className="font-semibold text-text-primary text-sm">
-              Tu privacidad es importante
+              Tu privacidad y cookies
             </h4>
             <p className="text-text-secondary text-xs leading-relaxed">
-              Utilizamos cookies técnicas y de seguridad necesarias para mantener tu sesión activa y procesar pagos seguros con Stripe. No usamos cookies de rastreo publicitario.{' '}
+              Utilizamos cookies técnicas necesarias para autenticar tu cuenta y procesar pagos con Stripe. Puedes consultar los detalles en nuestra{' '}
               <Link
                 to="/cookies"
                 className="text-accent underline underline-offset-2 hover:text-accent-hover font-medium"
               >
-                Leer política
+                Política de Cookies
               </Link>
               .
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-1">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-1">
           <button
             type="button"
-            onClick={handleAccept}
-            className="w-full sm:w-auto px-4 py-2 text-xs font-semibold rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors shadow-sm min-h-[36px]"
+            onClick={() => saveConsent(false)}
+            className="w-full sm:w-auto px-3.5 py-2 text-xs font-medium rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors min-h-[36px]"
           >
-            Aceptar y Continuar
+            Solo necesarias
+          </button>
+          <button
+            type="button"
+            onClick={() => saveConsent(true)}
+            className="w-full sm:w-auto px-4 py-2 text-xs font-semibold rounded-lg bg-accent text-background hover:bg-white transition-colors shadow-sm min-h-[36px]"
+          >
+            Aceptar todas
           </button>
         </div>
       </div>

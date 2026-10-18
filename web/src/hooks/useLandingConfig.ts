@@ -144,8 +144,7 @@ export const DEFAULT_CONFIG: LandingConfig = {
   membresias_title: 'Tu Membresía Mensual Todo Incluido',
   // Imagen local del repo (web/public/landing) — reemplazable desde Admin con una URL externa.
   hero_image: '/landing/vivi.webp',
-  educacion_image:
-    'https://storage.googleapis.com/uxpilot-auth.appspot.com/gen_bcbde05bb8_c9ad26c2d0ca8065.png',
+  educacion_image: '/landing/thumb-cardio.jpg',
   logo_url: '/landing/logo-vivipressonfit.jpg',
   logo_height: 64,
   gallery_title: 'El Método VIVIPRESSONFIT en Acción',
@@ -219,6 +218,8 @@ export function useLandingConfig() {
             } else if (row.key === 'whatsapp_number') {
               const cleanWa = val.replace(/\D/g, '');
               next.whatsapp_number = cleanWa && cleanWa !== '59178000000' ? cleanWa : '5493415888117';
+            } else if (row.key === 'educacion_image' && val.includes('uxpilot-auth.appspot.com')) {
+              next.educacion_image = '/landing/thumb-cardio.jpg';
             } else {
               (next as unknown as Record<string, string>)[row.key] = val;
             }

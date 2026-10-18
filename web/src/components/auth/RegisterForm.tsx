@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { useLandingConfig } from '../../hooks/useLandingConfig';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 
@@ -11,15 +12,21 @@ export function RegisterForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | undefined)?.from;
+  const { config } = useLandingConfig();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!acceptedTerms) {
+      setError('Debes aceptar los Términos del Servicio y la Política de Privacidad para continuar');
+      return;
+    }
     if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
     setLoading(true);
     setError(null);
@@ -87,8 +94,8 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={onSubmit} className="card-surface max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-1">Únete al Programa</h2>
-      <p className="text-sm text-text-secondary mb-6">Membresía Mensual • $us. 40.-/mes (7 días gratis)</p>
+      <h1 className="text-2xl font-bold mb-1">Únete al Programa</h1>
+      <p className="text-sm text-text-secondary mb-6">Membresía Mensual • $us. {config.monthly_price || 40}.-/mes (7 días gratis)</p>
 
       {from === '/membresia' && (
         <div className="mb-5 rounded-xl border border-accent/40 bg-accent/10 p-3.5 text-accent text-sm">
@@ -99,20 +106,56 @@ export function RegisterForm() {
         </div>
       )}
 
-      <Input label="Nombre completo" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-      <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-      <Input label="Contraseña" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+      <Input
+        label="Nombre completo"
+        name="fullName"
+        autoComplete="name"
+        required
+        value={fullName}
+        onChange={(e) => setFullName(e.target.value)}
+      />
+      <Input
+        label="Email"
+        type="email"
+        name="email"
+        autoComplete="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <Input
+        label="Contraseña"
+        type="password"
+        name="password"
+        autoComplete="new-password"
+        required
+        minLength={6}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <label className="flex items-start gap-2.5 text-xs text-text-secondary cursor-pointer my-4 select-none">
+        <input
+          type="checkbox"
+          name="terms"
+          required
+          checked={acceptedTerms}
+          onChange={(e) => setAcceptedTerms(e.target.checked)}
+          className="mt-0.5 w-4 h-4 rounded border-border accent-accent shrink-0 cursor-pointer"
+        />
+        <span>
+          Confirmo que he leído y acepto los{' '}
+          <Link to="/terminos" target="_blank" className="text-accent underline hover:text-accent-hover font-medium">
+            Términos del Servicio
+          </Link>{' '}
+          y la{' '}
+          <Link to="/privacidad" target="_blank" className="text-accent underline hover:text-accent-hover font-medium">
+            Política de Privacidad
+          </Link>.
+        </span>
+      </label>
+
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
-      <p className="text-xs text-text-secondary text-center mb-4 leading-relaxed">
-        Al suscribirte, confirmas que has leído y aceptas nuestros{' '}
-        <Link to="/terminos" target="_blank" className="text-accent underline hover:text-accent-hover font-medium">
-          Términos
-        </Link>{' '}
-        y la{' '}
-        <Link to="/privacidad" target="_blank" className="text-accent underline hover:text-accent-hover font-medium">
-          Política de Privacidad
-        </Link>.
-      </p>
       <Button loading={loading} type="submit" className="w-full">Comenzar 7 días de prueba gratis</Button>
       <p className="text-sm text-text-secondary mt-4 text-center">
         ¿Ya eres alumna del programa?{' '}

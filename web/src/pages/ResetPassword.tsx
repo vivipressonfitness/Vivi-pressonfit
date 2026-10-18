@@ -45,7 +45,7 @@ export default function ResetPassword() {
   return (
     <section className="pt-36 pb-20 px-4">
       <div className="card-surface max-w-md mx-auto">
-        <h2 className="text-2xl font-bold mb-1">Nueva Contraseña</h2>
+        <h1 className="text-2xl font-bold mb-1">Nueva Contraseña</h1>
         <p className="text-sm text-text-secondary mb-6">
           Introduce tu nueva contraseña segura para acceder a tu cuenta del programa.
         </p>
@@ -67,6 +67,8 @@ export default function ResetPassword() {
             <Input
               label="Nueva contraseña (mínimo 6 caracteres)"
               type="password"
+              name="newPassword"
+              autoComplete="new-password"
               required
               minLength={6}
               value={password}
@@ -75,6 +77,8 @@ export default function ResetPassword() {
             <Input
               label="Confirma tu nueva contraseña"
               type="password"
+              name="confirmPassword"
+              autoComplete="new-password"
               required
               minLength={6}
               value={confirmPassword}

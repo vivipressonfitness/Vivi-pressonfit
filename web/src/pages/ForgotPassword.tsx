@@ -34,7 +34,7 @@ export default function ForgotPassword() {
   return (
     <section className="pt-36 pb-20 px-4">
       <div className="card-surface max-w-md mx-auto">
-        <h2 className="text-2xl font-bold mb-1">Recuperar Contraseña</h2>
+        <h1 className="text-2xl font-bold mb-1">Recuperar Contraseña</h1>
         <p className="text-sm text-text-secondary mb-6">
           Ingresa tu correo electrónico registrado y te enviaremos un enlace seguro para restablecer tu contraseña.
         </p>
@@ -58,6 +58,8 @@ export default function ForgotPassword() {
             <Input
               label="Email registrado"
               type="email"
+              name="email"
+              autoComplete="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}

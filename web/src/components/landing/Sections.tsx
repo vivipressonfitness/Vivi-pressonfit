@@ -197,7 +197,7 @@ export function PreviewCard({
             muted
             loop
             playsInline
-            preload="auto"
+            preload="metadata"
             onLoadedData={(e) => {
               e.currentTarget.muted = true;
               void e.currentTarget.play().catch(() => {});

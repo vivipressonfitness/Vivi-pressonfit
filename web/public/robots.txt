@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /videos
+Disallow: /perfil
+
+Sitemap: https://vivi-pressonfit.vercel.app/sitemap.xml
+

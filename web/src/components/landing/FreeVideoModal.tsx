@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import Hls from 'hls.js';
+import type Hls from 'hls.js';
 import type { PreviewItem } from '../../hooks/useLandingConfig';
 
 // Modal de video PROMOCIONAL FREE en el portal público (visible sin login).
@@ -72,7 +72,7 @@ export function FreeVideoModal({ item, onClose }: Props) {
         const json = (await res.json().catch(() => ({}))) as { hlsUrl?: string; error?: string };
         if (cancelled) return;
         if (!res.ok || !json.hlsUrl) throw new Error(json.error ?? 'No se pudo cargar el video');
-        attachSource(json.hlsUrl);
+        await attachSource(json.hlsUrl);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Error cargando video');
       } finally {
@@ -80,23 +80,28 @@ export function FreeVideoModal({ item, onClose }: Props) {
       }
     }
 
-    function attachSource(url: string) {
-      const video = videoRef.current!;
+    async function attachSource(url: string) {
+      const video = videoRef.current;
+      if (!video) return;
       hlsRef.current?.destroy();
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = url;
-      } else if (Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true });
-        hls.loadSource(url);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.ERROR, (_evt, data) => {
-          if (data.fatal && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            setError('El video no está disponible por ahora.');
-          }
-        });
-        hlsRef.current = hls;
       } else {
-        setError('Tu navegador no soporta HLS');
+        const { default: HlsClass } = await import('hls.js');
+        if (cancelled) return;
+        if (HlsClass.isSupported()) {
+          const hls = new HlsClass({ enableWorker: true });
+          hls.loadSource(url);
+          hls.attachMedia(video);
+          hls.on(HlsClass.Events.ERROR, (_evt, data) => {
+            if (data.fatal && data.type === HlsClass.ErrorTypes.NETWORK_ERROR) {
+              setError('El video no está disponible por ahora.');
+            }
+          });
+          hlsRef.current = hls;
+        } else {
+          setError('Tu navegador no soporta HLS');
+        }
       }
       void video.play().catch(() => undefined);
     }
