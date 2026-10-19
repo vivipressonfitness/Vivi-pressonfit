@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type Hls from 'hls.js';
 import type { PreviewItem } from '../../hooks/useLandingConfig';
 
@@ -20,9 +21,11 @@ function youtubeId(url: string): string | null {
 
 export function FreeVideoModal({ item, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const directVideoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
 
   const ytEmbed = item.video_url ? youtubeId(item.video_url) : null;
   const vimeoEmbed = item.video_url
@@ -151,10 +154,17 @@ export function FreeVideoModal({ item, onClose }: Props) {
           </button>
         </div>
 
-        <div className="aspect-video bg-black relative w-full flex-1 md:flex-none flex items-center justify-center">
+        <div className="aspect-video bg-black relative w-full flex-1 md:flex-none flex items-center justify-center overflow-hidden">
           {item.bunny_video_id ? (
             <>
-              <video ref={videoRef} controls playsInline className="w-full h-full" />
+              <video
+                ref={videoRef}
+                controls
+                playsInline
+                onEnded={() => setVideoEnded(true)}
+                onPlay={() => setVideoEnded(false)}
+                className="w-full h-full"
+              />
               {loading && (
                 <div className="absolute inset-0 flex items-center justify-center text-text-secondary">
                   Cargando video…
@@ -192,16 +202,57 @@ export function FreeVideoModal({ item, onClose }: Props) {
             />
           ) : directUrl ? (
             <video
+              ref={directVideoRef}
               src={directUrl}
               controls
               autoPlay={!isLocalDemo}
               playsInline
               poster={item.thumbnail_url ?? undefined}
+              onEnded={() => setVideoEnded(true)}
+              onPlay={() => setVideoEnded(false)}
               className="w-full h-full"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-text-secondary text-sm">
               Sin video configurado
+            </div>
+          )}
+
+          {/* End-Screen CTA al terminar el video (CRO) */}
+          {videoEnded && (
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20 animate-fadeIn">
+              <span className="bg-accent/20 border border-accent/40 text-accent text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2">
+                Fin del adelanto gratuito
+              </span>
+              <h4 className="text-xl md:text-2xl font-extrabold text-white mb-2">
+                ¿Lista para entrenar la clase completa?
+              </h4>
+              <p className="text-xs sm:text-sm text-text-secondary max-w-md mb-6 leading-relaxed">
+                Desbloquea las clases de 30-45 min, rutinas de fuerza 3x por semana y guías de nutrición con tus 7 días de prueba sin costo.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 items-center w-full sm:w-auto">
+                <Link
+                  to="/membresia"
+                  onClick={onClose}
+                  className="w-full sm:w-auto bg-accent hover:bg-white text-background font-bold px-6 py-3 rounded-full text-sm transition shadow-lg shadow-accent/30 text-center"
+                >
+                  Probar 7 días gratis — USD 40/mes
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoEnded(false);
+                    const target = videoRef.current || directVideoRef.current;
+                    if (target) {
+                      target.currentTime = 0;
+                      void target.play();
+                    }
+                  }}
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-text-secondary hover:text-white transition-colors"
+                >
+                  ↺ Volver a reproducir
+                </button>
+              </div>
             </div>
           )}
         </div>

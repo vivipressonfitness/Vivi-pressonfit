@@ -394,13 +394,13 @@ export function PortalCta({ config }: { config: LandingConfig }) {
         </h2>
         <p className="text-text-secondary mt-2 mb-6">
           Clases completas, rutinas 3x por semana, guías de nutrición mensuales y soporte
-          personalizado por WhatsApp — desde $us. {config.monthly_price}/mes.
+          personalizado por WhatsApp — desde USD {config.monthly_price}/mes con 7 días de prueba gratis.
         </p>
         <a
           href="/membresia"
           className="inline-block bg-accent text-background px-8 py-3.5 rounded-full font-bold hover:bg-white transition-all shadow-lg shadow-accent/20"
         >
-          Conocer la membresía →
+          Probar 7 días gratis →
         </a>
       </div>
     </section>

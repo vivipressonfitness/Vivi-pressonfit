@@ -161,7 +161,7 @@ export function Navbar() {
                   onClick={closeMenu}
                   className="w-full text-center bg-accent hover:bg-white text-background font-bold py-3 rounded-xl text-base transition shadow-md shadow-accent/25"
                 >
-                  Hazte Miembro — $us. {config.monthly_price || 40}/mes
+                  Hazte Miembro — USD {config.monthly_price || 40}/mes
                 </Link>
               </>
             )}

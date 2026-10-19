@@ -66,16 +66,16 @@ export function Hero({ config }: { config: LandingConfig }) {
 
           <div className="flex flex-col gap-3 pt-1">
             <a
-              href="#adelantos"
+              href="/membresia"
               className="w-full inline-block bg-accent hover:bg-white text-background py-3.5 rounded-full font-bold transition-all text-center shadow-lg shadow-accent/30 text-base"
             >
-              Ver contenido gratis ▶
+              Hazte miembro — USD {config.monthly_price}/mes
             </a>
             <a
-              href="/membresia"
+              href="#adelantos"
               className="w-full inline-block bg-white/10 hover:bg-white/20 border border-white/20 text-white hover:text-accent py-3.5 rounded-full font-bold backdrop-blur-md transition-all text-center text-base"
             >
-              Hazte miembro — $us. {config.monthly_price}/mes
+              Ver contenido gratis ▶
             </a>
           </div>
 
@@ -146,16 +146,16 @@ export function Hero({ config }: { config: LandingConfig }) {
 
             <div className="flex flex-row gap-4 pt-1">
               <a
-                href="#adelantos"
+                href="/membresia"
                 className="inline-block bg-accent hover:bg-white text-background px-8 py-4 rounded-full font-bold transition-all text-center shadow-lg shadow-accent/30 cursor-pointer text-lg"
               >
-                Ver contenido gratis ▶
+                Hazte miembro — USD {config.monthly_price}/mes
               </a>
               <a
-                href="/membresia"
+                href="#adelantos"
                 className="inline-block bg-white/10 hover:bg-white/20 border border-white/20 text-white hover:text-accent hover:border-accent px-8 py-4 rounded-full font-bold backdrop-blur-md transition-all text-center text-lg"
               >
-                Hazte miembro — $us. {config.monthly_price}/mes
+                Ver contenido gratis ▶
               </a>
             </div>
 

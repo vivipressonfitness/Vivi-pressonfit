@@ -95,7 +95,7 @@ export function RegisterForm() {
   return (
     <form onSubmit={onSubmit} className="card-surface max-w-md mx-auto">
       <h1 className="text-2xl font-bold mb-1">Únete al Programa</h1>
-      <p className="text-sm text-text-secondary mb-6">Membresía Mensual • $us. {config.monthly_price || 40}.-/mes (7 días gratis)</p>
+      <p className="text-sm text-text-secondary mb-6">Membresía Mensual • USD {config.monthly_price || 40}/mes (7 días gratis)</p>
 
       {from === '/membresia' && (
         <div className="mb-5 rounded-xl border border-accent/40 bg-accent/10 p-3.5 text-accent text-sm">

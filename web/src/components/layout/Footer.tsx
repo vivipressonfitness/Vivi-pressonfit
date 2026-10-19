@@ -34,7 +34,7 @@ export function Footer() {
               <li><Link to="/#adelantos" className="hover:text-accent transition-colors">Adelantos Gratis</Link></li>
               <li><Link to="/#pilares" className="hover:text-accent transition-colors">Plan de Fuerza 3x</Link></li>
               <li><Link to="/#educativo" className="hover:text-accent transition-colors">Educación Alimentaria</Link></li>
-              <li><Link to="/membresia" className="hover:text-accent transition-colors">Membresía $us. 40</Link></li>
+              <li><Link to="/membresia" className="hover:text-accent transition-colors">Membresía USD 40</Link></li>
             </ul>
           </div>
           <div>
@@ -60,7 +60,7 @@ export function Footer() {
         </div>
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-border text-xs text-text-secondary">
           <p>© {new Date().getFullYear()} VIVIPRESSONFIT. Todos los derechos reservados.</p>
-          <p className="mt-2 md:mt-0">Suscripción mensual $us. 40.- / mes</p>
+          <p className="mt-2 md:mt-0">Suscripción mensual USD 40 / mes</p>
         </div>
       </div>
     </footer>

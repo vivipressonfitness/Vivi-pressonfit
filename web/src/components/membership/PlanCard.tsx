@@ -24,7 +24,7 @@ export function PlanCard({ price = 40, onSubscribe, loading }: Props) {
         </span>
       </div>
       <p className="text-4xl font-extrabold text-accent my-4">
-        $us. {price}
+        USD {price}
         <span className="text-base font-medium text-text-secondary"> /mes</span>
       </p>
       <ul className="space-y-2 text-sm text-text-secondary mb-6 text-left">
@@ -38,7 +38,7 @@ export function PlanCard({ price = 40, onSubscribe, loading }: Props) {
         Comenzar prueba gratis de 7 días
       </Button>
       <p className="text-xs text-text-secondary text-center mt-2.5">
-        $0.00 hoy. Cancela cuando quieras antes de los 7 días sin costo.
+        $0.00 hoy. Cancela cuando quieras antes de los 7 días sin costo. Cobro internacional en USD procesado con Stripe.
       </p>
     </Card>
   );
