@@ -112,7 +112,7 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
           modules={[Autoplay, FreeMode]}
           spaceBetween={16}
           slidesPerView={1.25}
-          speed={3800}
+          speed={2800}
           freeMode={{
             enabled: true,
             momentum: false,
@@ -123,6 +123,17 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
             delay: 0,
             disableOnInteraction: false,
             pauseOnMouseEnter: false,
+            waitForTransition: false,
+          }}
+          onSwiper={(swiper) => {
+            const resume = () => {
+              if (swiper.autoplay && !swiper.autoplay.running) {
+                swiper.autoplay.start();
+              }
+            };
+            swiper.el.addEventListener('pointerup', resume);
+            swiper.el.addEventListener('touchend', resume);
+            swiper.el.addEventListener('mouseleave', resume);
           }}
           breakpoints={{
             480: {
