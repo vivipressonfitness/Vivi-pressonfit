@@ -7,7 +7,7 @@ import { LandingConfigEditor } from '../components/admin/LandingConfigEditor';
 import { ContentManager } from '../components/admin/ContentManager';
 import { AnalyticsChart } from '../components/admin/AnalyticsChart';
 
-import { MediaBucketManager } from '../components/admin/MediaBucketManager';
+import { MediaManager } from '../components/admin/MediaManager';
 
 // Panel admin con autonomía plena: 4 pestañas.
 // - Contenido: CRUD de membership_content (público para landing y privado para miembros)
@@ -112,7 +112,7 @@ export default function Admin() {
 
       {tab === 'content' && <ContentManager />}
 
-      {tab === 'bucket' && <MediaBucketManager />}
+      {tab === 'bucket' && <MediaManager />}
 
       {tab === 'landing' && (
         <Card>

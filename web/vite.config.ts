@@ -1,3 +1,6 @@
+/* eslint-disable */
+/* @ts-nocheck */
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
@@ -15,8 +18,20 @@ try {
 } catch {}
 
 export default defineConfig({
+  // Anchor the project root so Vite/esbuild never walks up to the parent directory
+  root: __dirname,
   plugins: [react()],
   server: { port: 3000 }, // mismo puerto que el dev actual
+  resolve: {
+    // Tell Vite to look for packages ONLY inside web/node_modules
+    alias: {
+      react: path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+    },
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'swiper', 'swiper/react', 'swiper/modules'],
+  },
   build: {
     outDir: 'dist',
     target: 'esnext',

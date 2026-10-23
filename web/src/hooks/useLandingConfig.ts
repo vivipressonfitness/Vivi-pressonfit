@@ -21,6 +21,7 @@ export interface LandingConfig {
   quien_soy_title: string;
   quien_soy_subtitle: string;
   quien_soy_bio: string;
+  carousel_filter: 'all' | 'image' | 'video';
 }
 
 export interface GalleryCardItem {
@@ -152,6 +153,7 @@ export const DEFAULT_CONFIG: LandingConfig = {
   quien_soy_subtitle: 'Tu Coach & Mentora',
   quien_soy_bio:
     '¡Hola! Soy Vivi. Mi enfoque no se basa en dietas extremas ni castigos, sino en construir fuerza, disciplina y bienestar paso a paso. Estoy aquí para acompañarte cada día y guiarte a lograr la mejor versión de ti misma.',
+  carousel_filter: 'all',
 };
 
 const CONFIG_KEYS = Object.keys(DEFAULT_CONFIG) as Array<keyof LandingConfig>;
@@ -220,6 +222,8 @@ export function useLandingConfig() {
               next.whatsapp_number = cleanWa && cleanWa !== '59178000000' ? cleanWa : '5493415888117';
             } else if (row.key === 'educacion_image' && val.includes('uxpilot-auth.appspot.com')) {
               next.educacion_image = '/landing/thumb-cardio.jpg';
+            } else if (row.key === 'carousel_filter') {
+              if (val === 'all' || val === 'image' || val === 'video') next.carousel_filter = val;
             } else {
               (next as unknown as Record<string, string>)[row.key] = val;
             }

@@ -2,7 +2,7 @@ import { useLandingConfig } from '../hooks/useLandingConfig';
 import { Hero, Marquee } from '../components/landing/Hero';
 import { MetodoVideo } from '../components/landing/MetodoVideo';
 import { Pilares, AdelantoClases, AdelantoEducativo, PortalCta } from '../components/landing/Sections';
-import { GallerySection } from '../components/landing/GallerySection';
+import { SwiperWrapper } from '../components/gallery/SwiperWrapper';
 import { AboutMe } from '../components/landing/AboutMe';
 import { Faq } from '../components/landing/MembresiaFaq';
 import { Testimonios } from '../components/landing/Testimonios';
@@ -13,7 +13,7 @@ import { Testimonios } from '../components/landing/Testimonios';
 // vive en su propia página: /membresia (tras login).
 // ============================================================
 export default function Home() {
-  const { config, clases, recursos, galleryCards, quienSoyImages } = useLandingConfig();
+  const { config, clases, recursos, quienSoyImages } = useLandingConfig();
 
   return (
     <div>
@@ -21,7 +21,7 @@ export default function Home() {
       <MetodoVideo />
       <Marquee />
       <Pilares config={config} />
-      <GallerySection cards={galleryCards} title={config.gallery_title} />
+      <SwiperWrapper filterMode={config.carousel_filter} />
       <AboutMe config={config} images={quienSoyImages} />
       <AdelantoClases clases={clases} />
       <AdelantoEducativo recursos={recursos} config={config} />

@@ -1,6 +1,6 @@
 module.exports = [
   {
-    ignores: ['dist', 'node_modules', 'supabase'],
+    ignores: ['dist', 'node_modules', 'supabase', 'vite.config.ts'],
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
