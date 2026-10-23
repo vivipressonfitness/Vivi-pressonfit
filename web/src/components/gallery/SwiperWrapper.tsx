@@ -1,8 +1,7 @@
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, FreeMode } from 'swiper/modules';
+import { Autoplay } from 'swiper/modules';
 import 'swiper/css';
-import 'swiper/css/free-mode';
 import { useCarouselMedia } from '../../hooks/useCarouselMedia';
 import { MediaItem } from '../../types/MediaItem';
 
@@ -12,7 +11,7 @@ interface MediaCardProps {
 
 const MediaCard: React.FC<MediaCardProps> = ({ item }) => {
   return (
-    <div className="group relative w-full aspect-[9/16] max-h-[540px] rounded-[2rem] overflow-hidden bg-neutral-900 border border-white/10 shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 select-none">
+    <div className="group relative w-full aspect-[9/16] max-h-[540px] rounded-[2rem] overflow-hidden bg-neutral-900 border border-white/10 shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 select-none pointer-events-none">
       {item.type === 'image' ? (
         <img
           src={item.src}
@@ -44,10 +43,9 @@ interface SwiperWrapperProps {
 
 /**
  * Carousel horizontal multi-tarjeta estilo Obé Fitness:
- * - Totalmente limpio en el frontend (sin botones de filtro ni flechas intrusivas).
- * - Movimiento 100% continuo, fluido y autoplay constante.
- * - La selección de contenido se administra desde el Panel Admin.
- * - Excluye el logo oficial del carrusel.
+ * - Movimiento continuo lineal sin pausas.
+ * - Inmune a pausas por desplazamiento de mouse o touch en celular.
+ * - Totalmente limpio en el frontend.
  */
 export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all' }) => {
   const { media: filtered, loading } = useCarouselMedia(filterMode);
@@ -84,7 +82,7 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
   }
 
   if (filtered.length === 0) {
-    return null; // Si no hay archivos, no ocupa espacio innecesario en la landing
+    return null;
   }
 
   return (
@@ -106,19 +104,19 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
         </h2>
       </div>
 
-      {/* Contenedor del Carrusel Estilo Obé con movimiento 100% fluido y lineal */}
+      {/* Contenedor del Carrusel Estilo Obé con movimiento continuo y sin pausas */}
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <Swiper
-          modules={[Autoplay, FreeMode]}
+          modules={[Autoplay]}
           spaceBetween={16}
           slidesPerView={1.25}
           speed={2800}
-          freeMode={{
-            enabled: true,
-            momentum: false,
-          }}
-          grabCursor={true}
           loop={true}
+          grabCursor={false}
+          simulateTouch={false}
+          allowTouchMove={true}
+          touchReleaseOnEdges={true}
+          touchStartPreventDefault={false}
           autoplay={{
             delay: 0,
             disableOnInteraction: false,
@@ -126,14 +124,23 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
             waitForTransition: false,
           }}
           onSwiper={(swiper) => {
-            const resume = () => {
-              if (swiper.autoplay && !swiper.autoplay.running) {
+            const restart = () => {
+              if (swiper && !swiper.destroyed && swiper.autoplay) {
                 swiper.autoplay.start();
+                swiper.slideNext(2800, false);
               }
             };
-            swiper.el.addEventListener('pointerup', resume);
-            swiper.el.addEventListener('touchend', resume);
-            swiper.el.addEventListener('mouseleave', resume);
+
+            // Eventos internos de Swiper para reanudar de inmediato
+            swiper.on('touchEnd', () => {
+              setTimeout(restart, 20);
+            });
+            swiper.on('autoplayPause', () => {
+              setTimeout(restart, 20);
+            });
+            swiper.on('autoplayStop', () => {
+              setTimeout(restart, 20);
+            });
           }}
           breakpoints={{
             480: {
