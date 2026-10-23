@@ -97,7 +97,7 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
         .carousel-marquee-inner {
           display: flex;
           width: max-content;
-          animation: carouselMarqueeTrack 38s linear infinite !important;
+          animation: carouselMarqueeTrack 28s linear infinite !important;
           will-change: transform;
         }
       `}</style>
