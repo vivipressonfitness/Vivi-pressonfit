@@ -112,7 +112,7 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
           modules={[Autoplay, FreeMode]}
           spaceBetween={16}
           slidesPerView={1.25}
-          speed={6000}
+          speed={3800}
           freeMode={{
             enabled: true,
             momentum: false,
