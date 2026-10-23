@@ -1,5 +1,6 @@
 import { useLandingConfig } from '../hooks/useLandingConfig';
 import { Hero, Marquee } from '../components/landing/Hero';
+import { MetodoVideo } from '../components/landing/MetodoVideo';
 import { Pilares, AdelantoClases, AdelantoEducativo, PortalCta } from '../components/landing/Sections';
 import { GallerySection } from '../components/landing/GallerySection';
 import { AboutMe } from '../components/landing/AboutMe';
@@ -17,6 +18,7 @@ export default function Home() {
   return (
     <div>
       <Hero config={config} />
+      <MetodoVideo />
       <Marquee />
       <Pilares config={config} />
       <GallerySection cards={galleryCards} title={config.gallery_title} />
