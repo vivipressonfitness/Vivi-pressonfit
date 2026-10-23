@@ -1,7 +1,4 @@
 import React from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay } from 'swiper/modules';
-import 'swiper/css';
 import { useCarouselMedia } from '../../hooks/useCarouselMedia';
 import { MediaItem } from '../../types/MediaItem';
 
@@ -11,7 +8,7 @@ interface MediaCardProps {
 
 const MediaCard: React.FC<MediaCardProps> = ({ item }) => {
   return (
-    <div className="group relative w-full aspect-[9/16] max-h-[540px] rounded-[2rem] overflow-hidden bg-neutral-900 border border-white/10 shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 select-none pointer-events-none">
+    <div className="relative w-[210px] sm:w-[250px] md:w-[280px] aspect-[9/16] shrink-0 rounded-[2rem] overflow-hidden bg-neutral-900 border border-white/10 shadow-md select-none pointer-events-none">
       {item.type === 'image' ? (
         <img
           src={item.src}
@@ -42,21 +39,21 @@ interface SwiperWrapperProps {
 }
 
 /**
- * Carousel horizontal multi-tarjeta estilo Obé Fitness:
- * - Movimiento continuo lineal sin pausas.
- * - Inmune a pausas por desplazamiento de mouse o touch en celular.
- * - Totalmente limpio en el frontend.
+ * Carrusel horizontal continuo estilo Obé Fitness:
+ * - Movimiento 100% fluido e imparable mediante GPU hardware acceleration.
+ * - NUNCA se pausa al hacer scroll con el mouse ni al desplazarse en celular.
+ * - Velocidad calibrada a 28s para un ritmo ágil y constante.
+ * - Totalmente limpio en el frontend y administrable desde el Panel Admin.
  */
 export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all' }) => {
   const { media: filtered, loading } = useCarouselMedia(filterMode);
 
-  // Asegura suficientes tarjetas para un loop continuo y fluido sin saltos
+  // Asegura suficientes tarjetas para duplicación sin saltos en el bucle infinito
   const displayItems = React.useMemo(() => {
     if (filtered.length === 0) return [];
-    if (filtered.length >= 10) return filtered;
     let list = [...filtered];
     let counter = 1;
-    while (list.length < 12) {
+    while (list.length < 8) {
       list = [
         ...list,
         ...filtered.map((item) => ({
@@ -87,10 +84,21 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
 
   return (
     <section className="w-full py-16 overflow-hidden">
-      {/* Estilo para garantizar movimiento continuo y suave sin saltos */}
+      {/* Animación por GPU nativa inmune a pausas por scroll o toques de pantalla */}
       <style>{`
-        .swiper-continuous-fluid .swiper-wrapper {
-          transition-timing-function: linear !important;
+        @keyframes carouselMarqueeTrack {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          100% {
+            transform: translate3d(-50%, 0, 0);
+          }
+        }
+        .carousel-marquee-inner {
+          display: flex;
+          width: max-content;
+          animation: carouselMarqueeTrack 28s linear infinite !important;
+          will-change: transform;
         }
       `}</style>
 
@@ -104,74 +112,18 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
         </h2>
       </div>
 
-      {/* Contenedor del Carrusel Estilo Obé con movimiento continuo y sin pausas */}
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <Swiper
-          modules={[Autoplay]}
-          spaceBetween={16}
-          slidesPerView={1.25}
-          speed={2800}
-          loop={true}
-          grabCursor={false}
-          simulateTouch={false}
-          allowTouchMove={true}
-          touchReleaseOnEdges={true}
-          touchStartPreventDefault={false}
-          autoplay={{
-            delay: 0,
-            disableOnInteraction: false,
-            pauseOnMouseEnter: false,
-            waitForTransition: false,
-          }}
-          onSwiper={(swiper) => {
-            const restart = () => {
-              if (swiper && !swiper.destroyed && swiper.autoplay) {
-                swiper.autoplay.start();
-                swiper.slideNext(2800, false);
-              }
-            };
-
-            // Eventos internos de Swiper para reanudar de inmediato
-            swiper.on('touchEnd', () => {
-              setTimeout(restart, 20);
-            });
-            swiper.on('autoplayPause', () => {
-              setTimeout(restart, 20);
-            });
-            swiper.on('autoplayStop', () => {
-              setTimeout(restart, 20);
-            });
-          }}
-          breakpoints={{
-            480: {
-              slidesPerView: 1.8,
-              spaceBetween: 16,
-            },
-            640: {
-              slidesPerView: 2.4,
-              spaceBetween: 20,
-            },
-            768: {
-              slidesPerView: 3.2,
-              spaceBetween: 20,
-            },
-            1024: {
-              slidesPerView: 4.2,
-              spaceBetween: 24,
-            },
-            1280: {
-              slidesPerView: 4.8,
-              spaceBetween: 24,
-            },
-          }}
-          className="swiper-continuous-fluid !overflow-visible py-4"
-        >
+      {/* Tira continua e infinita que jamás se pausa al hacer scroll */}
+      <div className="w-full overflow-hidden py-4 select-none">
+        <div className="carousel-marquee-inner gap-4 sm:gap-6">
+          {/* Primer set de tarjetas */}
           {displayItems.map((item) => (
-            <SwiperSlide key={item.id} className="h-auto">
-              <MediaCard item={item} />
-            </SwiperSlide>
+            <MediaCard key={item.id} item={item} />
           ))}
-        </Swiper>
+          {/* Segundo set clonado para bucle 100% continuo e invisible */}
+          {displayItems.map((item) => (
+            <MediaCard key={`clone-${item.id}`} item={item} />
+          ))}
+        </div>
       </div>
     </section>
   );
