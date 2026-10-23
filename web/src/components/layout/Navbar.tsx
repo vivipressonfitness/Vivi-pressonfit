@@ -12,11 +12,14 @@ const mobileNavLinkCls = ({ isActive }: { isActive: boolean }) =>
 // Anclas del portal público (scroll suave a secciones) — visibles solo en "/"
 const landingAnchors = [
   { href: '/#pilares', label: 'Programas' },
-  { href: '/#galeria', label: 'Métodos' },
-  { href: '/#quien-soy', label: '¿Quién Soy?' },
   { href: '/#adelantos', label: 'Gratis' },
   { href: '/#educativo', label: 'Nutrición' },
   { href: '/#faq', label: 'FAQ' },
+];
+// Anchors que aparecen solo en pantallas extra‑large (≥1280 px)
+const secondaryAnchors = [
+  { href: '/#galeria', label: 'Métodos' },
+  { href: '/#quien-soy', label: '¿Quién Soy?' },
 ];
 
 export function Navbar() {
@@ -44,17 +47,34 @@ export function Navbar() {
         </Link>
 
         {/* NAVEGACIÓN DESKTOP (Visible en pantallas grandes lg+) */}
-        <div className="hidden lg:flex items-center gap-1 xl:gap-2">
-          {onHome &&
-            landingAnchors.map((a) => (
-              <a
-                key={a.href}
-                href={a.href}
-                className="px-3 py-1.5 text-sm xl:text-base font-medium text-text-secondary hover:text-accent transition whitespace-nowrap"
-              >
-                {a.label}
-              </a>
-            ))}
+<div className="hidden lg:flex items-center gap-1 xl:gap-2">
+  {onHome && (
+    <>
+      {/* Anclajes principales – siempre visibles en lg+ */}
+      {landingAnchors.map((a) => (
+        <a
+          key={a.href}
+          href={a.href}
+          className="px-3 py-1.5 text-sm xl:text-base font-medium text-text-secondary hover:text-accent transition whitespace-nowrap"
+        >
+          {a.label}
+        </a>
+      ))}
+
+      {/* Anclajes secundarios – solo en xl (≥1280 px) */}
+      <div className="hidden xl:flex gap-2">
+        {secondaryAnchors.map((a) => (
+          <a
+            key={a.href}
+            href={a.href}
+            className="px-3 py-1.5 text-sm xl:text-base font-medium text-text-secondary hover:text-accent transition whitespace-nowrap"
+          >
+            {a.label}
+          </a>
+        ))}
+      </div>
+    </>
+  )}
           {user && <NavLink to="/dashboard" className={navLinkCls}>Dashboard</NavLink>}
           {user && <NavLink to="/videos" className={navLinkCls}>Videos</NavLink>}
           {user && <NavLink to="/membresia" className={navLinkCls}>Mi Plan</NavLink>}

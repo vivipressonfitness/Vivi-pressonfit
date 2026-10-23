@@ -5,7 +5,7 @@ import { Pilares, AdelantoClases, AdelantoEducativo, PortalCta } from '../compon
 import { GallerySection } from '../components/landing/GallerySection';
 import { AboutMe } from '../components/landing/AboutMe';
 import { Faq } from '../components/landing/MembresiaFaq';
-
+import { Testimonios } from '../components/landing/Testimonios';
 // ============================================================
 // LANDING TIPO PORTAL (público, sin login)
 // Muestra TODO el contenido gratuito como adelanto de lo que la
@@ -26,6 +26,7 @@ export default function Home() {
       <AdelantoClases clases={clases} />
       <AdelantoEducativo recursos={recursos} config={config} />
       <PortalCta config={config} />
+      <Testimonios />
       <Faq />
     </div>
   );
