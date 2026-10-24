@@ -4,6 +4,7 @@ import { FreeVideoModal } from './FreeVideoModal';
 import { HaloBadge } from '../ui/HaloBadge';
 import { FeatureCarousel } from './FeatureCarousel';
 import { LANDING_CLASES, LANDING_EDUCATIVO } from '../../data/landingMedia';
+import { SpotlightCard } from '../ui/reactbits/SpotlightCard';
 
 // ============================================================
 // Secciones del PORTAL PÚBLICO de adelantos (landing tipo portal).
@@ -78,18 +79,19 @@ export function Pilares({ config }: { config: LandingConfig }) {
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {PILARES.map((p) => (
-            <div
+            <SpotlightCard
               key={p.title}
-              className="bg-raised p-7 rounded-2xl border border-border hover:border-accent transition duration-300"
+              spotlightColor="rgba(255, 46, 147, 0.2)"
+              className="p-7 bg-raised hover:border-accent/80 transition-colors duration-300"
             >
               <div
-                className={`w-14 h-14 bg-background rounded-2xl flex items-center justify-center mb-6 border border-border ${p.iconColor}`}
+                className={`w-14 h-14 bg-background rounded-2xl flex items-center justify-center mb-6 border border-border relative z-10 ${p.iconColor}`}
               >
                 {p.icon}
               </div>
-              <h3 className="font-heading text-xl font-bold mb-3 text-text-primary">{p.title}</h3>
-              <p className="text-text-secondary text-sm leading-relaxed">{p.desc}</p>
-            </div>
+              <h3 className="font-heading text-xl font-bold mb-3 text-text-primary relative z-10">{p.title}</h3>
+              <p className="text-text-secondary text-sm leading-relaxed relative z-10">{p.desc}</p>
+            </SpotlightCard>
           ))}
         </div>
       </div>

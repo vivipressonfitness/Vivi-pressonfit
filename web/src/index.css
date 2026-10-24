@@ -27,6 +27,27 @@
   }
 }
 
+/* Reglas oficiales de Lenis Smooth Scrolling */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
 @layer components {
   .btn-accent {
     @apply bg-accent hover:bg-accent-hover text-white font-bold px-6 py-3 rounded-pill transition;

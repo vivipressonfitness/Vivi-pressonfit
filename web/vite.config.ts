@@ -30,7 +30,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'swiper', 'swiper/react', 'swiper/modules'],
+    include: ['react', 'react-dom', 'swiper', 'swiper/react', 'swiper/modules', 'lenis', 'lenis/react'],
   },
   build: {
     outDir: 'dist',
