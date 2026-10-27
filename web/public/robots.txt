@@ -4,6 +4,9 @@ Disallow: /admin
 Disallow: /dashboard
 Disallow: /videos
 Disallow: /perfil
+Disallow: /login
+Disallow: /registro
+Disallow: /recuperar
+Disallow: /recuperar-password
 
 Sitemap: https://vivi-pressonfit.vercel.app/sitemap.xml
-

@@ -42,10 +42,10 @@ export default function Membership() {
     { title: 'Contenido nuevo cada ciclo', desc: 'Renovación mensual: siempre hay clases, desafíos y material fresco disponible.' },
   ];
 
-  // Si la usuaria ya tiene una membresía activa gestionable
+  // Si la usuaria ya tiene una membresía activa o en período de prueba gestionable
   const isManaging =
     Boolean(user) &&
-    (status === 'active' || status === 'past_due') &&
+    (status === 'active' || status === 'past_due' || status === 'trial') &&
     /^sub_[A-Za-z0-9]+$/.test(stripeSubscriptionId ?? '');
 
   // Manejo de Registro Inline directo hacia Stripe Checkout

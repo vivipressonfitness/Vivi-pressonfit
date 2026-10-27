@@ -1,13 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
+import { useLenis } from 'lenis/react';
 import type Hls from 'hls.js';
 import type { PreviewItem } from '../../hooks/useLandingConfig';
 
 // Modal de video PROMOCIONAL FREE en el portal público (visible sin login).
-// Fuentes soportadas por item de preview_clases / preview_recursos:
-//  - bunny_video_id → HLS de Bunny Stream. El token se pide a la Edge Function
-//    pública bunny-token-public (no requiere sesión; verificar-membership=false).
-//  - video_url      → mp4/mov directo, o embed de YouTube/Vimeo.
+// Cumple con WAI-ARIA 1.2 dialog (atrapamiento de foco, escape, pausa de scroll y Lenis).
 
 interface Props {
   item: PreviewItem;
@@ -20,6 +18,12 @@ function youtubeId(url: string): string | null {
 }
 
 export function FreeVideoModal({ item, onClose }: Props) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const lenis = useLenis();
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const directVideoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -43,18 +47,63 @@ export function FreeVideoModal({ item, onClose }: Props) {
     item.video_url && !ytEmbed && !vimeoEmbed && !bunnyEmbed ? item.video_url : null;
   const isLocalDemo = Boolean(directUrl && directUrl.startsWith('/landing/'));
 
-  // Cerrar con Escape + bloquear scroll del fondo
+  // Gestión de foco, teclado Escape, bloqueo de scroll y pausa de Lenis (WAI-ARIA 1.2)
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+
+    // Pausar Lenis y bloquear scroll nativo
+    lenis?.stop();
+    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    // Foco inicial accesible
+    const timer = setTimeout(() => {
+      closeButtonRef.current?.focus();
+    }, 50);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        const first = focusableElements[0];
+        const last = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === first || document.activeElement === modalRef.current) {
+            e.preventDefault();
+            last?.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first?.focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+      lenis?.start();
+
       hlsRef.current?.destroy();
       hlsRef.current = null;
+
+      // Restaurar foco al elemento que disparó el modal
+      previousFocusRef.current?.focus();
     };
-  }, [onClose]);
+  }, [onClose, lenis]);
 
   // HLS público desde Bunny (token vía Edge Function anon)
   useEffect(() => {
@@ -124,33 +173,44 @@ export function FreeVideoModal({ item, onClose }: Props) {
       <button
         type="button"
         onClick={onClose}
-        aria-label="Regresar a la pantalla anterior"
-        className="md:hidden fixed top-3 left-3 z-[90] flex items-center gap-1.5 bg-black/80 hover:bg-black active:scale-95 text-white px-3.5 py-2 rounded-full border border-white/20 backdrop-blur-md shadow-2xl transition cursor-pointer select-none"
+        aria-label="Regresar y cerrar video"
+        className="md:hidden fixed top-3 left-3 z-[90] flex items-center gap-1.5 bg-black/80 hover:bg-black active:scale-95 text-white px-3.5 py-2 rounded-full border border-white/20 backdrop-blur-md shadow-2xl transition cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-accent"
       >
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="w-4 h-4">
           <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
         </svg>
         <span className="text-xs font-bold tracking-tight">Volver</span>
       </button>
 
       <div
-        className="relative w-full h-full md:h-auto max-w-3xl bg-surface border-0 md:border md:border-border rounded-none md:rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-center md:block"
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="relative w-full h-full md:h-auto max-w-3xl bg-surface border-0 md:border md:border-border rounded-none md:rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-center md:block focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 border-b border-border/40 md:border-border">
           <div className="pl-24 md:pl-0">
-            {/* Solo categoría del programa (sin 'ADELANTO GRATIS') */}
+            {/* Solo categoría del programa */}
             <span className="inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-1 uppercase tracking-wider">
               {item.category}
             </span>
-            <h3 className="font-heading text-base md:text-xl font-bold text-text-primary line-clamp-1">{item.title}</h3>
+            <h3 id={titleId} className="font-heading text-base md:text-xl font-bold text-text-primary line-clamp-1">
+              {item.title}
+            </h3>
           </div>
           <button
+            ref={closeButtonRef}
+            type="button"
             onClick={onClose}
-            aria-label="Cerrar"
-            className="text-text-secondary hover:text-white text-2xl leading-none px-2 cursor-pointer transition-colors"
+            aria-label="Cerrar reproductor"
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-border bg-surface text-text-secondary hover:text-white hover:border-accent transition-colors focus-visible:ring-2 focus-visible:ring-accent"
           >
-            ✕
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
@@ -161,40 +221,41 @@ export function FreeVideoModal({ item, onClose }: Props) {
                 ref={videoRef}
                 controls
                 playsInline
+                aria-label={item.title}
                 onEnded={() => setVideoEnded(true)}
                 onPlay={() => setVideoEnded(false)}
                 className="w-full h-full"
               />
               {loading && (
-                <div className="absolute inset-0 flex items-center justify-center text-text-secondary">
+                <div role="status" className="absolute inset-0 flex items-center justify-center text-text-secondary">
                   Cargando video…
                 </div>
               )}
               {error && (
-                <div className="absolute inset-0 flex items-center justify-center text-red-400 text-sm px-6 text-center">
+                <div role="alert" className="absolute inset-0 flex items-center justify-center text-red-400 text-sm px-6 text-center">
                   {error}
                 </div>
               )}
             </>
           ) : ytEmbed ? (
             <iframe
-              title={item.title}
+              title={`Video de ${item.title}`}
               src={`https://www.youtube.com/embed/${ytEmbed}?autoplay=1`}
               allow="autoplay; encrypted-media; picture-in-picture"
               allowFullScreen
-              className="w-full h-full"
+              className="w-full h-full border-0"
             />
           ) : vimeoEmbed ? (
             <iframe
-              title={item.title}
+              title={`Video de ${item.title}`}
               src={`https://player.vimeo.com/video/${vimeoEmbed}?autoplay=1`}
               allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
-              className="w-full h-full"
+              className="w-full h-full border-0"
             />
           ) : bunnyEmbed ? (
             <iframe
-              title={item.title}
+              title={`Video de ${item.title}`}
               src={`${bunnyEmbed}${bunnyEmbed.includes('?') ? '&' : '?'}autoplay=true`}
               allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
               allowFullScreen
@@ -207,13 +268,14 @@ export function FreeVideoModal({ item, onClose }: Props) {
               controls
               autoPlay={!isLocalDemo}
               playsInline
+              aria-label={item.title}
               poster={item.thumbnail_url ?? undefined}
               onEnded={() => setVideoEnded(true)}
               onPlay={() => setVideoEnded(false)}
               className="w-full h-full"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-text-secondary text-sm">
+            <div role="status" className="w-full h-full flex items-center justify-center text-text-secondary text-sm">
               Sin video configurado
             </div>
           )}
@@ -234,7 +296,7 @@ export function FreeVideoModal({ item, onClose }: Props) {
                 <Link
                   to="/membresia"
                   onClick={onClose}
-                  className="w-full sm:w-auto bg-accent hover:bg-white text-background font-bold px-6 py-3 rounded-full text-sm transition shadow-lg shadow-accent/30 text-center"
+                  className="w-full sm:w-auto bg-accent hover:bg-white text-background font-bold px-6 py-3 rounded-full text-sm transition shadow-lg shadow-accent/30 text-center focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   Probar 7 días gratis — USD 40/mes
                 </Link>
@@ -248,7 +310,7 @@ export function FreeVideoModal({ item, onClose }: Props) {
                       void target.play();
                     }
                   }}
-                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-text-secondary hover:text-white transition-colors"
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-text-secondary hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   ↺ Volver a reproducir
                 </button>

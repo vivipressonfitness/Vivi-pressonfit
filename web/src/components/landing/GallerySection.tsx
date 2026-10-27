@@ -10,7 +10,7 @@ export function GallerySection({ cards, title }: GallerySectionProps) {
   const [selectedImage, setSelectedImage] = useState<GalleryCardItem | null>(null);
 
   return (
-    <section id="galeria" className="py-12 md:py-16 bg-background relative overflow-hidden border-t border-border">
+    <section id="galeria-legacy" className="py-12 md:py-16 bg-background relative overflow-hidden border-t border-border">
       {/* Resplandor decorativo de fondo */}
       <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-accent/5 rounded-full blur-[140px]" />
 

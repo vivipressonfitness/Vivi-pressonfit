@@ -147,6 +147,9 @@ export function PreviewCard({
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !isDirectVideo || videoError) return;
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
     video.muted = true;
     video.defaultMuted = true;
     const playPromise = video.play();
@@ -161,10 +164,9 @@ export function PreviewCard({
         hasVideo ? 'hover:border-accent' : 'opacity-95'
       }`}
     >
-      {/* Contenedor del reproductor / media: más grande y protagonista en móvil (1:1), 4:3 en desktop */}
+      {/* Contenedor del reproductor / media */}
       <div
-        onClick={() => hasVideo && onPlay(item)}
-        className="relative -m-4 sm:-m-5 md:-m-6 mb-3 sm:mb-4 rounded-t-2xl overflow-hidden aspect-[1/1] sm:aspect-[4/3] md:aspect-[4/3] bg-black/90 cursor-pointer group/media flex items-center justify-center select-none"
+        className="relative -m-4 sm:-m-5 md:-m-6 mb-3 sm:mb-4 rounded-t-2xl overflow-hidden aspect-[1/1] sm:aspect-[4/3] md:aspect-[4/3] bg-black/90 group/media flex items-center justify-center select-none"
       >
         {ytId ? (
           <iframe

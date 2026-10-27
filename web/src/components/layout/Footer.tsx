@@ -60,6 +60,15 @@ export function Footer() {
               <li><Link to="/terminos" className="hover:text-accent transition-colors">Términos del Servicio</Link></li>
               <li><Link to="/privacidad" className="hover:text-accent transition-colors">Política de Privacidad</Link></li>
               <li><Link to="/cookies" className="hover:text-accent transition-colors">Política de Cookies</Link></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new Event('reopen-cookie-banner'))}
+                  className="hover:text-accent transition-colors text-left"
+                >
+                  Preferencias de cookies
+                </button>
+              </li>
               <li><Link to="/aviso-legal" className="hover:text-accent transition-colors">Aviso Legal</Link></li>
             </ul>
           </div>

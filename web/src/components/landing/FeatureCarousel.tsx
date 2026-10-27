@@ -6,10 +6,12 @@ interface Props {
   autoSlideInterval?: number; // ms entre desplazamientos (por defecto 3500ms)
 }
 
-/** Carrusel autodeslizante suave y responsive con soporte táctil y pausa al posar el mouse. */
+/** Carrusel autodeslizante suave y responsive con soporte táctil, teclado y pausa accesible (WCAG 2.2.2). */
 export function FeatureCarousel({ label, children, autoSlideInterval = 3500 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false);
+  const [userPaused, setUserPaused] = useState(false);
+  const isPaused = isInteracting || userPaused;
 
   // Desplazamiento manual en dirección (-1 o +1)
   const move = (direction: -1 | 1) => {
@@ -57,10 +59,12 @@ export function FeatureCarousel({ label, children, autoSlideInterval = 3500 }: P
   return (
     <div
       className="relative group/carousel"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onTouchStart={() => setIsPaused(true)}
-      onTouchEnd={() => setIsPaused(false)}
+      onMouseEnter={() => setIsInteracting(true)}
+      onMouseLeave={() => setIsInteracting(false)}
+      onTouchStart={() => setIsInteracting(true)}
+      onTouchEnd={() => setIsInteracting(false)}
+      onFocusCapture={() => setIsInteracting(true)}
+      onBlurCapture={() => setIsInteracting(false)}
     >
       {/* Pista de tarjetas deslizantes */}
       <div
@@ -74,12 +78,18 @@ export function FeatureCarousel({ label, children, autoSlideInterval = 3500 }: P
         {children}
       </div>
 
-      {/* Controles de navegación laterales */}
+      {/* Controles de navegación laterales y estado de pausa */}
       <div className="flex items-center justify-between pt-2">
-        <span className="text-xs text-text-secondary/80 flex items-center gap-1.5 font-medium">
+        <button
+          type="button"
+          onClick={() => setUserPaused((prev) => !prev)}
+          aria-label={userPaused ? `Reanudar rotación de ${label}` : `Pausar rotación de ${label}`}
+          aria-pressed={userPaused}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-surface text-xs text-text-secondary hover:text-text-primary hover:border-accent transition focus-visible:ring-2 focus-visible:ring-accent"
+        >
           <span className={`inline-block size-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'}`} />
-          {isPaused ? 'Pausado (interacción)' : 'Deslizamiento automático'}
-        </span>
+          <span>{isPaused ? (userPaused ? 'Pausado' : 'Pausa (interacción)') : 'Deslizamiento activo'}</span>
+        </button>
 
         <div className="flex gap-2">
           <button

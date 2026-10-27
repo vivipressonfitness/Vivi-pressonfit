@@ -17,8 +17,8 @@ export function Hero({ config }: { config: LandingConfig }) {
       {/* ============================================================== */}
       <div className="block md:hidden pt-[76px]">
         {/* 1. TIRA ANIMADA DEL TÍTULO ANCLADA JUSTO DEBAJO DEL HEADER */}
-        <div className="py-3 bg-gradient-to-r from-accent/20 via-accent/10 to-accent/20 border-b border-border overflow-hidden whitespace-nowrap" aria-hidden="true">
-          <div className="inline-block animate-marquee">
+        <div className="py-3 bg-gradient-to-r from-accent/20 via-accent/10 to-accent/20 border-b border-border overflow-hidden whitespace-nowrap group/marquee" aria-hidden="true">
+          <div className="inline-block animate-marquee motion-reduce:animate-none group-hover/marquee:[animation-play-state:paused]">
             {[1, 2, 3].map((i) => (
               <span key={i}>
                 <span className="font-heading text-sm font-extrabold tracking-wider text-white px-4">
@@ -199,8 +199,8 @@ export function Marquee() {
     </>
   );
   return (
-    <div className="py-6 border-y border-border bg-background overflow-hidden whitespace-nowrap">
-      <div className="inline-block animate-marquee">{row}{row}</div>
+    <div className="py-6 border-y border-border bg-background overflow-hidden whitespace-nowrap group/marquee" aria-hidden="true">
+      <div className="inline-block animate-marquee motion-reduce:animate-none group-hover/marquee:[animation-play-state:paused]">{row}{row}</div>
     </div>
   );
 }

@@ -20,6 +20,12 @@ export function CookieBanner() {
     }
   }, []);
 
+  useEffect(() => {
+    const handleReopen = () => setVisible(true);
+    window.addEventListener('reopen-cookie-banner', handleReopen);
+    return () => window.removeEventListener('reopen-cookie-banner', handleReopen);
+  }, []);
+
   function saveConsent(allowAnalytics: boolean) {
     try {
       const consentRecord = {
@@ -41,6 +47,7 @@ export function CookieBanner() {
     <aside
       role="region"
       aria-label="Consentimiento de cookies"
+      aria-live="polite"
       className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-5 sm:max-w-md z-40 animate-fade-in"
     >
       <div className="bg-surface/95 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-4 sm:p-5 text-sm space-y-3">
@@ -69,14 +76,14 @@ export function CookieBanner() {
           <button
             type="button"
             onClick={() => saveConsent(false)}
-            className="w-full sm:w-auto px-3.5 py-2 text-xs font-medium rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors min-h-[36px]"
+            className="w-full sm:w-auto px-4 py-2.5 text-xs font-medium rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-accent"
           >
             Solo necesarias
           </button>
           <button
             type="button"
             onClick={() => saveConsent(true)}
-            className="w-full sm:w-auto px-4 py-2 text-xs font-semibold rounded-lg bg-accent text-background hover:bg-white transition-colors shadow-sm min-h-[36px]"
+            className="w-full sm:w-auto px-5 py-2.5 text-xs font-semibold rounded-lg bg-accent text-background hover:bg-white transition-colors shadow-sm min-h-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-accent"
           >
             Aceptar todas
           </button>
