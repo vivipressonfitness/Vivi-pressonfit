@@ -231,7 +231,7 @@ export default function Membership() {
                 <h3 className="text-base font-bold text-white">Adelanto gratuito vs. Membresía completa</h3>
                 <div className="grid grid-cols-2 gap-4 text-xs pt-2">
                   <div className="space-y-2 p-3 rounded-xl bg-white/[0.02] border border-border/40">
-                    <p className="font-bold text-text-secondary uppercase tracking-wider text-[11px]">Portal Público</p>
+                    <p className="font-bold text-text-secondary uppercase tracking-wider text-xs">Portal Público</p>
                     <ul className="space-y-1.5 text-text-secondary">
                       <li className="flex items-center gap-1.5"><span className="text-emerald-400">✓</span> Muestras de 1-2 min</li>
                       <li className="flex items-center gap-1.5"><span className="text-red-400">✗</span> Sin rutinas completas</li>
@@ -241,7 +241,7 @@ export default function Membership() {
                   </div>
 
                   <div className="space-y-2 p-3 rounded-xl bg-accent/10 border border-accent/30">
-                    <p className="font-bold text-accent uppercase tracking-wider text-[11px]">Membresía VIP</p>
+                    <p className="font-bold text-accent uppercase tracking-wider text-xs">Membresía VIP</p>
                     <ul className="space-y-1.5 text-text-primary">
                       <li className="flex items-center gap-1.5"><span className="text-accent font-bold">✓</span> Clases completas HD</li>
                       <li className="flex items-center gap-1.5"><span className="text-accent font-bold">✓</span> Rutinas de fuerza 3x</li>
@@ -254,7 +254,7 @@ export default function Membership() {
             </div>
 
             {/* COLUMNA 2: Formulario de Checkout / Registro Inline (5 columnas) */}
-            <div className="lg:col-span-5 sticky top-28 space-y-4">
+            <div className="lg:col-span-5 lg:sticky lg:top-28 lg:self-start space-y-4">
               <div className="card-surface p-6 sm:p-8 border border-accent/40 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -273,7 +273,7 @@ export default function Membership() {
 
                     <StatusCard />
 
-                    {stripeError && <p className="text-red-400 text-xs text-center">{stripeError}</p>}
+                    {stripeError && <p role="alert" className="text-red-400 text-xs text-center">{stripeError}</p>}
 
                     <Button
                       loading={stripeLoading}
@@ -283,7 +283,7 @@ export default function Membership() {
                       Comenzar 7 días de prueba gratis →
                     </Button>
 
-                    <p className="text-[11px] text-text-secondary text-center leading-relaxed">
+                    <p className="text-xs text-text-secondary text-center leading-relaxed">
                       $0.00 hoy. Al terminar los 7 días se renovará a USD {config.monthly_price || 40}/mes. Cancela cuando quieras.
                     </p>
                   </div>
@@ -291,9 +291,10 @@ export default function Membership() {
                   /* Formulario de Alta Inline (Sin sesión previa) */
                   <div className="space-y-5">
                     {/* Selector de modo (Registro vs Login) */}
-                    <div className="flex border border-border rounded-xl p-1 bg-background/50">
+                    <div className="flex border border-border rounded-xl p-1 bg-background/50" role="group" aria-label="Tipo de acceso">
                       <button
                         type="button"
+                        aria-pressed={authMode === 'register'}
                         onClick={() => { setAuthMode('register'); setFormError(null); }}
                         className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                           authMode === 'register'
@@ -305,6 +306,7 @@ export default function Membership() {
                       </button>
                       <button
                         type="button"
+                        aria-pressed={authMode === 'login'}
                         onClick={() => { setAuthMode('login'); setFormError(null); }}
                         className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
                           authMode === 'login'
@@ -382,8 +384,8 @@ export default function Membership() {
                           </span>
                         </label>
 
-                        {formError && <p className="text-red-400 text-xs">{formError}</p>}
-                        {stripeError && <p className="text-red-400 text-xs">{stripeError}</p>}
+                        {formError && <p role="alert" className="text-red-400 text-xs">{formError}</p>}
+                        {stripeError && <p role="alert" className="text-red-400 text-xs">{stripeError}</p>}
 
                         <Button
                           loading={formLoading || stripeLoading}
@@ -393,7 +395,7 @@ export default function Membership() {
                           Continuar a la prueba gratis →
                         </Button>
 
-                        <p className="text-[11px] text-text-secondary text-center leading-relaxed">
+                        <p className="text-xs text-text-secondary text-center leading-relaxed">
                           $0.00 cobrados hoy. Stripe validará tu tarjeta de forma segura sin coste durante 7 días.
                         </p>
                       </form>
@@ -426,8 +428,8 @@ export default function Membership() {
                           </Link>
                         </div>
 
-                        {formError && <p className="text-red-400 text-xs">{formError}</p>}
-                        {stripeError && <p className="text-red-400 text-xs">{stripeError}</p>}
+                        {formError && <p role="alert" className="text-red-400 text-xs">{formError}</p>}
+                        {stripeError && <p role="alert" className="text-red-400 text-xs">{stripeError}</p>}
 
                         <Button
                           loading={formLoading || stripeLoading}

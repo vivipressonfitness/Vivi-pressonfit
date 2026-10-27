@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useLandingConfig } from '../../hooks/useLandingConfig';
 
@@ -28,19 +28,45 @@ export function Navbar() {
   const profile = useAuthStore((s) => s.profile);
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const onHome = typeof window !== 'undefined' && window.location.pathname === '/';
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const onHome = pathname === '/';
 
   const closeMenu = () => setMobileMenuOpen(false);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileMenuOpen]);
+
   return (
     <header className="fixed top-0 inset-x-0 z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-sm">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:!fixed focus:left-3 focus:top-3 focus:z-[100] focus:!rounded-full focus:!bg-accent focus:!px-4 focus:!py-2 focus:text-sm focus:font-bold focus:!text-background"
+      >
+        Saltar al contenido
+      </a>
       <nav className="container mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 min-h-[76px] md:min-h-[90px] py-2">
         {/* LOGO */}
         <Link to="/" onClick={closeMenu} className="flex items-center group py-1 flex-shrink-0">
           <img
             src={config.logo_url || '/landing/logo-vivipressonfit.jpg'}
             alt="VIVIPRESSONFIT"
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (img.dataset.fallback) return;
+              img.dataset.fallback = '1';
+              img.src = '/landing/logo-vivifit.jpg';
+            }}
             style={{ maxHeight: `${config.logo_height || 54}px` }}
             className="w-auto h-11 sm:h-12 md:h-14 object-contain transition-transform group-hover:scale-105"
           />
@@ -52,25 +78,25 @@ export function Navbar() {
     <>
       {/* Anclajes principales – siempre visibles en lg+ */}
       {landingAnchors.map((a) => (
-        <a
+        <Link
           key={a.href}
-          href={a.href}
+          to={a.href}
           className="px-3 py-1.5 text-sm xl:text-base font-medium text-text-secondary hover:text-accent transition whitespace-nowrap"
         >
           {a.label}
-        </a>
+        </Link>
       ))}
 
       {/* Anclajes secundarios – solo en xl (≥1280 px) */}
       <div className="hidden xl:flex gap-2">
         {secondaryAnchors.map((a) => (
-          <a
+          <Link
             key={a.href}
-            href={a.href}
+            to={a.href}
             className="px-3 py-1.5 text-sm xl:text-base font-medium text-text-secondary hover:text-accent transition whitespace-nowrap"
           >
             {a.label}
-          </a>
+          </Link>
         ))}
       </div>
     </>
@@ -113,10 +139,12 @@ export function Navbar() {
             </Link>
           )}
           <button
+            ref={menuButtonRef}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Abrir menú"
+            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
+            aria-haspopup="true"
             className="p-2 rounded-xl text-text-primary hover:bg-white/10 transition focus:outline-none"
           >
             {mobileMenuOpen ? (
@@ -137,14 +165,14 @@ export function Navbar() {
         <div id="mobile-menu" className="lg:hidden bg-background/95 backdrop-blur-xl border-b border-border px-5 py-6 space-y-2 max-h-[85vh] overflow-y-auto animate-fadeIn">
           {onHome &&
             landingAnchors.map((a) => (
-              <a
+              <Link
                 key={a.href}
-                href={a.href}
+                to={a.href}
                 onClick={closeMenu}
                 className="block px-4 py-2.5 text-base font-medium text-text-secondary hover:text-accent hover:bg-white/5 rounded-xl transition"
               >
                 {a.label}
-              </a>
+              </Link>
             ))}
 
           <div className="pt-2 border-t border-border/60 my-2"></div>

@@ -19,17 +19,25 @@ export function Sidebar() {
   return (
     <div className="lg:w-56 shrink-0">
       <button
-        className="lg:hidden btn-accent w-full !py-2 text-sm mb-3"
+        className="lg:hidden btn-accent w-full !py-2 text-sm mb-3 min-h-[44px]"
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls="private-nav"
       >
         Menú {open ? '▲' : '▼'}
       </button>
-      <aside className={`${open ? 'block' : 'hidden'} lg:block card-surface !p-3 sticky top-24 space-y-1`}>
+      <aside
+        id="private-nav"
+        aria-label="Navegación del área de miembros"
+        className={`${open ? 'block' : 'hidden'} lg:block card-surface !p-3 lg:sticky lg:top-24 space-y-1`}
+      >
         {allLinks.map((l) => (
           <Link
             key={l.to}
             to={l.to}
-            className={`block px-4 py-2 rounded-xl text-sm transition ${
+            onClick={() => setOpen(false)}
+            aria-current={pathname === l.to ? 'page' : undefined}
+            className={`block px-4 py-2.5 rounded-xl text-sm transition ${
               pathname === l.to ? 'bg-accent/15 text-accent font-semibold' : 'text-text-secondary hover:text-text-primary'
             }`}
           >

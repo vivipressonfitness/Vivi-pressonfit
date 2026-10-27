@@ -310,7 +310,7 @@ export function LandingConfigEditor() {
               type="text"
               value={values.logo_url ?? ''}
               onChange={(e) => setValues((v) => ({ ...v, logo_url: e.target.value }))}
-              placeholder="/landing/logo-vivifit.jpg o https://..."
+              placeholder="/landing/logo-vivipressonfit.jpg o https://..."
               className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:border-accent outline-none"
             />
           </div>

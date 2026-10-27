@@ -56,8 +56,8 @@ export function StatusCard() {
     <Card className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-lg font-bold leading-tight">Estado de tu suscripción</h3>
-          <p id="membership-state-copy" className="text-sm text-text-secondary">
+          <h2 className="text-lg font-bold leading-tight">Estado de tu suscripción</h2>
+          <p id="membership-state-copy" aria-live="polite" className="text-sm text-text-secondary">
             {stateCopy[status ?? 'inactive'] ?? stateCopy.inactive}
           </p>
         </div>

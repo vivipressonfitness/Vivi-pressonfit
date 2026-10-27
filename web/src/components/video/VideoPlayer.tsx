@@ -84,25 +84,26 @@ export function VideoPlayer({ bunnyVideoId, title, autoplay = false }: Props) {
       <h3 className="font-bold text-lg">{title}</h3>
       <div className="aspect-video bg-black rounded-2xl overflow-hidden border border-border relative">
         {loading && (
-          <div className="absolute inset-0 grid place-items-center text-text-secondary">
+          <div role="status" className="absolute inset-0 grid place-items-center text-text-secondary">
             Cargando video…
           </div>
         )}
         {error && (
-          <div className="absolute inset-0 grid place-items-center text-red-400 px-6 text-center">
+          <div role="alert" className="absolute inset-0 grid place-items-center text-red-400 px-6 text-center">
             {error}
           </div>
         )}
         {iframeSrc ? (
           <iframe
             src={iframeSrc}
+            title={title}
             loading="lazy"
             className="w-full h-full border-0"
             allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;"
             allowFullScreen
           />
         ) : (
-          <video ref={videoRef} controls playsInline className="w-full h-full" />
+          <video ref={videoRef} controls playsInline aria-label={title} className="w-full h-full" />
         )}
       </div>
     </div>

@@ -12,7 +12,7 @@ const map: Record<PlanStatus, { label: string; cls: string }> = {
 export function MembershipBadge({ status }: { status: PlanStatus | null }) {
   const s = map[status ?? 'inactive'];
   return (
-    <span className={`inline-block px-3 py-1 rounded-pill text-xs font-semibold ${s.cls}`}>
+    <span className={`inline-block shrink-0 px-3 py-1 rounded-pill text-xs font-semibold ${s.cls}`}>
       {s.label}
     </span>
   );

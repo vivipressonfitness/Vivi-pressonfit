@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
+import { useLenis } from 'lenis/react';
 
 interface Props {
   open: boolean;
@@ -11,11 +12,30 @@ interface Props {
 }
 
 const FOCUSABLE =
-  'a[href], button:not([disabled]), textarea, input, select, video[controls], [tabindex]:not([tabindex="-1"])';
+  'a[href], button:not([disabled]), textarea, input, select, video[controls], iframe, [tabindex]:not([tabindex="-1"])';
 
 export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  const titleId = useId();
+  const lenis = useLenis();
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Bloquear el scroll de fondo (incluido el scroll suave de Lenis).
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    lenis?.stop();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      lenis?.start();
+    };
+  }, [open, lenis]);
 
   // Cerrar con Escape y devolver el foco al elemento original.
   useEffect(() => {
@@ -25,7 +45,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       // Trampa simple de foco con Tab dentro del panel.
@@ -37,10 +57,11 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
         const first = focusables[0];
         const last = focusables[focusables.length - 1];
         const active = document.activeElement as HTMLElement | null;
-        if (e.shiftKey && (active === first || !panelRef.current.contains(active))) {
+        const outside = !panelRef.current.contains(active);
+        if (e.shiftKey && (active === first || active === panelRef.current || outside)) {
           e.preventDefault();
           last.focus();
-        } else if (!e.shiftKey && active === last) {
+        } else if (!e.shiftKey && (active === last || outside)) {
           e.preventDefault();
           first.focus();
         }
@@ -59,7 +80,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
       cancelAnimationFrame(raf);
       previouslyFocused.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
   return (
@@ -69,7 +90,8 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={title ?? 'Diálogo'}
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : 'Diálogo'}
         tabIndex={-1}
         className={`relative bg-surface border border-border rounded-2xl p-6 w-full ${
           size === 'lg' ? 'max-w-4xl' : 'max-w-md'
@@ -77,9 +99,9 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
       >
         <div className="flex items-start justify-between gap-4">
           {title ? (
-            <h3 id="modal-title" className="text-lg font-bold mb-4 pr-8">
+            <h2 id={titleId} className="text-lg font-bold mb-4 pr-8">
               {title}
-            </h3>
+            </h2>
           ) : (
             <span />
           )}

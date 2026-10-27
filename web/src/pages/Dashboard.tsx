@@ -38,7 +38,7 @@ export default function Dashboard() {
           <Link to="/videos" className="text-accent text-sm font-semibold hover:underline">Ver todos →</Link>
         </div>
         {loading ? (
-          <p className="text-text-secondary text-sm">Cargando contenido…</p>
+          <p role="status" className="text-text-secondary text-sm">Cargando contenido…</p>
         ) : !hasAccess && status !== null ? (
           <p className="text-amber-400 text-sm">
             Activa tu membresía para desbloquear los videos del mes.{' '}
@@ -91,7 +91,7 @@ export default function Dashboard() {
         href={`https://wa.me/${(config.whatsapp_number && config.whatsapp_number !== '59178000000') ? config.whatsapp_number : '5493415888117'}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="block bg-whatsapp-green hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-pill text-center transition"
+        className="block bg-whatsapp-green hover:bg-emerald-600 text-background font-bold px-6 py-3 rounded-pill text-center transition"
       >
         Chatear por WhatsApp
       </a>

@@ -20,7 +20,7 @@ export function VideoCard({ content, onPlay }: Props) {
         </span>
       </div>
       <span className="text-xs uppercase tracking-wide text-accent">{content.category}</span>
-      <h4 className="font-semibold leading-snug">{content.title}</h4>
+      <h3 className="font-semibold leading-snug">{content.title}</h3>
       {content.description && (
         <p className="text-sm text-text-secondary line-clamp-2">{content.description}</p>
       )}

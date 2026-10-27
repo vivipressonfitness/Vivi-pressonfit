@@ -88,7 +88,7 @@ export function AboutMe({ config, images }: AboutMeProps) {
               <button
                 type="button"
                 onClick={() => setSelectedPhoto(null)}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-accent transition"
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-accent hover:text-background transition"
                 aria-label="Cerrar"
               >
                 ✕

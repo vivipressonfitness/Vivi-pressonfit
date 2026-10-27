@@ -103,7 +103,7 @@ export default function Admin() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-pill text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 ${tab === t.id ? 'bg-accent text-white' : 'border border-border text-text-secondary hover:text-white'}`}
+            className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-pill text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 ${tab === t.id ? 'bg-accent text-background' : 'border border-border text-text-secondary hover:text-white'}`}
           >
             {t.label}
           </button>
@@ -155,7 +155,7 @@ export default function Admin() {
                           onClick={() => toggleRole(p)}
                           disabled={updatingId === p.id || p.id === myId}
                           title={p.id === myId ? 'No puedes cambiar tu propio rol' : undefined}
-                          className="px-2.5 py-1 rounded-pill text-[11px] sm:text-xs font-bold border border-border hover:border-accent disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                          className="px-2.5 py-1 rounded-pill text-xs font-bold border border-border hover:border-accent disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
                         >
                           {updatingId === p.id ? 'Guardando…' : p.is_admin ? 'Retroceder' : 'Hacer Admin'}
                         </button>

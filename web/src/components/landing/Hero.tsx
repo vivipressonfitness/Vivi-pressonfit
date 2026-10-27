@@ -11,12 +11,13 @@ export function Hero({ config }: { config: LandingConfig }) {
 
   return (
     <header id="inicio" className="relative bg-background">
+      <h1 className="sr-only">{heroTitleFull}</h1>
       {/* ============================================================== */}
       {/* VERSIÓN MÓVIL (< md): FLUJO LIMPIO Y APILADO */}
       {/* ============================================================== */}
       <div className="block md:hidden pt-[76px]">
         {/* 1. TIRA ANIMADA DEL TÍTULO ANCLADA JUSTO DEBAJO DEL HEADER */}
-        <div className="py-3 bg-gradient-to-r from-accent/20 via-accent/10 to-accent/20 border-b border-border overflow-hidden whitespace-nowrap">
+        <div className="py-3 bg-gradient-to-r from-accent/20 via-accent/10 to-accent/20 border-b border-border overflow-hidden whitespace-nowrap" aria-hidden="true">
           <div className="inline-block animate-marquee">
             {[1, 2, 3].map((i) => (
               <span key={i}>
@@ -135,12 +136,12 @@ export function Hero({ config }: { config: LandingConfig }) {
               <ShinyText text="7 Días de Prueba Gratis · Membresía VIP" speed={3.5} color="#FFFFFF" shineColor="#FF2E93" />
             </span>
 
-            <h1 className="font-heading text-4xl lg:text-6xl font-bold leading-[1.08] tracking-tight text-white drop-shadow-md">
+            <div className="font-heading text-4xl lg:text-6xl font-bold leading-[1.08] tracking-tight text-white drop-shadow-md" aria-hidden="true">
               <BlurText text={config.hero_title} delay={60} animateBy="words" direction="top" className="inline" /> <br />
               <span className="text-accent drop-shadow-[0_2px_15px_rgba(255,107,157,0.35)]">
                 {config.hero_title_sub}
               </span>
-            </h1>
+            </div>
 
             <p className="text-gray-200 text-lg lg:text-xl leading-relaxed font-light drop-shadow">
               {config.hero_sub}

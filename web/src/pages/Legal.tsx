@@ -31,7 +31,7 @@ export default function Legal({ defaultSection }: LegalProps) {
   ];
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen pt-24 md:pt-28 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Cabecera */}
         <div className="text-center space-y-3">
@@ -63,7 +63,7 @@ export default function Legal({ defaultSection }: LegalProps) {
                 onClick={() => navigate(tab.path)}
                 className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all min-h-[40px] ${
                   isActive
-                    ? 'bg-accent text-white shadow-md'
+                    ? 'bg-accent text-background shadow-md'
                     : 'bg-surface text-text-secondary hover:text-text-primary hover:bg-surface/80 border border-border'
                 }`}
               >

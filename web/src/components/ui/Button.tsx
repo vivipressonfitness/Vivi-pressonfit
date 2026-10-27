@@ -9,7 +9,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const styles: Record<Variant, string> = {
-  primary: 'bg-accent hover:bg-accent-hover text-white font-bold',
+  primary: 'bg-accent hover:bg-accent-hover text-background font-bold',
   outline: 'border border-accent text-accent hover:bg-accent/10 font-semibold',
   ghost: 'text-text-secondary hover:text-text-primary',
   danger: 'bg-red-600 hover:bg-red-700 text-white font-semibold',
@@ -19,6 +19,7 @@ export function Button({ variant = 'primary', loading, disabled, className = '',
   return (
     <button
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={`rounded-pill px-6 py-3 transition disabled:opacity-50 ${styles[variant]} ${className}`}
       {...rest}
     >

@@ -18,6 +18,12 @@ export function Footer() {
               <img
                 src={config.logo_url || '/landing/logo-vivipressonfit.jpg'}
                 alt="VIVIPRESSONFIT"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (img.dataset.fallback) return;
+                  img.dataset.fallback = '1';
+                  img.src = '/landing/logo-vivifit.jpg';
+                }}
                 style={{ height: `${Math.round((config.logo_height || 44) * 1.2)}px` }}
                 className="w-auto object-contain transition-transform group-hover:scale-105"
               />

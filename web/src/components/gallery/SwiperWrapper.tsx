@@ -67,7 +67,7 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
 
   if (loading) {
     return (
-      <section className="w-full py-16 px-4">
+      <section id="galeria" className="w-full py-16 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-center h-72 rounded-3xl bg-neutral-900/40 border border-white/5">
           <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
@@ -83,7 +83,7 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
   }
 
   return (
-    <section className="w-full py-16 overflow-hidden">
+    <section id="galeria" className="w-full py-16 overflow-hidden">
       {/* Animación por GPU nativa inmune a pausas por scroll o toques de pantalla */}
       <style>{`
         @keyframes carouselMarqueeTrack {

@@ -89,7 +89,7 @@ export function MediaManager() {
                 onClick={() => handleFilterChange(item.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                   carouselFilter === item.id
-                    ? 'bg-accent text-white shadow-md'
+                    ? 'bg-accent text-background shadow-md'
                     : 'text-text-secondary hover:text-white hover:bg-surface'
                 }`}
               >

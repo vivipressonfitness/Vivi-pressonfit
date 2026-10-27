@@ -22,7 +22,7 @@ const testimonios = [
 ];
 
 export const Testimonios: FC = () => (
-  <section id="educativo" className="py-12 bg-surface">
+  <section id="testimonios" className="py-12 bg-surface">
     <h2 className="text-center text-3xl font-bold text-text-primary mb-8">
       Lo que dicen nuestras alumnas
     </h2>
