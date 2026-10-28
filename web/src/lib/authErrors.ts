@@ -30,3 +30,4 @@ export function formatAuthError(err: unknown): string {
 
   return message;
 }
+
