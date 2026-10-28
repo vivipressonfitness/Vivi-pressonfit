@@ -1,7 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { MembershipContent } from '../../types';
 import { MediaBucketManager } from './MediaBucketManager';
+import {
+  SearchIcon,
+  FilterIcon,
+  CheckCircleIcon,
+  AlertCircleIcon,
+  TrashIcon,
+  VideoIcon,
+  FolderIcon,
+} from '../ui/Icons';
 
 // CRUD de membership_content (contenido del mes con diferenciación pública vs privada).
 const EMPTY: Omit<MembershipContent, 'id' | 'created_at' | 'updated_at'> = {
@@ -34,6 +43,17 @@ export function ContentManager() {
   const [showBucketDrawer, setShowBucketDrawer] = useState(false);
   const [assignTarget, setAssignTarget] = useState<'private_video' | 'preview_video' | 'thumbnail' | 'pdf' | null>(null);
 
+  // Estados de seguridad y filtros (F-13)
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [deleteModalTarget, setDeleteModalTarget] = useState<MembershipContent | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Filtros de búsqueda en el listado
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
+  const [landingFilter, setLandingFilter] = useState<'all' | 'landing' | 'private_only'>('all');
+
   const load = () => {
     supabase
       .from('membership_content')
@@ -43,6 +63,7 @@ export function ContentManager() {
         if (!error && data) setItems(data);
       });
   };
+
   useEffect(load, []);
 
   const reset = () => {
@@ -115,20 +136,71 @@ export function ContentManager() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const remove = async (id: string) => {
-    if (!window.confirm('¿Eliminar este contenido?')) return;
-    await supabase.from('membership_content').delete().eq('id', id);
-    load();
+  // Eliminación segura con modal y manejo de error (F-13)
+  const handleConfirmDelete = async () => {
+    if (!deleteModalTarget) return;
+    setDeleteLoading(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from('membership_content')
+      .delete()
+      .eq('id', deleteModalTarget.id);
+
+    setDeleteLoading(false);
+
+    if (error) {
+      setMsg({ text: `Error al eliminar contenido: ${error.message}`, error: true });
+    } else {
+      setMsg({ text: `✅ "${deleteModalTarget.title}" ha sido eliminado exitosamente.` });
+      setItems((prev) => prev.filter((item) => item.id !== deleteModalTarget.id));
+      if (editingId === deleteModalTarget.id) reset();
+    }
+    setDeleteModalTarget(null);
   };
 
+  // Toggle de publicación con manejo de error (F-13)
   const togglePub = async (c: MembershipContent) => {
-    await supabase.from('membership_content').update({ is_published: !c.is_published }).eq('id', c.id);
-    load();
+    setActionLoadingId(c.id);
+    setMsg(null);
+    const nextVal = !c.is_published;
+
+    const { error } = await supabase
+      .from('membership_content')
+      .update({ is_published: nextVal })
+      .eq('id', c.id);
+
+    setActionLoadingId(null);
+
+    if (error) {
+      setMsg({ text: `Error al cambiar estado de publicación: ${error.message}`, error: true });
+    } else {
+      setItems((prev) =>
+        prev.map((item) => (item.id === c.id ? { ...item, is_published: nextVal } : item))
+      );
+    }
   };
 
+  // Toggle de visibilidad en Landing con manejo de error (F-13)
   const toggleLanding = async (c: MembershipContent) => {
-    await supabase.from('membership_content').update({ show_in_landing: !c.show_in_landing }).eq('id', c.id);
-    load();
+    setActionLoadingId(c.id);
+    setMsg(null);
+    const nextVal = !c.show_in_landing;
+
+    const { error } = await supabase
+      .from('membership_content')
+      .update({ show_in_landing: nextVal })
+      .eq('id', c.id);
+
+    setActionLoadingId(null);
+
+    if (error) {
+      setMsg({ text: `Error al cambiar visibilidad en Landing: ${error.message}`, error: true });
+    } else {
+      setItems((prev) =>
+        prev.map((item) => (item.id === c.id ? { ...item, show_in_landing: nextVal } : item))
+      );
+    }
   };
 
   // Asignar archivo seleccionado desde el bucket members-media
@@ -146,7 +218,6 @@ export function ContentManager() {
       setForm((prev) => ({ ...prev, pdf_url: fileUrl }));
       setMsg({ text: '📄 Documento PDF asignado desde el bucket' });
     } else {
-      // Auto-detección según el tipo de archivo si no había un target fijo
       if (fileType === 'video') {
         setForm((prev) => ({ ...prev, private_video_url: fileUrl, content_url: fileUrl }));
         setMsg({ text: '🎬 Video privado asignado desde el bucket' });
@@ -160,6 +231,25 @@ export function ContentManager() {
     }
   };
 
+  // Filtrado de contenidos en el listado
+  const filteredItems = useMemo(() => {
+    return items.filter((c) => {
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchTitle = c.title.toLowerCase().includes(q);
+        const matchDesc = c.description?.toLowerCase().includes(q) ?? false;
+        if (!matchTitle && !matchDesc) return false;
+      }
+      if (categoryFilter !== 'all' && c.category !== categoryFilter) return false;
+      if (statusFilter === 'published' && !c.is_published) return false;
+      if (statusFilter === 'draft' && c.is_published) return false;
+      if (landingFilter === 'landing' && !c.show_in_landing) return false;
+      if (landingFilter === 'private_only' && c.show_in_landing) return false;
+
+      return true;
+    });
+  }, [items, searchQuery, categoryFilter, statusFilter, landingFilter]);
+
   const inputCls =
     'w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:border-accent outline-none text-text-primary transition';
 
@@ -169,7 +259,8 @@ export function ContentManager() {
       <div className="flex flex-wrap items-center justify-between gap-3 bg-raised/80 border border-border p-4 rounded-2xl">
         <div>
           <h3 className="font-heading font-bold text-base text-text-primary flex items-center gap-2">
-            <span>📦</span> Bucket Multimedia de Miembros (<code className="text-accent text-xs">members-media</code>)
+            <FolderIcon className="w-5 h-5 text-accent" />
+            <span>Bucket Multimedia de Miembros (<code>members-media</code>)</span>
           </h3>
           <p className="text-xs text-text-secondary mt-0.5">
             Sube videos completos, demos del landing, miniaturas o PDFs y asígnalos con un clic.
@@ -197,14 +288,14 @@ export function ContentManager() {
       )}
 
       {/* FORMULARIO DE CONTENIDO (PÚBLICO Y PRIVADO) */}
-      <form onSubmit={submit} className="bg-raised border border-border rounded-2xl p-6 space-y-6">
+      <form onSubmit={submit} className="bg-raised border border-border rounded-2xl p-6 space-y-6 shadow-sm">
         <div className="flex items-center justify-between border-b border-border pb-4">
           <h3 className="font-heading font-bold text-xl text-text-primary flex items-center gap-2">
-            <span>{editingId ? '✏️' : '➕'}</span>
-            {editingId ? 'Editar Programa / Contenido' : 'Nuevo Programa / Contenido'}
+            <VideoIcon className="w-5 h-5 text-accent" />
+            <span>{editingId ? 'Editar Programa / Contenido' : 'Nuevo Programa / Contenido'}</span>
           </h3>
           {editingId && (
-            <span className="text-xs bg-accent/20 border border-accent/40 text-accent font-semibold px-3 py-1 rounded-full">
+            <span className="text-xs bg-accent/20 border border-accent/40 text-accent font-semibold px-3 py-1 rounded-pill">
               Editando ID: {editingId.slice(0, 8)}…
             </span>
           )}
@@ -280,9 +371,7 @@ export function ContentManager() {
           </div>
         </div>
 
-        {/* ============================================================== */}
         {/* BLOQUE 1: LO PÚBLICO (QUÉ SE MUESTRA EN EL LANDING PAGE) */}
-        {/* ============================================================== */}
         <div className="bg-background/80 border-2 border-accent/30 rounded-2xl p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
             <div className="flex items-center gap-2">
@@ -296,12 +385,12 @@ export function ContentManager() {
                 </p>
               </div>
             </div>
-            <label className="flex items-center gap-2 cursor-pointer bg-accent/15 border border-accent/40 px-3 py-1.5 rounded-full text-xs font-bold text-white">
+            <label className="flex items-center gap-2 cursor-pointer bg-accent/15 border border-accent/40 px-3 py-1.5 rounded-pill text-xs font-bold text-white">
               <input
                 type="checkbox"
                 checked={form.show_in_landing}
                 onChange={(e) => setForm({ ...form, show_in_landing: e.target.checked })}
-                className="w-4 h-4 accent-[#FF2E93]"
+                className="w-4 h-4 accent-accent rounded"
               />
               Mostrar como Adelanto en el Landing
             </label>
@@ -376,7 +465,9 @@ export function ContentManager() {
                     src={form.thumbnail_url}
                     alt="Preview portada"
                     className="w-16 h-12 object-cover rounded-lg"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                   <span className="text-xs text-text-secondary">Miniatura activa para el Landing</span>
                 </div>
@@ -389,9 +480,7 @@ export function ContentManager() {
           )}
         </div>
 
-        {/* ============================================================== */}
         {/* BLOQUE 2: LO PRIVADO (QUÉ VA A MIRAR EL MIEMBRO ACTIVO) */}
-        {/* ============================================================== */}
         <div className="bg-background/80 border-2 border-border/80 rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-2 border-b border-border pb-3">
             <span className="text-xl">🔒</span>
@@ -426,7 +515,9 @@ export function ContentManager() {
                 placeholder="URL completa en members-media o HLS"
                 className={inputCls}
                 value={form.private_video_url ?? ''}
-                onChange={(e) => setForm({ ...form, private_video_url: e.target.value, content_url: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, private_video_url: e.target.value, content_url: e.target.value })
+                }
               />
             </div>
 
@@ -506,7 +597,7 @@ export function ContentManager() {
               type="checkbox"
               checked={form.is_published}
               onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
-              className="w-4 h-4 accent-[#FF2E93]"
+              className="w-4 h-4 accent-accent rounded"
             />
             <span className="font-semibold text-text-primary">
               {form.is_published ? '✅ Publicado (Visible a Miembros)' : '⏸️ Oculto (Borrador)'}
@@ -515,32 +606,116 @@ export function ContentManager() {
         </div>
       </form>
 
+      {/* Banner de mensajes y feedback */}
       {msg && (
         <div
-          className={`p-4 rounded-xl text-sm flex items-center justify-between ${
-            msg.error ? 'bg-red-500/15 border border-red-500/30 text-red-200' : 'bg-green-500/15 border border-green-500/30 text-green-200'
+          className={`p-4 rounded-xl text-sm flex items-center justify-between border ${
+            msg.error
+              ? 'bg-red-500/15 border-red-500/30 text-red-200'
+              : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-200'
           }`}
         >
-          <span>{msg.text}</span>
-          <button type="button" onClick={() => setMsg(null)} className="text-text-secondary hover:text-white font-bold ml-2">
-            ✕
+          <div className="flex items-center gap-2">
+            {msg.error ? (
+              <AlertCircleIcon className="w-5 h-5 text-red-400 shrink-0" />
+            ) : (
+              <CheckCircleIcon className="w-5 h-5 text-emerald-400 shrink-0" />
+            )}
+            <span>{msg.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMsg(null)}
+            className="text-text-secondary hover:text-white font-bold ml-2 text-xs underline"
+          >
+            Cerrar
           </button>
         </div>
       )}
 
-      {/* LISTADO DE CONTENIDOS DEL MES */}
+      {/* LISTADO DE CONTENIDOS DEL MES CON FILTROS (F-13) */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-heading font-bold text-lg text-text-primary">
-            Programas y Clases Registrados ({items.length})
-          </h3>
-          <span className="text-xs text-text-secondary">
-            Administra qué programas se muestran en el Landing y cuáles en la Biblioteca
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="font-heading font-bold text-lg text-text-primary">
+              Programas y Clases Registrados ({filteredItems.length} de {items.length})
+            </h3>
+            <p className="text-xs text-text-secondary">
+              Filtra, audita visibilidad y administra programas públicos y privados.
+            </p>
+          </div>
         </div>
 
+        {/* Barra de Filtros de Contenido */}
+        <div className="flex flex-wrap items-center gap-2 bg-raised/80 border border-border p-3 rounded-xl text-xs">
+          <div className="flex items-center gap-1.5 text-text-secondary">
+            <FilterIcon className="w-3.5 h-3.5 text-accent" />
+            <span className="font-bold uppercase tracking-wider text-[10px]">Filtros:</span>
+          </div>
+
+          <div className="w-48 relative">
+            <SearchIcon className="w-3.5 h-3.5 text-text-secondary absolute left-2.5 top-2" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar contenido…"
+              className="w-full bg-background border border-border rounded-lg pl-8 pr-2.5 py-1 text-xs text-text-primary focus:border-accent outline-none"
+            />
+          </div>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="bg-background border border-border rounded-lg px-2.5 py-1 text-text-primary focus:border-accent outline-none"
+          >
+            <option value="all">Categoría: Todas</option>
+            {['Clase', 'Rutina', 'Nutrición', 'Recurso', 'Full Body', 'Cardio HIIT', 'GAP'].map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'published' | 'draft')}
+            className="bg-background border border-border rounded-lg px-2.5 py-1 text-text-primary focus:border-accent outline-none"
+          >
+            <option value="all">Estado: Todos</option>
+            <option value="published">Solo Publicados</option>
+            <option value="draft">Solo Borradores</option>
+          </select>
+
+          <select
+            value={landingFilter}
+            onChange={(e) => setLandingFilter(e.target.value as 'all' | 'landing' | 'private_only')}
+            className="bg-background border border-border rounded-lg px-2.5 py-1 text-text-primary focus:border-accent outline-none"
+          >
+            <option value="all">Exposición: Todos</option>
+            <option value="landing">En Landing</option>
+            <option value="private_only">Solo Miembros</option>
+          </select>
+
+          {(searchQuery || categoryFilter !== 'all' || statusFilter !== 'all' || landingFilter !== 'all') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setCategoryFilter('all');
+                setStatusFilter('all');
+                setLandingFilter('all');
+              }}
+              className="text-accent hover:underline ml-auto"
+            >
+              Restablecer filtros
+            </button>
+          )}
+        </div>
+
+        {/* Lista de Items */}
         <div className="space-y-3">
-          {items.map((c) => (
+          {filteredItems.map((c) => (
             <div
               key={c.id}
               className="bg-raised border border-border hover:border-accent/30 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3.5 transition"
@@ -548,11 +723,11 @@ export function ContentManager() {
               <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-bold text-text-primary text-sm sm:text-base break-words">{c.title}</p>
-                  <span className="text-[10px] sm:text-[11px] bg-background border border-border px-2 py-0.5 rounded-md text-text-secondary font-mono shrink-0">
+                  <span className="text-[10px] sm:text-[11px] bg-background border border-border px-2 py-0.5 rounded-pill text-text-secondary font-mono shrink-0">
                     {c.category}
                   </span>
                   {c.target_mode && (
-                    <span className="text-[10px] sm:text-[11px] bg-background border border-border px-2 py-0.5 rounded-md text-text-secondary shrink-0">
+                    <span className="text-[10px] sm:text-[11px] bg-background border border-border px-2 py-0.5 rounded-pill text-text-secondary shrink-0">
                       {c.target_mode}
                     </span>
                   )}
@@ -562,31 +737,32 @@ export function ContentManager() {
                   <span>📅 {c.month_year ?? c.cycle_date}</span>
                   <span>•</span>
                   {c.private_video_url || c.content_url ? (
-                    <span className="text-green-400">🎬 Video Listo</span>
+                    <span className="text-emerald-400">🎬 Video Listo</span>
                   ) : c.bunny_video_id ? (
                     <span className="text-accent">🐰 Bunny Stream</span>
                   ) : (
-                    <span className="text-gray-500">Sin video</span>
+                    <span className="text-zinc-500">Sin video</span>
                   )}
                   {c.pdf_url && (
                     <>
                       <span>•</span>
-                      <span className="text-blue-400">📄 PDF Adjunto</span>
+                      <span className="text-sky-400">📄 PDF Adjunto</span>
                     </>
                   )}
                 </div>
               </div>
 
-              {/* Indicadores de exposición y Botones de acción adaptables */}
+              {/* Botones de acción y estado con protección de carga */}
               <div className="flex flex-wrap items-center justify-between md:justify-end gap-2 pt-2 md:pt-0 border-t border-border/40 md:border-t-0">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
+                    disabled={actionLoadingId === c.id}
                     onClick={() => toggleLanding(c)}
-                    className={`text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 ${
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-pill border transition flex items-center gap-1 disabled:opacity-50 ${
                       c.show_in_landing
                         ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30'
-                        : 'bg-background border-border text-gray-500 hover:text-white'
+                        : 'bg-background border-border text-zinc-500 hover:text-white'
                     }`}
                     title="Haz clic para alternar si se muestra en el Landing público"
                   >
@@ -596,16 +772,17 @@ export function ContentManager() {
 
                   <button
                     type="button"
+                    disabled={actionLoadingId === c.id}
                     onClick={() => togglePub(c)}
-                    className={`text-[11px] font-bold px-2.5 py-1 rounded-full border transition flex items-center gap-1 ${
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-pill border transition flex items-center gap-1 disabled:opacity-50 ${
                       c.is_published
-                        ? 'bg-green-500/15 border-green-500/40 text-green-300 hover:bg-green-500/25'
-                        : 'bg-yellow-500/15 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/25'
+                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25'
+                        : 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25'
                     }`}
                     title="Haz clic para alternar si está visible para miembros"
                   >
                     <span>🔒</span>
-                    <span>{c.is_published ? 'Activo' : 'Borrador'}</span>
+                    <span>{c.is_published ? 'Publicado' : 'Borrador'}</span>
                   </button>
                 </div>
 
@@ -619,7 +796,7 @@ export function ContentManager() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => remove(c.id)}
+                    onClick={() => setDeleteModalTarget(c)}
                     className="text-xs bg-background hover:bg-red-500/20 text-red-400 hover:border-red-400 border border-border px-3 py-1 rounded-pill transition"
                   >
                     Eliminar
@@ -629,13 +806,70 @@ export function ContentManager() {
             </div>
           ))}
 
-          {items.length === 0 && (
-            <div className="bg-raised/50 border border-border rounded-2xl p-8 text-center text-text-secondary text-sm">
-              No hay programas registrados todavía. Utiliza el formulario superior para agregar tu primer contenido.
+          {filteredItems.length === 0 && (
+            <div className="bg-raised/50 border border-dashed border-border rounded-2xl p-8 text-center text-text-secondary text-sm space-y-1">
+              <p className="font-semibold text-text-primary">No se encontraron contenidos</p>
+              <p className="text-xs">
+                {searchQuery || categoryFilter !== 'all' || statusFilter !== 'all' || landingFilter !== 'all'
+                  ? 'Prueba modificando los filtros aplicados.'
+                  : 'Aún no has registrado programas o clases. Usa el formulario superior para crear el primero.'}
+              </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN DE CONTENIDO (F-13) */}
+      {deleteModalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+          <div className="bg-raised border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center shrink-0">
+                <TrashIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-heading font-bold text-base text-text-primary">
+                  ¿Eliminar este contenido permanentemente?
+                </h3>
+                <p className="text-xs text-text-secondary">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+
+            <div className="bg-background border border-border rounded-xl p-3 space-y-1 text-xs">
+              <p className="font-bold text-text-primary">{deleteModalTarget.title}</p>
+              <p className="text-text-secondary">
+                Categoría: <span className="text-text-primary font-semibold">{deleteModalTarget.category}</span>
+                {deleteModalTarget.month_year && (
+                  <> · Ciclo: <span className="text-text-primary font-semibold">{deleteModalTarget.month_year}</span></>
+                )}
+              </p>
+            </div>
+
+            <p className="text-xs text-text-secondary leading-relaxed">
+              El contenido se eliminará de la base de datos y dejará de estar disponible tanto en el Landing público como en el área de miembros.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => setDeleteModalTarget(null)}
+                className="px-4 py-2 rounded-pill text-xs border border-border text-text-secondary hover:text-text-primary transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={handleConfirmDelete}
+                className="px-5 py-2 rounded-pill text-xs font-bold bg-red-500 hover:bg-red-600 text-white transition disabled:opacity-50"
+              >
+                {deleteLoading ? 'Eliminando…' : 'Sí, Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
