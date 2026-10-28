@@ -6,6 +6,7 @@ import {
   MEMBERS_BUCKET,
   type StorageFileItem,
 } from '../../lib/storage';
+import { FolderIcon, TrashIcon } from '../ui/Icons';
 
 interface MediaBucketManagerProps {
   onSelectFile?: (fileUrl: string, fileType: 'video' | 'image' | 'pdf') => void;
@@ -13,9 +14,10 @@ interface MediaBucketManagerProps {
   compact?: boolean;
 }
 
+// F-10: Gestor de Storage con iconos SVG de trazo y sin emojis funcionales
 export function MediaBucketManager({
   onSelectFile,
-  title = 'Gestor de Contenido Multimedia (Bucket: members-media)',
+  title = 'Biblioteca Multimedia (Bucket: members-media)',
   compact = false,
 }: MediaBucketManagerProps) {
   const [files, setFiles] = useState<StorageFileItem[]>([]);
@@ -47,7 +49,6 @@ export function MediaBucketManager({
     setUploading(true);
     setStatusMsg({ text: `Subiendo "${selected.name}" al bucket ${MEMBERS_BUCKET}...` });
 
-    // Auto-detectar subcarpeta según tipo de archivo
     let targetFolder: 'videos' | 'images' | 'documents' | 'misc' = 'misc';
     if (selected.type.startsWith('video/')) targetFolder = 'videos';
     else if (selected.type.startsWith('image/')) targetFolder = 'images';
@@ -57,7 +58,7 @@ export function MediaBucketManager({
     setUploading(false);
 
     if (result.success) {
-      setStatusMsg({ text: `✅ Archivo "${selected.name}" subido con éxito al bucket.` });
+      setStatusMsg({ text: `Archivo "${selected.name}" subido con éxito al bucket.` });
       if (fileInputRef.current) fileInputRef.current.value = '';
       await loadFiles();
       if (onSelectFile) {
@@ -80,7 +81,7 @@ export function MediaBucketManager({
     if (!window.confirm(`¿Seguro que deseas eliminar "${name}" del bucket ${MEMBERS_BUCKET}?`)) return;
     const { success, error } = await deleteMemberMediaFile(path);
     if (success) {
-      setStatusMsg({ text: `🗑️ Archivo "${name}" eliminado.` });
+      setStatusMsg({ text: `Archivo "${name}" eliminado.` });
       setFiles((prev) => prev.filter((f) => f.path !== path));
     } else {
       setStatusMsg({ text: `Error al eliminar: ${error}`, error: true });
@@ -89,7 +90,7 @@ export function MediaBucketManager({
 
   const copyUrl = (url: string) => {
     navigator.clipboard.writeText(url);
-    setStatusMsg({ text: '📋 URL copiada al portapapeles' });
+    setStatusMsg({ text: 'URL copiada al portapapeles' });
     setTimeout(() => setStatusMsg(null), 3000);
   };
 
@@ -109,7 +110,8 @@ export function MediaBucketManager({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
         <div>
           <h3 className="font-heading font-bold text-lg text-text-primary flex items-center gap-2">
-            <span>📦</span> {title}
+            <FolderIcon className="w-5 h-5 text-accent" />
+            <span>{title}</span>
           </h3>
           <p className="text-xs text-text-secondary mt-0.5">
             Bucket de Supabase Storage: <code className="bg-background px-1.5 py-0.5 rounded text-accent font-mono">{MEMBERS_BUCKET}</code>
@@ -119,9 +121,9 @@ export function MediaBucketManager({
           type="button"
           onClick={loadFiles}
           disabled={loading || uploading}
-          className="text-xs text-text-secondary hover:text-white border border-border px-3 py-1.5 rounded-pill transition"
+          className="text-xs text-text-secondary hover:text-white border border-border px-3 py-1.5 rounded-pill transition min-h-[36px]"
         >
-          {loading ? 'Cargando...' : '🔄 Actualizar lista'}
+          {loading ? 'Cargando...' : 'Actualizar lista'}
         </button>
       </div>
 
@@ -140,42 +142,37 @@ export function MediaBucketManager({
           htmlFor="member-media-upload-input"
           className="cursor-pointer flex flex-col items-center justify-center gap-2"
         >
-          <span className="text-3xl">📤</span>
+          <FolderIcon className="w-8 h-8 text-accent/80" />
           <span className="font-semibold text-sm text-text-primary">
             {uploading ? 'Subiendo archivo al bucket...' : 'Haz clic para seleccionar o subir multimedia'}
           </span>
           <span className="text-xs text-text-secondary">
-            Videos (MP4, WebM) · Portadas e Imágenes (JPG, PNG, WebP) · Guías en PDF
-          </span>
-          <span className="inline-block mt-2 bg-accent hover:bg-white text-background font-bold px-4 py-2 rounded-full text-xs transition shadow-sm">
-            {uploading ? 'Procesando subida...' : 'Seleccionar archivo local'}
+            MP4, WebM, WebP, JPG, PNG o PDF. Se asignará a la carpeta correspondiente.
           </span>
         </label>
       </div>
 
+      {/* Mensaje de estado */}
       {statusMsg && (
         <div
+          role="status"
           className={`p-3 rounded-xl text-xs flex items-center justify-between ${
             statusMsg.error
-              ? 'bg-red-500/15 border border-red-500/30 text-red-200'
-              : 'bg-green-500/15 border border-green-500/30 text-green-200'
+              ? 'bg-red-500/10 border border-red-500/30 text-red-300'
+              : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
           }`}
         >
           <span>{statusMsg.text}</span>
-          <button
-            type="button"
-            onClick={() => setStatusMsg(null)}
-            className="text-text-secondary hover:text-white ml-2 font-bold"
-          >
-            ✕
-          </button>
+          <button type="button" onClick={() => setStatusMsg(null)} className="ml-2 hover:opacity-75">✕</button>
         </div>
       )}
 
-      {/* Filtros de archivo */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-        <div className="flex gap-1.5">
-          {(['all', 'video', 'image', 'pdf'] as const).map((t) => (
+      {/* Filtros por tipo de archivo */}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <span className="text-xs text-text-secondary font-semibold mr-1">Filtrar:</span>
+        {(['all', 'video', 'image', 'pdf'] as const).map((t) => {
+          const labels = { all: 'Todos', video: 'Videos', image: 'Imágenes', pdf: 'PDFs' };
+          return (
             <button
               key={t}
               type="button"
@@ -183,30 +180,27 @@ export function MediaBucketManager({
               className={`px-3 py-1 rounded-pill text-xs font-semibold transition ${
                 filterType === t
                   ? 'bg-accent text-background'
-                  : 'bg-background border border-border text-text-secondary hover:text-white'
+                  : 'bg-surface border border-border text-text-secondary hover:text-white'
               }`}
             >
-              {t === 'all' && `Todos (${files.length})`}
-              {t === 'video' && '🎬 Videos'}
-              {t === 'image' && '🖼️ Imágenes'}
-              {t === 'pdf' && '📄 PDFs'}
+              {labels[t]}
             </button>
-          ))}
-        </div>
-        <span className="text-xs text-text-secondary">
-          {filteredFiles.length} archivo{filteredFiles.length === 1 ? '' : 's'} en el bucket
+          );
+        })}
+        <span className="text-xs text-text-secondary ml-auto">
+          {filteredFiles.length} {filteredFiles.length === 1 ? 'archivo' : 'archivos'}
         </span>
       </div>
 
-      {/* Lista / Cuadrícula de archivos */}
+      {/* Lista de archivos */}
       {loading ? (
-        <div className="py-8 text-center text-text-secondary text-xs">Cargando archivos del bucket...</div>
+        <div className="py-8 text-center text-xs text-text-secondary">Cargando biblioteca de archivos...</div>
       ) : filteredFiles.length === 0 ? (
-        <div className="py-8 text-center text-text-secondary text-xs bg-background/30 rounded-xl border border-border/50">
-          No hay archivos de este tipo en el bucket <code className="text-accent">{MEMBERS_BUCKET}</code>.
+        <div className="py-8 text-center text-xs text-text-secondary border border-dashed border-border rounded-xl">
+          No hay archivos de este tipo en el bucket.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
+        <div className={`grid ${compact ? 'grid-cols-1 gap-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'} max-h-96 overflow-y-auto pr-1`}>
           {filteredFiles.map((file) => {
             const isVid = isVideo(file.name);
             const isImg = isImage(file.name);
@@ -215,57 +209,28 @@ export function MediaBucketManager({
             return (
               <div
                 key={file.path}
-                className="bg-background border border-border rounded-xl p-3 flex flex-col justify-between space-y-2 group hover:border-accent/40 transition"
+                className="bg-surface border border-border/80 hover:border-accent/40 rounded-xl p-3 flex flex-col justify-between gap-2 text-xs transition"
               >
-                {/* Previsualizador miniatura */}
-                <div className="w-full h-28 bg-black/40 rounded-lg overflow-hidden flex items-center justify-center relative">
-                  {isImg && (
-                    <img
-                      src={file.publicUrl}
-                      alt={file.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  )}
-                  {isVid && (
-                    <video
-                      src={file.publicUrl}
-                      className="w-full h-full object-cover"
-                      muted
-                      preload="metadata"
-                    />
-                  )}
-                  {isDoc && (
-                    <div className="flex flex-col items-center justify-center text-text-secondary">
-                      <span className="text-3xl">📄</span>
-                      <span className="text-[10px] uppercase font-bold text-accent mt-1">Documento PDF</span>
-                    </div>
-                  )}
-                  <span className="absolute bottom-1 right-1 bg-black/75 px-1.5 py-0.5 rounded text-[10px] text-gray-300 font-mono">
-                    {file.sizeFormatted}
-                  </span>
+                <div className="flex items-start gap-2.5 overflow-hidden">
+                  <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center shrink-0 border border-border/50 text-accent font-bold">
+                    {isVid ? 'VID' : isImg ? 'IMG' : isDoc ? 'PDF' : 'DOC'}
+                  </div>
+                  <div className="overflow-hidden min-w-0 flex-1">
+                    <p className="font-semibold text-text-primary truncate" title={file.name}>
+                      {file.name}
+                    </p>
+                    <p className="text-[10px] text-text-secondary truncate mt-0.5">
+                      {file.path.split('/')[0] || 'general'} · {file.sizeFormatted}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Nombre y metadatos */}
-                <div>
-                  <p className="text-xs font-semibold text-text-primary truncate" title={file.name}>
-                    {file.name}
-                  </p>
-                  <p className="text-[10px] text-text-secondary font-mono truncate">{file.path}</p>
-                </div>
-
-                {/* Botones de acción */}
-                <div className="flex items-center gap-1.5 pt-1 border-t border-border/60">
+                <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-border/40">
                   {onSelectFile && (
                     <button
                       type="button"
-                      onClick={() =>
-                        onSelectFile(
-                          file.publicUrl,
-                          isVid ? 'video' : isImg ? 'image' : 'pdf'
-                        )
-                      }
-                      className="flex-1 bg-accent/20 hover:bg-accent text-accent hover:text-background font-bold text-[11px] py-1 px-2 rounded-lg transition"
+                      onClick={() => onSelectFile(file.publicUrl, isVid ? 'video' : isImg ? 'image' : 'pdf')}
+                      className="btn-accent !px-2.5 !py-1 text-[11px] font-bold"
                     >
                       Asignar
                     </button>
@@ -274,18 +239,18 @@ export function MediaBucketManager({
                     type="button"
                     onClick={() => copyUrl(file.publicUrl)}
                     title="Copiar URL"
-                    className="p-1 hover:bg-white/10 rounded text-text-secondary hover:text-white transition text-xs"
+                    className="px-2 py-1 hover:bg-white/10 rounded text-text-secondary hover:text-white transition text-xs"
                   >
-                    📋
+                    Copiar URL
                   </button>
                   <a
                     href={file.publicUrl}
                     target="_blank"
                     rel="noreferrer"
                     title="Abrir en pestaña nueva"
-                    className="p-1 hover:bg-white/10 rounded text-text-secondary hover:text-white transition text-xs"
+                    className="px-2 py-1 hover:bg-white/10 rounded text-text-secondary hover:text-white transition text-xs"
                   >
-                    🔗
+                    Ver
                   </a>
                   <button
                     type="button"
@@ -293,7 +258,7 @@ export function MediaBucketManager({
                     title="Eliminar del bucket"
                     className="p-1 hover:bg-red-500/20 text-text-secondary hover:text-red-400 rounded transition text-xs"
                   >
-                    🗑️
+                    <TrashIcon className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

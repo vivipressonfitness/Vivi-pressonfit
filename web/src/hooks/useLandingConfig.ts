@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { getMemberMediaUrl } from '../lib/storage';
 import { LANDING_CLASES, LANDING_EDUCATIVO } from '../data/landingMedia';
+import { BASE_OFFER } from '../lib/offer';
 
 // Config editable desde el panel Admin (tabla landing_config: key -> value jsonb).
 // Claves usadas por la landing tipo PORTAL, con defaults tomados del diseño EJEMPLO.
@@ -135,7 +136,7 @@ function parseItems(value: unknown): PreviewItem[] | null {
 }
 
 export const DEFAULT_CONFIG: LandingConfig = {
-  monthly_price: 40,
+  monthly_price: BASE_OFFER.monthlyPrice,
   whatsapp_number: '5493415888117',
   hero_title: 'Programa de Entrenamiento y',
   hero_title_sub: 'Estilo de Vida Saludable.',

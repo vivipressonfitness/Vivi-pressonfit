@@ -114,6 +114,13 @@ export function LandingConfigEditor() {
   };
 
   const saveSingle = async (key: keyof LandingConfig) => {
+    if (key === 'monthly_price') {
+      const p = Number(values.monthly_price);
+      if (isNaN(p) || p <= 0) {
+        setMsg('Error: El precio mensual debe ser un número mayor a 0 (ej: 40).');
+        return;
+      }
+    }
     setSaving(key);
     setMsg(null);
     const value = (key === 'monthly_price' || key === 'logo_height')

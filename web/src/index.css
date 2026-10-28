@@ -49,9 +49,13 @@ html.lenis, html.lenis body {
   pointer-events: none;
 }
 
+/* Sistema de componentes y botones unificados (F-10) */
 @layer components {
   .btn-accent {
-    @apply bg-accent hover:bg-accent-hover text-background font-bold px-6 py-3 rounded-pill transition;
+    @apply bg-accent hover:bg-accent-hover text-background font-bold px-6 py-3 rounded-pill transition shadow-md shadow-accent/20 min-h-[44px] inline-flex items-center justify-center;
+  }
+  .btn-outline {
+    @apply border border-accent text-accent hover:bg-accent/10 font-semibold px-6 py-3 rounded-pill transition min-h-[44px] inline-flex items-center justify-center;
   }
   .card-surface {
     @apply bg-surface border border-border rounded-2xl p-6;

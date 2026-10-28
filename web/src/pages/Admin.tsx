@@ -7,12 +7,9 @@ import { LandingConfigEditor } from '../components/admin/LandingConfigEditor';
 import { ContentManager } from '../components/admin/ContentManager';
 import { AnalyticsChart } from '../components/admin/AnalyticsChart';
 import { MediaManager } from '../components/admin/MediaManager';
+import { VideoIcon, FolderIcon, GearIcon, UsersIcon } from '../components/ui/Icons';
 
-// Panel admin: 4 pestañas de gestión.
-// - Contenido: CRUD de membership_content (público y privado)
-// - Biblioteca: gestor de archivos multimedia del bucket members-media
-// - Landing: editor de configuración (precio, WhatsApp, textos, imágenes)
-// - Miembros: lista filtrable con confirmación y auditoría de roles
+// Panel admin: 4 pestañas de gestión con sistema de diseño unificado (F-10).
 type Tab = 'content' | 'bucket' | 'landing' | 'members';
 
 interface MemberRow {
@@ -29,124 +26,109 @@ function formatPlanStatus(status: string | null) {
     case 'active':
       return <span className="text-emerald-400 font-semibold">Activo</span>;
     case 'trial':
-      return <span className="text-accent font-semibold">En Prueba</span>;
+      return <span className="text-sky-400 font-semibold">Prueba</span>;
     case 'past_due':
-      return <span className="text-amber-400 font-semibold">Pago Pendiente</span>;
+      return <span className="text-amber-400 font-semibold">Pago pendiente</span>;
     case 'canceled':
-      return <span className="text-neutral-400">Cancelado</span>;
+      return <span className="text-red-400 font-semibold">Cancelado</span>;
     case 'expired':
-      return <span className="text-red-400">Vencido</span>;
+      return <span className="text-red-400 font-semibold">Prueba vencida</span>;
     default:
-      return <span className="text-text-secondary">{status || 'Inactivo'}</span>;
+      return <span className="text-neutral-400">Sin plan</span>;
   }
 }
 
 export default function Admin() {
-  const isStoreAdmin = useMembershipStore((s) => s.isAdmin);
   const profile = useAuthStore((s) => s.profile);
-  const initializing = useAuthStore((s) => s.initializing);
-  const membershipLoading = useMembershipStore((s) => s.loading);
-  const isAdmin = isStoreAdmin || Boolean(profile?.is_admin);
-  const myId = useAuthStore((s) => s.user?.id);
-  const [profiles, setProfiles] = useState<MemberRow[]>([]);
-  const [loadingMembers, setLoadingMembers] = useState(true);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [roleError, setRoleError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const isAdmin = useMembershipStore((s) => s.isAdmin);
   const [tab, setTab] = useState<Tab>('content');
+  const [profiles, setProfiles] = useState<MemberRow[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [toggleLoading, setToggleLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tab === 'members') loadMembers();
+  }, [tab]);
 
   async function loadMembers() {
-    setLoadingMembers(true);
-    const { data, error } = await supabase
+    setLoading(true);
+    const { data } = await supabase
       .from('profiles')
       .select('id, email, full_name, plan_status, is_admin, created_at')
       .order('created_at', { ascending: false });
-    if (!error) setProfiles((data as MemberRow[]) ?? []);
-    setLoadingMembers(false);
+    setProfiles(data ?? []);
+    setLoading(false);
   }
 
-  useEffect(() => {
-    if (!isAdmin) return;
-    loadMembers();
-  }, [isAdmin]);
-
-  // Cambiar rol con confirmación obligatoria para evitar degradaciones accidentales (F-13)
   async function toggleRole(m: MemberRow) {
-    if (m.id === myId) {
-      setRoleError('No puedes modificar tu propio rol de administrador.');
-      return;
-    }
-    const actionLabel = m.is_admin ? 'retirar los permisos de Administrador a' : 'nombrar como Administrador a';
-    const confirmMessage = `¿Estás segura de que deseas ${actionLabel} ${m.full_name || m.email}?`;
-    if (!window.confirm(confirmMessage)) return;
+    const action = m.is_admin ? 'quitar privilegios de Administrador a' : 'hacer Administrador a';
+    const confirmed = window.confirm(
+      `¿Confirmas que deseas ${action} ${m.full_name || m.email}?\n\nEsta acción modificará sus permisos de acceso.`
+    );
+    if (!confirmed) return;
 
-    setRoleError(null);
-    setUpdatingId(m.id);
-    const nextAdmin = !m.is_admin;
+    setToggleLoading(m.id);
+    const nextRole = !m.is_admin;
     const { error } = await supabase
       .from('profiles')
-      .update({ is_admin: nextAdmin, plan_status: nextAdmin ? 'active' : m.plan_status })
+      .update({ is_admin: nextRole, role: nextRole ? 'admin' : 'member' })
       .eq('id', m.id);
 
     if (error) {
-      setRoleError(`No se pudo actualizar el rol: ${error.message}`);
+      alert(`Error al actualizar el rol: ${error.message}`);
     } else {
       setProfiles((prev) =>
-        prev.map((p) => (p.id === m.id ? { ...p, is_admin: nextAdmin, plan_status: nextAdmin ? 'active' : p.plan_status } : p))
+        prev.map((p) => (p.id === m.id ? { ...p, is_admin: nextRole } : p))
       );
     }
-    setUpdatingId(null);
+    setToggleLoading(null);
   }
 
-  if (initializing || (membershipLoading && !profile)) {
+  if (!profile?.is_admin && !isAdmin) {
     return (
-      <div className="py-20 text-center text-text-secondary flex flex-col items-center justify-center gap-3">
-        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-        <span>Verificando credenciales de administrador…</span>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="py-20 text-center text-text-secondary">
-        <p className="text-accent font-semibold text-lg mb-2">Acceso restringido</p>
-        <p>Esta sección está reservada exclusivamente para la administración del portal.</p>
+      <div className="py-20 text-center">
+        <h1 className="text-2xl font-bold">Acceso restringido</h1>
+        <p className="text-text-secondary mt-2">Esta sección es solo para administradores.</p>
       </div>
     );
   }
 
   const adminsCount = profiles.filter((p) => p.is_admin).length;
   const filteredProfiles = profiles.filter((p) => {
+    if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return true;
     return (
-      (p.full_name?.toLowerCase().includes(q) ?? false) ||
+      (p.full_name && p.full_name.toLowerCase().includes(q)) ||
       p.email.toLowerCase().includes(q) ||
       p.plan_status.toLowerCase().includes(q)
     );
   });
 
-  const tabs: Array<{ id: Tab; label: string }> = [
-    { id: 'content', label: 'Contenido del mes (Público / Privado)' },
-    { id: 'bucket', label: 'Biblioteca de Archivos' },
-    { id: 'landing', label: 'Landing / Precios' },
-    { id: 'members', label: `Miembros (${profiles.length - adminsCount})` },
+  const tabs = [
+    { id: 'content' as Tab, label: 'Contenido', icon: VideoIcon },
+    { id: 'bucket' as Tab, label: 'Biblioteca', icon: FolderIcon },
+    { id: 'landing' as Tab, label: 'Landing & Precios', icon: GearIcon },
+    { id: 'members' as Tab, label: `Miembros (${profiles.length ? profiles.length - adminsCount : '…'})`, icon: UsersIcon },
   ];
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-extrabold">Panel Admin</h1>
+      <h1 className="text-3xl font-extrabold text-white">Panel Admin</h1>
+
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none -mx-2 px-2 sm:mx-0 sm:px-0">
-        {tabs.map((t) => (
+        {tabs.map(({ id, label, icon: Icon }) => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-pill text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 ${
-              tab === t.id ? 'bg-accent text-background' : 'border border-border text-text-secondary hover:text-white'
+            key={id}
+            onClick={() => setTab(id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-pill text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 min-h-[44px] ${
+              tab === id
+                ? 'bg-accent text-background shadow-md shadow-accent/20'
+                : 'border border-border text-text-secondary hover:text-white hover:bg-white/5'
             }`}
           >
-            {t.label}
+            <Icon className="w-4 h-4" />
+            <span>{label}</span>
           </button>
         ))}
       </div>
@@ -168,60 +150,87 @@ export default function Admin() {
           <Card className="!p-4 sm:!p-6 space-y-4">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-bold text-white">Listado de Miembros y Permisos</h2>
-                <p className="text-xs text-text-secondary">Gestiona los roles de acceso y consulta el estado de suscripción.</p>
+                <h2 className="font-bold text-lg text-white">Miembros registrados</h2>
+                <p className="text-xs text-text-secondary">
+                  {profiles.length} cuentas en total · {adminsCount} administradores
+                </p>
               </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por nombre o correo…"
-                className="bg-background border border-border rounded-xl px-3.5 py-2 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent w-full sm:w-64"
-              />
+
+              {/* Buscador de miembros en tiempo real */}
+              <div className="w-full sm:w-64">
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar por nombre o email…"
+                  aria-label="Buscar miembros"
+                  className="w-full bg-background border border-border rounded-xl px-3.5 py-2 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
             </div>
 
-            {roleError && <p role="alert" className="text-red-400 text-xs">{roleError}</p>}
-
-            {loadingMembers ? (
-              <p role="status" className="py-6 text-center text-text-secondary text-sm">Cargando miembros…</p>
+            {loading ? (
+              <p role="status" className="text-text-secondary text-sm py-4">Cargando miembros…</p>
             ) : filteredProfiles.length === 0 ? (
-              <p className="py-6 text-center text-text-secondary text-sm">No se encontraron miembros con ese criterio.</p>
+              <p className="text-text-secondary text-sm py-4">
+                {searchQuery ? 'No se encontraron miembros con ese criterio.' : 'No hay miembros registrados.'}
+              </p>
             ) : (
-              <div className="overflow-x-auto w-full">
-                <table className="w-full text-xs sm:text-sm min-w-[580px]">
-                  <thead className="text-left text-text-secondary border-b border-border">
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs uppercase text-text-secondary border-b border-border bg-surface/50">
                     <tr>
-                      <th className="p-3 sm:p-4">Nombre</th>
-                      <th className="p-3 sm:p-4">Email</th>
-                      <th className="p-3 sm:p-4">Plan</th>
-                      <th className="p-3 sm:p-4">Rol</th>
-                      <th className="p-3 sm:p-4 text-right">Acción</th>
+                      <th className="py-3 px-3">Miembro</th>
+                      <th className="py-3 px-3">Plan</th>
+                      <th className="py-3 px-3">Rol</th>
+                      <th className="py-3 px-3">Registro</th>
+                      <th className="py-3 px-3 text-right">Acción</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {filteredProfiles.map((p) => (
-                      <tr key={p.id} className="border-b border-border/50 hover:bg-white/[0.02]">
-                        <td className="p-3 sm:p-4 font-medium">{p.full_name ?? '—'}</td>
-                        <td className="p-3 sm:p-4 text-text-secondary truncate max-w-[160px]">{p.email}</td>
-                        <td className="p-3 sm:p-4">{formatPlanStatus(p.plan_status)}</td>
-                        <td className="p-3 sm:p-4">
-                          <span
-                            className={`px-2 py-0.5 rounded-pill text-[10px] sm:text-xs font-bold ${
-                              p.is_admin ? 'bg-accent/20 text-accent' : 'bg-white/10 text-text-secondary'
-                            }`}
-                          >
-                            {p.is_admin ? 'Administrador' : 'Miembro'}
-                          </span>
+                  <tbody className="divide-y divide-border">
+                    {filteredProfiles.map((m) => (
+                      <tr key={m.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3 px-3">
+                          <p className="font-semibold text-text-primary">{m.full_name || 'Sin nombre'}</p>
+                          <p className="text-xs text-text-secondary">{m.email}</p>
                         </td>
-                        <td className="p-3 sm:p-4 text-right">
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          {formatPlanStatus(m.plan_status)}
+                        </td>
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          {m.is_admin ? (
+                            <span className="inline-block px-2.5 py-0.5 rounded-pill text-[11px] font-bold bg-accent/20 text-accent border border-accent/40">
+                              Admin
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2.5 py-0.5 rounded-pill text-[11px] text-text-secondary border border-border">
+                              Miembro
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 whitespace-nowrap text-xs text-text-secondary">
+                          {new Date(m.created_at).toLocaleDateString('es-AR', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </td>
+                        <td className="py-3 px-3 text-right whitespace-nowrap">
                           <button
                             type="button"
-                            onClick={() => toggleRole(p)}
-                            disabled={updatingId === p.id || p.id === myId}
-                            title={p.id === myId ? 'No puedes modificar tu propio rol' : undefined}
-                            className="px-3 py-1.5 rounded-pill text-xs font-bold border border-border hover:border-accent disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-accent"
+                            disabled={toggleLoading === m.id}
+                            onClick={() => toggleRole(m)}
+                            className={`text-xs px-3 py-1.5 rounded-pill font-semibold transition ${
+                              m.is_admin
+                                ? 'border border-red-500/40 text-red-400 hover:bg-red-500/10'
+                                : 'border border-border text-text-secondary hover:text-white hover:border-accent'
+                            } disabled:opacity-50`}
                           >
-                            {updatingId === p.id ? 'Guardando…' : p.is_admin ? 'Quitar Admin' : 'Hacer Admin'}
+                            {toggleLoading === m.id
+                              ? 'Guardando…'
+                              : m.is_admin
+                              ? 'Quitar Admin'
+                              : 'Hacer Admin'}
                           </button>
                         </td>
                       </tr>

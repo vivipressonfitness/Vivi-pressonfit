@@ -13,17 +13,20 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { formatAuthError } from '../lib/authErrors';
+import { formatPrice, formatMonthlyRate } from '../lib/offer';
 
 // Página de MEMBRESÍA — Checkout de 2 columnas de alta conversión (CRO).
-// Columna 1: Resumen de valor, beneficios, garantía y comparativa.
-// Columna 2: Formulario directo de alta / checkout sin fricción con Stripe.
+// F-08: Un CTA por estado, bloqueo durante hidratación, exclusión de admin.
 export default function Membership() {
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
+  const initializing = useAuthStore((s) => s.initializing);
   const { signIn } = useAuth();
   const { startCheckout, loading: stripeLoading, error: stripeError } = useStripe();
   const { status } = useMembership();
+  const membershipLoading = useMembershipStore((s) => s.loading);
   const stripeSubscriptionId = useMembershipStore((s) => s.stripeSubscriptionId);
+  const trialEndDate = useMembershipStore((s) => s.trialEndDate);
   const { config } = useLandingConfig();
 
   // Estados para el formulario inline (cuando !user)
@@ -44,11 +47,30 @@ export default function Membership() {
     { title: 'Contenido nuevo cada ciclo', desc: 'Renovación mensual: siempre hay clases, desafíos y material fresco disponible.' },
   ];
 
+  // F-08: Determinar el estado concreto de la usuaria para renderizar el CTA correcto
+  const hasStripeSubscription = /^sub_[A-Za-z0-9]+$/.test(stripeSubscriptionId ?? '');
+
   // Si la usuaria ya tiene una membresía activa o en período de prueba gestionable
   const isManaging =
     Boolean(user) &&
     (status === 'active' || status === 'past_due' || status === 'trial') &&
-    /^sub_[A-Za-z0-9]+$/.test(stripeSubscriptionId ?? '');
+    hasStripeSubscription;
+
+  // F-08: Admin sin membresía no necesita comprar
+  const isAdminWithoutMembership =
+    Boolean(user) && Boolean(profile?.is_admin) && !isManaging;
+
+  // F-08: Fecha exacta de cobro legible
+  const trialCobro = (() => {
+    if (!trialEndDate) return null;
+    try {
+      return new Date(trialEndDate).toLocaleDateString('es-AR', {
+        day: 'numeric', month: 'long', year: 'numeric',
+      });
+    } catch {
+      return null;
+    }
+  })();
 
   // Manejo de Registro Inline directo hacia Stripe Checkout
   async function handleInlineRegister(e: FormEvent) {
@@ -118,6 +140,398 @@ export default function Membership() {
     } finally {
       setFormLoading(false);
     }
+  }
+
+  // F-08: Renderizar la columna 2 (CTA) según el estado concreto de la usuaria
+  function renderCheckoutColumn() {
+    // — Estado: Hidratando perfil/membresía —
+    if (initializing || (user && membershipLoading)) {
+      return (
+        <div className="card-surface p-6 sm:p-8 border border-border space-y-4">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-white/10 rounded w-1/3" />
+            <div className="h-6 bg-white/10 rounded w-2/3" />
+            <div className="h-3 bg-white/10 rounded w-full" />
+            <div className="h-3 bg-white/10 rounded w-4/5" />
+            <div className="h-12 bg-white/10 rounded-xl w-full" />
+          </div>
+          <p className="text-xs text-text-secondary text-center">Verificando tu cuenta…</p>
+        </div>
+      );
+    }
+
+    // — Estado: Admin sin membresía —
+    if (isAdminWithoutMembership) {
+      return (
+        <div className="card-surface p-6 sm:p-8 border border-accent/40 space-y-5">
+          <div className="space-y-1">
+            <span className="text-xs uppercase tracking-wider text-accent font-bold">Administradora</span>
+            <h3 className="text-xl font-bold text-white">
+              Hola, {profile?.full_name || user?.email?.split('@')[0]}
+            </h3>
+            <p className="text-xs text-text-secondary">
+              Tu cuenta tiene acceso de administradora al contenido completo y al panel de gestión. No necesitas una suscripción de pago.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link
+              to="/admin"
+              className="btn-accent text-center !py-3 font-bold flex-1 inline-flex items-center justify-center min-h-[48px]"
+            >
+              Ir al Panel de Admin
+            </Link>
+            <Link
+              to="/dashboard"
+              className="text-center text-sm font-semibold text-accent border border-accent/30 rounded-xl px-4 py-3 hover:bg-accent/10 transition-colors flex-1 inline-flex items-center justify-center min-h-[48px]"
+            >
+              Ver Dashboard
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    // — Estado: Usuaria con sesión y estado conocido —
+    if (user && status) {
+      // Trial con suscripción de Stripe → gestionable
+      if (status === 'trial' && hasStripeSubscription) {
+        return (
+          <div className="card-surface p-6 sm:p-8 border border-sky-500/40 space-y-5">
+            <div className="space-y-1">
+              <span className="text-xs uppercase tracking-wider text-sky-400 font-bold">Prueba Gratuita Activa</span>
+              <h3 className="text-xl font-bold text-white">
+                Hola, {profile?.full_name || user.email?.split('@')[0]}
+              </h3>
+              <p className="text-xs text-text-secondary">
+                Ya estás disfrutando la prueba gratuita con acceso completo a todo el contenido.
+              </p>
+            </div>
+
+            <StatusCard />
+
+            {trialCobro && (
+              <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-4 text-xs text-text-secondary leading-relaxed">
+                <p>
+                  <strong className="text-sky-400">Tu primer cobro será el {trialCobro}.</strong>{' '}
+                  Si prefieres no continuar, cancela antes de esa fecha desde el portal de Stripe y no se realizará ningún cargo.
+                </p>
+              </div>
+            )}
+
+            <Link
+              to="/dashboard"
+              className="btn-accent w-full text-center !py-3.5 text-base font-bold shadow-lg shadow-accent/30 inline-flex items-center justify-center min-h-[48px]"
+            >
+              Ir a entrenar →
+            </Link>
+          </div>
+        );
+      }
+
+      // Trial sin suscripción de Stripe → debe completar checkout
+      if (status === 'trial' && !hasStripeSubscription) {
+        return (
+          <div className="card-surface p-6 sm:p-8 border border-accent/40 shadow-2xl relative overflow-hidden space-y-5">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="space-y-1">
+              <span className="text-xs uppercase tracking-wider text-accent font-bold">Completa tu suscripción</span>
+              <h3 className="text-xl font-bold text-white">
+                Hola, {profile?.full_name || user.email?.split('@')[0]}
+              </h3>
+              <p className="text-xs text-text-secondary">
+                Estás en la prueba gratuita. Registra tu método de pago para conservar el acceso completo cuando finalice.
+              </p>
+            </div>
+
+            <StatusCard />
+
+            {stripeError && <p role="alert" className="text-red-400 text-xs text-center">{stripeError}</p>}
+
+            <Button
+              loading={stripeLoading}
+              onClick={startCheckout}
+              className="w-full !py-3.5 text-base font-bold shadow-lg shadow-accent/30"
+            >
+              Registrar método de pago →
+            </Button>
+
+            <p className="text-xs text-text-secondary text-center leading-relaxed">
+              $0.00 hoy. Al terminar tu prueba se renovará a {formatMonthlyRate(config.monthly_price)}. Cancela cuando quieras.
+            </p>
+          </div>
+        );
+      }
+
+      // Activa o pago vencido con suscripción → ya gestionable (no se llega aquí normalmente, pero por seguridad)
+      if ((status === 'active' || status === 'past_due') && hasStripeSubscription) {
+        // Este caso lo cubre isManaging → renderizado arriba como vista de gestión
+        return null;
+      }
+
+      // Cancelada → reactivación
+      if (status === 'canceled') {
+        return (
+          <div className="card-surface p-6 sm:p-8 border border-accent/40 shadow-2xl relative overflow-hidden space-y-5">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="space-y-1">
+              <span className="text-xs uppercase tracking-wider text-red-400 font-bold">Suscripción Cancelada</span>
+              <h3 className="text-xl font-bold text-white">
+                Hola, {profile?.full_name || user.email?.split('@')[0]}
+              </h3>
+              <p className="text-xs text-text-secondary">
+                Tu suscripción fue cancelada. Reactiva tu membresía para volver a acceder a todo el contenido.
+              </p>
+            </div>
+
+            <StatusCard />
+
+            {stripeError && <p role="alert" className="text-red-400 text-xs text-center">{stripeError}</p>}
+
+            <Button
+              loading={stripeLoading}
+              onClick={startCheckout}
+              className="w-full !py-3.5 text-base font-bold shadow-lg shadow-accent/30"
+            >
+              Reactivar membresía — {formatMonthlyRate(config.monthly_price)} →
+            </Button>
+
+            <p className="text-xs text-text-secondary text-center leading-relaxed">
+              Se creará una nueva suscripción con 7 días de prueba sin costo.
+            </p>
+          </div>
+        );
+      }
+
+      // Expirada → nueva suscripción
+      if (status === 'expired') {
+        return (
+          <div className="card-surface p-6 sm:p-8 border border-accent/40 shadow-2xl relative overflow-hidden space-y-5">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="space-y-1">
+              <span className="text-xs uppercase tracking-wider text-amber-400 font-bold">Prueba Finalizada</span>
+              <h3 className="text-xl font-bold text-white">
+                Hola, {profile?.full_name || user.email?.split('@')[0]}
+              </h3>
+              <p className="text-xs text-text-secondary">
+                Tu período de prueba terminó. Suscríbete para seguir entrenando con todo el contenido del ciclo actual.
+              </p>
+            </div>
+
+            <StatusCard />
+
+            {stripeError && <p role="alert" className="text-red-400 text-xs text-center">{stripeError}</p>}
+
+            <Button
+              loading={stripeLoading}
+              onClick={startCheckout}
+              className="w-full !py-3.5 text-base font-bold shadow-lg shadow-accent/30"
+            >
+              Suscribirme ahora — {formatMonthlyRate(config.monthly_price)} →
+            </Button>
+
+            <p className="text-xs text-text-secondary text-center leading-relaxed">
+              Incluye 7 días de prueba sin costo. Cancela cuando quieras.
+            </p>
+          </div>
+        );
+      }
+
+      // Inactive con sesión → primer checkout (paso final)
+      return (
+        <div className="card-surface p-6 sm:p-8 border border-accent/40 shadow-2xl relative overflow-hidden space-y-5">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="space-y-1">
+            <span className="text-xs uppercase tracking-wider text-accent font-bold">Paso Final</span>
+            <h3 className="text-xl font-bold text-white">
+              Hola, {profile?.full_name || user.email?.split('@')[0]}
+            </h3>
+            <p className="text-xs text-text-secondary">
+              Tu cuenta está lista. Confirma tu método de pago con Stripe para comenzar tus 7 días gratis.
+            </p>
+          </div>
+
+          <StatusCard />
+
+          {stripeError && <p role="alert" className="text-red-400 text-xs text-center">{stripeError}</p>}
+
+          <Button
+            loading={stripeLoading}
+            onClick={startCheckout}
+            className="w-full !py-3.5 text-base font-bold shadow-lg shadow-accent/30"
+          >
+            Probar 7 días gratis →
+          </Button>
+
+          <p className="text-xs text-text-secondary text-center leading-relaxed">
+            $0.00 hoy. Al terminar los 7 días se renovará a {formatMonthlyRate(config.monthly_price)}. Cancela cuando quieras.
+          </p>
+        </div>
+      );
+    }
+
+    // — Sin sesión: formulario de registro/login inline —
+    return (
+      <div className="card-surface p-6 sm:p-8 border border-accent/40 shadow-2xl relative overflow-hidden space-y-5">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Selector de modo (Registro vs Login) */}
+        <div className="flex border border-border rounded-xl p-1 bg-background/50" role="group" aria-label="Tipo de acceso">
+          <button
+            type="button"
+            aria-pressed={authMode === 'register'}
+            onClick={() => { setAuthMode('register'); setFormError(null); }}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+              authMode === 'register'
+                ? 'bg-accent text-background shadow-md'
+                : 'text-text-secondary hover:text-white'
+            }`}
+          >
+            Nueva Alumna
+          </button>
+          <button
+            type="button"
+            aria-pressed={authMode === 'login'}
+            onClick={() => { setAuthMode('login'); setFormError(null); }}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+              authMode === 'login'
+                ? 'bg-accent text-background shadow-md'
+                : 'text-text-secondary hover:text-white'
+            }`}
+          >
+            Ya tengo cuenta
+          </button>
+        </div>
+
+        <div className="space-y-1">
+          <h3 className="text-xl font-bold text-white">
+            {authMode === 'register' ? 'Activa tus 7 días gratis' : 'Ingresa a tu cuenta'}
+          </h3>
+          <p className="text-xs text-text-secondary">
+            {authMode === 'register'
+              ? 'Crea tu cuenta y continúa a la pasarela segura de Stripe.'
+              : 'Inicia sesión con tu correo y contraseña.'}
+          </p>
+        </div>
+
+        {formInfo && (
+          <div role="status" className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs">
+            {formInfo}
+          </div>
+        )}
+
+        {authMode === 'register' ? (
+          /* Formulario de Registro Inline */
+          <form onSubmit={handleInlineRegister} className="space-y-4">
+            <Input
+              label="Nombre completo"
+              name="fullName"
+              autoComplete="name"
+              required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Tu nombre y apellido"
+            />
+            <Input
+              label="Email"
+              type="email"
+              name="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="alumna@ejemplo.com"
+            />
+            <Input
+              label="Contraseña"
+              type="password"
+              name="password"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mínimo 6 caracteres"
+            />
+
+            <label className="flex items-start gap-2.5 text-xs text-text-secondary cursor-pointer pt-1 select-none">
+              <input
+                type="checkbox"
+                name="terms"
+                required
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-border accent-accent shrink-0 cursor-pointer"
+              />
+              <span>
+                Acepto los{' '}
+                <Link to="/terminos" target="_blank" className="text-accent underline font-medium">
+                  Términos
+                </Link>{' '}
+                y la{' '}
+                <Link to="/privacidad" target="_blank" className="text-accent underline font-medium">
+                  Privacidad
+                </Link>.
+              </span>
+            </label>
+
+            {formError && <p role="alert" className="text-red-400 text-xs">{formError}</p>}
+            {stripeError && <p role="alert" className="text-red-400 text-xs">{stripeError}</p>}
+
+            <Button
+              loading={formLoading || stripeLoading}
+              type="submit"
+              className="w-full !py-3.5 text-base font-bold shadow-lg shadow-accent/30"
+            >
+              Probar 7 días gratis →
+            </Button>
+
+            <p className="text-xs text-text-secondary text-center leading-relaxed">
+              $0.00 cobrados hoy. Stripe validará tu tarjeta de forma segura sin coste durante 7 días.
+            </p>
+          </form>
+        ) : (
+          /* Formulario de Login Inline */
+          <form onSubmit={handleInlineLogin} className="space-y-4">
+            <Input
+              label="Email"
+              type="email"
+              name="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+            />
+            <Input
+              label="Contraseña"
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <div className="flex justify-end -mt-2">
+              <Link to="/recuperar" className="text-xs text-text-secondary hover:text-accent transition-colors">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+
+            {formError && <p role="alert" className="text-red-400 text-xs">{formError}</p>}
+            {stripeError && <p role="alert" className="text-red-400 text-xs">{stripeError}</p>}
+
+            <Button
+              loading={formLoading || stripeLoading}
+              type="submit"
+              className="w-full !py-3.5 text-base font-bold shadow-lg shadow-accent/30"
+            >
+              Iniciar Sesión y Continuar →
+            </Button>
+          </form>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -191,7 +605,7 @@ export default function Membership() {
                   </div>
                   <div className="text-left sm:text-right">
                     <span className="text-3xl font-black text-accent tracking-tight">
-                      USD {config.monthly_price || 40}
+                      {formatPrice(config.monthly_price)}
                     </span>
                     <span className="text-xs text-text-secondary block">/mes (tras los 7 días gratis)</span>
                   </div>
@@ -256,202 +670,9 @@ export default function Membership() {
               </div>
             </div>
 
-            {/* COLUMNA 2: Formulario de Checkout / Registro Inline (5 columnas) */}
+            {/* COLUMNA 2: CTA contextual por estado de la usuaria (5 columnas) */}
             <div className="lg:col-span-5 lg:sticky lg:top-28 lg:self-start space-y-4">
-              <div className="card-surface p-6 sm:p-8 border border-accent/40 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
-
-                {/* Si la usuaria ya inició sesión pero no tiene membresía activa */}
-                {user ? (
-                  <div className="space-y-5">
-                    <div className="space-y-1">
-                      <span className="text-xs uppercase tracking-wider text-accent font-bold">Paso Final</span>
-                      <h3 className="text-xl font-bold text-white">
-                        Hola, {profile?.full_name || user.email?.split('@')[0]}
-                      </h3>
-                      <p className="text-xs text-text-secondary">
-                        Tu cuenta está lista. Confirma tu método de pago con Stripe para comenzar tus 7 días gratis.
-                      </p>
-                    </div>
-
-                    <StatusCard />
-
-                    {stripeError && <p role="alert" className="text-red-400 text-xs text-center">{stripeError}</p>}
-
-                    <Button
-                      loading={stripeLoading}
-                      onClick={startCheckout}
-                      className="w-full !py-3.5 text-base font-bold shadow-lg shadow-accent/30"
-                    >
-                      Comenzar 7 días de prueba gratis →
-                    </Button>
-
-                    <p className="text-xs text-text-secondary text-center leading-relaxed">
-                      $0.00 hoy. Al terminar los 7 días se renovará a USD {config.monthly_price || 40}/mes. Cancela cuando quieras.
-                    </p>
-                  </div>
-                ) : (
-                  /* Formulario de Alta Inline (Sin sesión previa) */
-                  <div className="space-y-5">
-                    {/* Selector de modo (Registro vs Login) */}
-                    <div className="flex border border-border rounded-xl p-1 bg-background/50" role="group" aria-label="Tipo de acceso">
-                      <button
-                        type="button"
-                        aria-pressed={authMode === 'register'}
-                        onClick={() => { setAuthMode('register'); setFormError(null); }}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                          authMode === 'register'
-                            ? 'bg-accent text-background shadow-md'
-                            : 'text-text-secondary hover:text-white'
-                        }`}
-                      >
-                        Nueva Alumna
-                      </button>
-                      <button
-                        type="button"
-                        aria-pressed={authMode === 'login'}
-                        onClick={() => { setAuthMode('login'); setFormError(null); }}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
-                          authMode === 'login'
-                            ? 'bg-accent text-background shadow-md'
-                            : 'text-text-secondary hover:text-white'
-                        }`}
-                      >
-                        Ya tengo cuenta
-                      </button>
-                    </div>
-
-                    <div className="space-y-1">
-                      <h3 className="text-xl font-bold text-white">
-                        {authMode === 'register' ? 'Activa tus 7 días gratis' : 'Ingresa a tu cuenta'}
-                      </h3>
-                      <p className="text-xs text-text-secondary">
-                        {authMode === 'register'
-                          ? 'Crea tu cuenta y continúa a la pasarela segura de Stripe.'
-                          : 'Inicia sesión con tu correo y contraseña.'}
-                      </p>
-                    </div>
-
-                    {formInfo && (
-                      <div role="status" className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs">
-                        {formInfo}
-                      </div>
-                    )}
-
-                    {authMode === 'register' ? (
-                      /* Formulario de Registro Inline */
-                      <form onSubmit={handleInlineRegister} className="space-y-4">
-                        <Input
-                          label="Nombre completo"
-                          name="fullName"
-                          autoComplete="name"
-                          required
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          placeholder="Tu nombre y apellido"
-                        />
-                        <Input
-                          label="Email"
-                          type="email"
-                          name="email"
-                          autoComplete="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="alumna@ejemplo.com"
-                        />
-                        <Input
-                          label="Contraseña"
-                          type="password"
-                          name="password"
-                          autoComplete="new-password"
-                          required
-                          minLength={6}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="Mínimo 6 caracteres"
-                        />
-
-                        <label className="flex items-start gap-2.5 text-xs text-text-secondary cursor-pointer pt-1 select-none">
-                          <input
-                            type="checkbox"
-                            name="terms"
-                            required
-                            checked={acceptedTerms}
-                            onChange={(e) => setAcceptedTerms(e.target.checked)}
-                            className="mt-0.5 w-4 h-4 rounded border-border accent-accent shrink-0 cursor-pointer"
-                          />
-                          <span>
-                            Acepto los{' '}
-                            <Link to="/terminos" target="_blank" className="text-accent underline font-medium">
-                              Términos
-                            </Link>{' '}
-                            y la{' '}
-                            <Link to="/privacidad" target="_blank" className="text-accent underline font-medium">
-                              Privacidad
-                            </Link>.
-                          </span>
-                        </label>
-
-                        {formError && <p role="alert" className="text-red-400 text-xs">{formError}</p>}
-                        {stripeError && <p role="alert" className="text-red-400 text-xs">{stripeError}</p>}
-
-                        <Button
-                          loading={formLoading || stripeLoading}
-                          type="submit"
-                          className="w-full !py-3.5 text-base font-bold shadow-lg shadow-accent/30"
-                        >
-                          Continuar a la prueba gratis →
-                        </Button>
-
-                        <p className="text-xs text-text-secondary text-center leading-relaxed">
-                          $0.00 cobrados hoy. Stripe validará tu tarjeta de forma segura sin coste durante 7 días.
-                        </p>
-                      </form>
-                    ) : (
-                      /* Formulario de Login Inline */
-                      <form onSubmit={handleInlineLogin} className="space-y-4">
-                        <Input
-                          label="Email"
-                          type="email"
-                          name="email"
-                          autoComplete="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="tu@email.com"
-                        />
-                        <Input
-                          label="Contraseña"
-                          type="password"
-                          name="password"
-                          autoComplete="current-password"
-                          required
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                        />
-
-                        <div className="flex justify-end -mt-2">
-                          <Link to="/recuperar" className="text-xs text-text-secondary hover:text-accent transition-colors">
-                            ¿Olvidaste tu contraseña?
-                          </Link>
-                        </div>
-
-                        {formError && <p role="alert" className="text-red-400 text-xs">{formError}</p>}
-                        {stripeError && <p role="alert" className="text-red-400 text-xs">{stripeError}</p>}
-
-                        <Button
-                          loading={formLoading || stripeLoading}
-                          type="submit"
-                          className="w-full !py-3.5 text-base font-bold shadow-lg shadow-accent/30"
-                        >
-                          Iniciar Sesión y Continuar →
-                        </Button>
-                      </form>
-                    )}
-                  </div>
-                )}
-              </div>
+              {renderCheckoutColumn()}
 
               {/* Medios de Pago y Seguridad */}
               <div className="flex items-center justify-center gap-3 text-xs text-text-secondary pt-1">

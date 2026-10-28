@@ -45,12 +45,17 @@ export function StatusCard() {
 
   const stateCopy: Record<string, string> = {
     active: 'Tu acceso está activo. Puedes entrenar todo el contenido del ciclo actual.',
-    trial: 'Estás en la prueba gratuita con acceso completo al contenido.',
+    trial: hasStripeSubscription
+      ? 'Estás en la prueba gratuita. Tu suscripción comenzará automáticamente al finalizar.'
+      : 'Estás en la prueba gratuita con acceso completo al contenido.',
     past_due: 'El último pago no se completó. Gestiona tu suscripción para evitar interrupciones.',
     canceled: 'Tu suscripción está cancelada. Suscríbete de nuevo para retomar el acceso.',
     expired: 'La prueba gratuita terminó. Suscríbete para continuar entrenando.',
     inactive: 'Aún no tienes membresía. Suscríbete para desbloquear las clases completas.',
   };
+
+  // F-08: Mostrar portal de Stripe para trial con suscripción y para active/past_due
+  const showPortalButton = hasStripeSubscription && (status === 'active' || status === 'past_due' || status === 'trial');
 
   return (
     <Card className="space-y-4">
@@ -68,7 +73,7 @@ export function StatusCard() {
           Prueba gratuita: <strong className="text-accent">{trialDaysLeft} día{trialDaysLeft === 1 ? '' : 's'} restante{trialDaysLeft === 1 ? '' : 's'}</strong>
         </p>
       )}
-      {(status === 'active' || status === 'past_due') && hasStripeSubscription ? (
+      {showPortalButton ? (
         <Button
           variant="outline"
           onClick={openPortal}
@@ -76,13 +81,13 @@ export function StatusCard() {
           aria-describedby="membership-state-copy"
           className="w-full sm:w-auto min-h-[48px]"
         >
-          Gestionar / cancelar suscripción
+          {status === 'trial' ? 'Gestionar método de pago' : 'Gestionar / cancelar suscripción'}
         </Button>
-      ) : status === 'trial' ? (
-        <p className="text-sm text-text-secondary">La prueba gratuita no tiene una suscripción de Stripe para gestionar. Puedes iniciar tu suscripción desde esta página.</p>
       ) : (status === 'active' || status === 'past_due') && !hasStripeSubscription && !isAdmin ? (
         <p className="text-sm text-amber-400">Esta cuenta no tiene una suscripción de Stripe válida asociada. Contacta con soporte antes de intentar otro pago.</p>
-      ) : !isAdmin && (
+      ) : status === 'trial' && !hasStripeSubscription ? (
+        <p className="text-sm text-sky-400">Completa tu suscripción para conservar el acceso completo tras la prueba.</p>
+      ) : !isAdmin && status !== 'trial' && status !== 'active' && status !== 'past_due' && (
         <p className="text-sm text-amber-400">Tu membresía no está activa. Reactívala para ver los videos del mes.</p>
       )}
       {portalError && (

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useLenis } from 'lenis/react';
 import type Hls from 'hls.js';
 import type { PreviewItem } from '../../hooks/useLandingConfig';
+import { useLandingConfig } from '../../hooks/useLandingConfig';
+import { formatTrialCta } from '../../lib/offer';
 
 // Modal de video PROMOCIONAL FREE en el portal público (visible sin login).
 // Cumple con WAI-ARIA 1.2 dialog (atrapamiento de foco, escape, pausa de scroll y Lenis).
@@ -23,6 +25,7 @@ export function FreeVideoModal({ item, onClose }: Props) {
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
   const lenis = useLenis();
+  const { config } = useLandingConfig();
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const directVideoRef = useRef<HTMLVideoElement>(null);
@@ -296,9 +299,9 @@ export function FreeVideoModal({ item, onClose }: Props) {
                 <Link
                   to="/membresia"
                   onClick={onClose}
-                  className="w-full sm:w-auto bg-accent hover:bg-white text-background font-bold px-6 py-3 rounded-full text-sm transition shadow-lg shadow-accent/30 text-center focus-visible:ring-2 focus-visible:ring-accent"
+                  className="w-full sm:w-auto bg-accent hover:bg-accent-hover text-background font-bold px-6 py-3 rounded-pill text-sm transition shadow-lg shadow-accent/30 text-center focus-visible:ring-2 focus-visible:ring-accent min-h-[44px] inline-flex items-center justify-center"
                 >
-                  Probar 7 días gratis — USD 40/mes
+                  {formatTrialCta(config.monthly_price)}
                 </Link>
                 <button
                   type="button"

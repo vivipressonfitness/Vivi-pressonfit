@@ -1,64 +1,92 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
-import { formatAuthError } from '../../lib/authErrors';
+import { getAuthErrorDetails } from '../../lib/authErrors';
+import type { AuthErrorDetails } from '../../lib/authErrors';
 
+// F-09: Formulario de Login robusto con validación inline, acciones de recuperación y preservación de 'from'
 export function LoginForm() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | undefined)?.from;
+  const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
+  const initializing = useAuthStore((s) => s.initializing);
+
+  const rawFrom = (location.state as { from?: string } | undefined)?.from;
+  const safeFrom = rawFrom && !rawFrom.startsWith('/login') && !rawFrom.startsWith('/registro')
+    ? rawFrom
+    : (profile?.is_admin ? '/admin' : '/dashboard');
+
+  // Redirigir automáticamente si la usuaria ya tiene sesión activa
+  useEffect(() => {
+    if (!initializing && user) {
+      navigate(safeFrom, { replace: true });
+    }
+  }, [user, initializing, navigate, safeFrom]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState({ email: false, password: false });
+  const [authError, setAuthError] = useState<AuthErrorDetails | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Validaciones inline
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailError = touched.email && !email.trim()
+    ? 'El correo electrónico es obligatorio'
+    : touched.email && !emailRegex.test(email.trim())
+    ? 'Ingresa un formato de correo válido (ej: nombre@correo.com)'
+    : undefined;
+
+  const passwordError = touched.password && !password
+    ? 'Ingresa tu contraseña'
+    : undefined;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      await signIn(email, password);
+    setTouched({ email: true, password: true });
 
-      const { user } = useAuthStore.getState();
-      if (!user) {
+    if (!emailRegex.test(email.trim()) || !password) {
+      return;
+    }
+
+    setLoading(true);
+    setAuthError(null);
+
+    try {
+      await signIn(email.trim().toLowerCase(), password);
+
+      const { user: authedUser, reloadProfile } = useAuthStore.getState();
+      if (!authedUser) {
         navigate('/login');
         return;
       }
 
-      const { data: profile, error: profileError } = await import('../../lib/supabase').then(({ supabase }) =>
-        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
-      );
+      // Cargar perfil actualizado
+      const prof = await reloadProfile();
+      const destination = rawFrom && !rawFrom.startsWith('/login') && !rawFrom.startsWith('/registro')
+        ? rawFrom
+        : (prof?.is_admin ? '/admin' : '/dashboard');
 
-      if (profileError) {
-        throw profileError;
-      }
-
-      if (profile) {
-        useAuthStore.getState().setProfile(profile);
-        const { useMembershipStore } = await import('../../store/membershipStore');
-        useMembershipStore.getState().setFromProfile(profile);
-      }
-
-      navigate(from || (profile?.is_admin ? '/admin' : '/dashboard'), { replace: true });
+      navigate(destination, { replace: true });
     } catch (err) {
-      setError(formatAuthError(err));
+      setAuthError(getAuthErrorDetails(err));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form onSubmit={onSubmit} className="card-surface max-w-md mx-auto">
+    <form onSubmit={onSubmit} className="card-surface max-w-md mx-auto" noValidate>
       <h1 className="text-2xl font-bold mb-1">Iniciar Sesión</h1>
       <p className="text-sm text-text-secondary mb-6">Accede a tu contenido del mes</p>
 
-      {from === '/membresia' && (
+      {rawFrom === '/membresia' && (
         <div className="mb-5 rounded-xl border border-accent/40 bg-accent/10 p-3.5 text-accent text-sm">
           <p className="font-semibold">¡Estás a un paso de tu membresía VIP!</p>
           <p className="text-text-secondary text-xs mt-1">
@@ -77,8 +105,15 @@ export function LoginForm() {
         autoComplete="email"
         required
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        error={emailError}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          if (authError) setAuthError(null);
+        }}
+        onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
+        placeholder="tu@email.com"
       />
+
       <Input
         label="Contraseña"
         type="password"
@@ -86,7 +121,13 @@ export function LoginForm() {
         autoComplete="current-password"
         required
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        error={passwordError}
+        onChange={(e) => {
+          setPassword(e.target.value);
+          if (authError) setAuthError(null);
+        }}
+        onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
+        placeholder="Tu contraseña"
       />
 
       <div className="flex justify-end -mt-2 mb-4">
@@ -98,11 +139,41 @@ export function LoginForm() {
         </Link>
       </div>
 
-      {error && <p role="alert" className="text-red-400 text-sm mb-4">{error}</p>}
-      <Button loading={loading} type="submit" className="w-full">Entrar a mi Cuenta</Button>
+      {authError && (
+        <div role="alert" className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 p-3.5 text-red-300 text-sm space-y-2">
+          <p>{authError.message}</p>
+          {authError.action && (
+            authError.action.isExternal ? (
+              <a
+                href={authError.action.to}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block text-xs font-semibold text-accent underline underline-offset-2 hover:text-accent-hover"
+              >
+                {authError.action.label}
+              </a>
+            ) : (
+              <Link
+                to={authError.action.to}
+                state={{ from: rawFrom }}
+                className="inline-block text-xs font-semibold text-accent underline underline-offset-2 hover:text-accent-hover"
+              >
+                {authError.action.label}
+              </Link>
+            )
+          )}
+        </div>
+      )}
+
+      <Button loading={loading} type="submit" className="w-full">
+        Entrar a mi Cuenta
+      </Button>
+
       <p className="text-sm text-text-secondary mt-4 text-center">
         ¿Aún no eres miembro?{' '}
-        <Link to="/registro" state={{ from }} className="text-accent font-semibold hover:underline">Inscríbete aquí</Link>
+        <Link to="/registro" state={{ from: rawFrom }} className="text-accent font-semibold hover:underline">
+          Inscríbete aquí
+        </Link>
       </p>
     </form>
   );

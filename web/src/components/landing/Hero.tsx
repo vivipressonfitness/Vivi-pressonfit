@@ -4,8 +4,7 @@ import { BlurText } from '../ui/reactbits/BlurText';
 
 // Hero del PORTAL público:
 // - Fondo cinematográfico de pantalla completa con /landing/vivi.webp.
-// - Vivi visible a la izquierda con encuadre completo (cabeza y cuerpo sin recortes).
-// - El recuadro con Títulos, Descripción, Botones de acción y Sellos de confianza DENTRO de la imagen a la derecha.
+// - F-10: Léxico de CTA unificado, botones con contraste WCAG 2.2 AA (5.57:1) y sin emojis funcionales.
 export function Hero({ config }: { config: LandingConfig }) {
   const heroTitleFull = `${config.hero_title || 'Programa de Entrenamiento y'} ${config.hero_title_sub || 'Estilo de Vida Saludable'}`.toUpperCase();
 
@@ -30,7 +29,7 @@ export function Hero({ config }: { config: LandingConfig }) {
           </div>
         </div>
 
-        {/* 2. FOTO PRINCIPAL DE VIVI 100% LIMPIA (SIN NINGÚN TEXTO ENCIMA) */}
+        {/* 2. FOTO PRINCIPAL DE VIVI 100% LIMPIA */}
         <div className="relative w-full aspect-[4/5] max-h-[480px] bg-background overflow-hidden">
           <img
             src={config.hero_image || '/landing/vivi.webp'}
@@ -54,7 +53,7 @@ export function Hero({ config }: { config: LandingConfig }) {
           <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent z-10" />
         </div>
 
-        {/* 3. CONTENIDO MOVIDO DEBAJO DE LA FOTO PRINCIPAL */}
+        {/* 3. CONTENIDO PRINCIPAL DEBAJO DE LA FOTO */}
         <div className="px-5 pb-12 pt-2 space-y-5 text-center">
           <div>
             <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/40 text-accent px-4 py-1.5 rounded-full font-semibold tracking-widest uppercase text-xs shadow-sm">
@@ -70,15 +69,15 @@ export function Hero({ config }: { config: LandingConfig }) {
           <div className="flex flex-col gap-3 pt-1">
             <a
               href="/membresia"
-              className="w-full inline-block bg-accent hover:bg-white text-background py-3.5 rounded-full font-bold transition-all text-center shadow-lg shadow-accent/30 text-base"
+              className="w-full inline-flex items-center justify-center bg-accent hover:bg-accent-hover text-background py-3.5 rounded-pill font-bold transition-all text-center shadow-lg shadow-accent/30 text-base min-h-[48px]"
             >
-              Hazte miembro — USD {config.monthly_price}/mes
+              Probar 7 días gratis
             </a>
             <a
               href="#adelantos"
-              className="w-full inline-block bg-white/10 hover:bg-white/20 border border-white/20 text-white hover:text-accent py-3.5 rounded-full font-bold backdrop-blur-md transition-all text-center text-base"
+              className="w-full inline-flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 text-white hover:text-accent py-3.5 rounded-pill font-bold backdrop-blur-md transition-all text-center text-base min-h-[48px]"
             >
-              Ver contenido gratis ▶
+              Ver adelantos gratis
             </a>
           </div>
 
@@ -96,7 +95,7 @@ export function Hero({ config }: { config: LandingConfig }) {
       </div>
 
       {/* ============================================================== */}
-      {/* VERSIÓN LAPTOP Y PC (>= md): INTACTA TAL CUAL ESTABA */}
+      {/* VERSIÓN LAPTOP Y PC (>= md): FONDO CINEMATOGRÁFICO */}
       {/* ============================================================== */}
       <div className="hidden md:flex relative min-h-screen items-center pt-40 pb-28 overflow-hidden">
         {/* Fondo con Vivi de cuerpo entero a la izquierda */}
@@ -150,15 +149,15 @@ export function Hero({ config }: { config: LandingConfig }) {
             <div className="flex flex-row gap-4 pt-1">
               <a
                 href="/membresia"
-                className="inline-block bg-accent hover:bg-white text-background px-8 py-4 rounded-full font-bold transition-all text-center shadow-lg shadow-accent/30 cursor-pointer text-lg"
+                className="inline-flex items-center justify-center bg-accent hover:bg-accent-hover text-background px-8 py-4 rounded-pill font-bold transition-all text-center shadow-lg shadow-accent/30 cursor-pointer text-lg min-h-[52px]"
               >
-                Hazte miembro — USD {config.monthly_price}/mes
+                Probar 7 días gratis
               </a>
               <a
                 href="#adelantos"
-                className="inline-block bg-white/10 hover:bg-white/20 border border-white/20 text-white hover:text-accent hover:border-accent px-8 py-4 rounded-full font-bold backdrop-blur-md transition-all text-center text-lg"
+                className="inline-flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 text-white hover:text-accent hover:border-accent px-8 py-4 rounded-pill font-bold backdrop-blur-md transition-all text-center text-lg min-h-[52px]"
               >
-                Ver contenido gratis ▶
+                Ver adelantos gratis
               </a>
             </div>
 

@@ -22,6 +22,7 @@ const secondaryAnchors = [
   { href: '/#quien-soy', label: '¿Quién Soy?' },
 ];
 
+// F-10: Navbar con sistema visual coherente, tokens de contraste WCAG y léxico unificado de CTAs
 export function Navbar() {
   const { config } = useLandingConfig();
   const user = useAuthStore((s) => s.user);
@@ -73,44 +74,46 @@ export function Navbar() {
         </Link>
 
         {/* NAVEGACIÓN DESKTOP (Visible en pantallas grandes lg+) */}
-<div className="hidden lg:flex items-center gap-1 xl:gap-2">
-  {onHome && (
-    <>
-      {/* Anclajes principales – siempre visibles en lg+ */}
-      {landingAnchors.map((a) => (
-        <Link
-          key={a.href}
-          to={a.href}
-          className="px-3 py-1.5 text-sm xl:text-base font-medium text-text-secondary hover:text-accent transition whitespace-nowrap"
-        >
-          {a.label}
-        </Link>
-      ))}
+        <div className="hidden lg:flex items-center gap-1 xl:gap-2">
+          {onHome && (
+            <>
+              {/* Anclajes principales – siempre visibles en lg+ */}
+              {landingAnchors.map((a) => (
+                <Link
+                  key={a.href}
+                  to={a.href}
+                  className="px-3 py-1.5 text-sm xl:text-base font-medium text-text-secondary hover:text-accent transition whitespace-nowrap"
+                >
+                  {a.label}
+                </Link>
+              ))}
 
-      {/* Anclajes secundarios – solo en xl (≥1280 px) */}
-      <div className="hidden xl:flex gap-2">
-        {secondaryAnchors.map((a) => (
-          <Link
-            key={a.href}
-            to={a.href}
-            className="px-3 py-1.5 text-sm xl:text-base font-medium text-text-secondary hover:text-accent transition whitespace-nowrap"
-          >
-            {a.label}
-          </Link>
-        ))}
-      </div>
-    </>
-  )}
+              {/* Anclajes secundarios – solo en xl (≥1280 px) */}
+              <div className="hidden xl:flex gap-2">
+                {secondaryAnchors.map((a) => (
+                  <Link
+                    key={a.href}
+                    to={a.href}
+                    className="px-3 py-1.5 text-sm xl:text-base font-medium text-text-secondary hover:text-accent transition whitespace-nowrap"
+                  >
+                    {a.label}
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
+
           {user && <NavLink to="/dashboard" className={navLinkCls}>Dashboard</NavLink>}
           {user && <NavLink to="/videos" className={navLinkCls}>Videos</NavLink>}
           {user && <NavLink to="/membresia" className={navLinkCls}>Mi Plan</NavLink>}
           {profile?.is_admin && <NavLink to="/admin" className={navLinkCls}>Admin</NavLink>}
+
           {user ? (
             <>
               <NavLink to="/perfil" className={navLinkCls}>Perfil</NavLink>
               <button
                 onClick={async () => { await signOut(); navigate('/'); }}
-                className="bg-accent hover:bg-white text-background font-bold !px-5 !py-2 ml-2 rounded-full text-sm transition shadow-md shadow-accent/20 whitespace-nowrap"
+                className="bg-accent hover:bg-accent-hover text-background font-bold !px-5 !py-2.5 ml-2 rounded-pill text-sm transition shadow-md shadow-accent/20 whitespace-nowrap min-h-[44px] inline-flex items-center justify-center"
               >
                 Salir
               </button>
@@ -120,9 +123,9 @@ export function Navbar() {
               <NavLink to="/login" className={navLinkCls}>Entrar</NavLink>
               <Link
                 to="/membresia"
-                className="bg-accent hover:bg-white text-background font-bold !px-5 xl:!px-6 !py-2 ml-2 rounded-full text-sm xl:text-base transition shadow-md shadow-accent/20 whitespace-nowrap"
+                className="bg-accent hover:bg-accent-hover text-background font-bold !px-5 xl:!px-6 !py-2.5 ml-2 rounded-pill text-sm xl:text-base transition shadow-md shadow-accent/20 whitespace-nowrap min-h-[44px] inline-flex items-center justify-center"
               >
-                Hazte miembro
+                Probar 7 días gratis
               </Link>
             </>
           )}
@@ -133,9 +136,9 @@ export function Navbar() {
           {!user && (
             <Link
               to="/membresia"
-              className="bg-accent text-background font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-full shadow-sm"
+              className="bg-accent hover:bg-accent-hover text-background font-bold text-xs sm:text-sm px-3.5 py-2 rounded-pill shadow-sm whitespace-nowrap min-h-[38px] inline-flex items-center"
             >
-              Membresía
+              7 días gratis
             </Link>
           )}
           <button
@@ -145,7 +148,7 @@ export function Navbar() {
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
             aria-haspopup="true"
-            className="p-2 rounded-xl text-text-primary hover:bg-white/10 transition focus:outline-none"
+            className="p-2 rounded-xl text-text-primary hover:bg-white/10 transition focus:outline-none min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             {mobileMenuOpen ? (
               <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -191,7 +194,7 @@ export function Navbar() {
                   await signOut();
                   navigate('/');
                 }}
-                className="w-full text-center bg-white/10 hover:bg-white/20 text-text-primary font-bold py-3 rounded-xl text-base transition"
+                className="w-full text-center bg-white/10 hover:bg-white/20 text-text-primary font-bold py-3 rounded-xl text-base transition min-h-[44px]"
               >
                 Cerrar Sesión
               </button>
@@ -200,16 +203,16 @@ export function Navbar() {
                 <NavLink
                   to="/login"
                   onClick={closeMenu}
-                  className="w-full text-center border border-white/20 text-white font-semibold py-2.5 rounded-xl text-base hover:bg-white/5 transition"
+                  className="w-full text-center border border-white/20 text-white font-semibold py-2.5 rounded-xl text-base hover:bg-white/5 transition min-h-[44px] flex items-center justify-center"
                 >
                   Iniciar Sesión
                 </NavLink>
                 <Link
                   to="/membresia"
                   onClick={closeMenu}
-                  className="w-full text-center bg-accent hover:bg-white text-background font-bold py-3 rounded-xl text-base transition shadow-md shadow-accent/25"
+                  className="w-full text-center bg-accent hover:bg-accent-hover text-background font-bold py-3 rounded-xl text-base transition shadow-md shadow-accent/25 min-h-[44px] flex items-center justify-center"
                 >
-                  Hazte Miembro — USD {config.monthly_price || 40}/mes
+                  Probar 7 días gratis
                 </Link>
               </>
             )}

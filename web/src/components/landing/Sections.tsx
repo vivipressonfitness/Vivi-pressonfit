@@ -5,6 +5,7 @@ import { HaloBadge } from '../ui/HaloBadge';
 import { FeatureCarousel } from './FeatureCarousel';
 import { LANDING_CLASES, LANDING_EDUCATIVO } from '../../data/landingMedia';
 import { SpotlightCard } from '../ui/reactbits/SpotlightCard';
+import { formatMonthlyRate } from '../../lib/offer';
 
 // ============================================================
 // Secciones del PORTAL PÚBLICO de adelantos (landing tipo portal).
@@ -398,11 +399,11 @@ export function PortalCta({ config }: { config: LandingConfig }) {
         </h2>
         <p className="text-text-secondary mt-2 mb-6">
           Clases completas, rutinas 3x por semana, guías de nutrición mensuales y soporte
-          personalizado por WhatsApp — desde USD {config.monthly_price}/mes con 7 días de prueba gratis.
+          personalizado por WhatsApp — desde {formatMonthlyRate(config.monthly_price)} con 7 días de prueba gratis.
         </p>
         <a
           href="/membresia"
-          className="inline-block bg-accent text-background px-8 py-3.5 rounded-full font-bold hover:bg-white transition-all shadow-lg shadow-accent/20"
+          className="inline-flex items-center justify-center bg-accent hover:bg-accent-hover text-background px-8 py-3.5 rounded-pill font-bold transition-all shadow-lg shadow-accent/20 min-h-[48px]"
         >
           Probar 7 días gratis →
         </a>
