@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { LEGAL_SECTIONS, type LegalSection } from '../data/legalContent';
+import { useLandingConfig } from '../hooks/useLandingConfig';
 
 interface LegalProps {
   defaultSection?: 'terminos' | 'privacidad' | 'cookies' | 'aviso-legal';
@@ -9,6 +10,10 @@ interface LegalProps {
 export default function Legal({ defaultSection }: LegalProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { config } = useLandingConfig();
+  const waNumber = config.whatsapp_number && config.whatsapp_number !== '59178000000'
+    ? config.whatsapp_number
+    : '5493415888117';
 
   // Determinar la sección activa según la ruta actual o el prop
   const currentPath = location.pathname.replace(/^\//, '');
@@ -61,7 +66,7 @@ export default function Legal({ defaultSection }: LegalProps) {
                 key={tab.id}
                 type="button"
                 onClick={() => navigate(tab.path)}
-                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all min-h-[40px] ${
+                className={`px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all min-h-[44px] flex items-center justify-center ${
                   isActive
                     ? 'bg-accent text-background shadow-md'
                     : 'bg-surface text-text-secondary hover:text-text-primary hover:bg-surface/80 border border-border'
@@ -104,9 +109,14 @@ export default function Legal({ defaultSection }: LegalProps) {
         <div className="text-center pt-4 text-xs text-text-secondary">
           <p>
             ¿Tienes alguna duda sobre nuestras políticas o el servicio?{' '}
-            <Link to="/#unete" className="text-accent underline hover:text-accent-hover font-semibold">
-              Contáctanos por WhatsApp
-            </Link>
+            <a
+              href={`https://wa.me/${waNumber}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-accent underline hover:text-accent-hover font-semibold inline-flex items-center gap-1"
+            >
+              Contáctanos por WhatsApp (+{waNumber})
+            </a>
           </p>
         </div>
       </div>

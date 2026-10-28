@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { useLandingConfig } from '../../hooks/useLandingConfig';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { formatAuthError } from '../../lib/authErrors';
 
 // Registro: crea la cuenta en Supabase Auth + perfil básico.
 // El cobro real ocurre después vía Stripe Checkout (página Membresía).
@@ -19,6 +20,7 @@ export function RegisterForm() {
   const [password, setPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: FormEvent) {
@@ -27,9 +29,14 @@ export function RegisterForm() {
       setError('Debes aceptar los Términos del Servicio y la Política de Privacidad para continuar');
       return;
     }
-    if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
     setLoading(true);
     setError(null);
+    setInfoMessage(null);
+
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
@@ -39,7 +46,7 @@ export function RegisterForm() {
 
       if (signUpError) {
         if (signUpError.message.toLowerCase().includes('already registered') || signUpError.status === 422) {
-          setError('Este correo ya está registrado en el programa (como suscriptor o miembro VIP). Por favor inicia sesión con tu contraseña.');
+          setError('Este correo ya está registrado en el programa. Por favor inicia sesión con tu contraseña.');
           return;
         }
         throw signUpError;
@@ -47,7 +54,7 @@ export function RegisterForm() {
 
       // Supabase devuelve data.user con identities vacío [] si el correo YA existía previamente
       if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-        setError('Este correo ya está registrado en el programa (como suscriptor en prueba o miembro VIP). Por favor inicia sesión con tu contraseña.');
+        setError('Este correo ya está registrado en el programa. Por favor inicia sesión con tu contraseña.');
         return;
       }
 
@@ -57,36 +64,33 @@ export function RegisterForm() {
         for (const wait of [0, 400, 900]) {
           if (wait) await new Promise((r) => setTimeout(r, wait));
           const { data: prof } = await supabase.from('profiles').select('id').eq('id', data.user.id).maybeSingle();
-          if (prof) { profileOk = true; break; }
+          if (prof) {
+            profileOk = true;
+            break;
+          }
         }
       }
 
       if (!data.session) {
-        setError(
+        setInfoMessage(
           profileOk
-            ? 'Cuenta creada con éxito. Si no inicia sesión automáticamente, revisa tu correo o inicia sesión.'
-            : 'Casi listo: tu cuenta fue creada. Inicia sesión para acceder a tu membresía.'
+            ? '¡Cuenta creada con éxito! Si tu cuenta requiere confirmación por email, revisa tu bandeja de entrada o inicia sesión.'
+            : 'Casi listo: tu cuenta fue creada con éxito. Inicia sesión para acceder a tu membresía.'
         );
         return;
       }
 
       if (!profileOk) {
         setError(
-          'La cuenta se creó pero no se generó tu perfil de miembro. Vuelve a intentar en unos segundos o contacta a soporte.'
+          'La cuenta se creó pero hubo una demora en generar tu perfil de miembro. Vuelve a intentar en unos segundos o contacta a soporte.'
         );
-        setLoading(false);
         return;
       }
 
       const target = from || '/membresia';
       navigate(target, { state: { justRegistered: true } });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'No se pudo completar el registro';
-      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('user already exists')) {
-        setError('Este correo ya está registrado en el programa (como suscriptor en prueba o miembro VIP). Por favor inicia sesión.');
-      } else {
-        setError(msg);
-      }
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -155,7 +159,16 @@ export function RegisterForm() {
         </span>
       </label>
 
-      {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+      {infoMessage && (
+        <div role="status" className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-emerald-300 text-sm">
+          <p>{infoMessage}</p>
+          <Link to="/login" className="inline-block mt-2 text-accent font-semibold underline text-xs">
+            Ir a Iniciar Sesión →
+          </Link>
+        </div>
+      )}
+
+      {error && <p role="alert" className="text-red-400 text-sm mb-4">{error}</p>}
       <Button loading={loading} type="submit" className="w-full">Comenzar 7 días de prueba gratis</Button>
       <p className="text-sm text-text-secondary mt-4 text-center">
         ¿Ya eres alumna del programa?{' '}

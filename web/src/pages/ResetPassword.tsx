@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { formatAuthError } from '../lib/authErrors';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ export default function ResetPassword() {
         navigate('/login', { replace: true });
       }, 2500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo actualizar la contraseña');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }

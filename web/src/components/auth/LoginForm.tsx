@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { formatAuthError } from '../../lib/authErrors';
 
 export function LoginForm() {
   const { signIn } = useAuth();
@@ -25,7 +26,6 @@ export function LoginForm() {
       await signIn(email, password);
 
       const { user } = useAuthStore.getState();
-      console.debug('post-signIn user:', user);
       if (!user) {
         navigate('/login');
         return;
@@ -34,8 +34,6 @@ export function LoginForm() {
       const { data: profile, error: profileError } = await import('../../lib/supabase').then(({ supabase }) =>
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
       );
-
-      console.debug('post-signIn profile fetch:', profile, profileError);
 
       if (profileError) {
         throw profileError;
@@ -49,7 +47,7 @@ export function LoginForm() {
 
       navigate(from || (profile?.is_admin ? '/admin' : '/dashboard'), { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -100,7 +98,7 @@ export function LoginForm() {
         </Link>
       </div>
 
-      {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+      {error && <p role="alert" className="text-red-400 text-sm mb-4">{error}</p>}
       <Button loading={loading} type="submit" className="w-full">Entrar a mi Cuenta</Button>
       <p className="text-sm text-text-secondary mt-4 text-center">
         ¿Aún no eres miembro?{' '}

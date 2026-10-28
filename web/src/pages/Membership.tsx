@@ -12,6 +12,7 @@ import { StatusCard } from '../components/membership/StatusCard';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { formatAuthError } from '../lib/authErrors';
 
 // Página de MEMBRESÍA — Checkout de 2 columnas de alta conversión (CRO).
 // Columna 1: Resumen de valor, beneficios, garantía y comparativa.
@@ -33,6 +34,7 @@ export default function Membership() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [formInfo, setFormInfo] = useState<string | null>(null);
 
   const incluye = [
     { title: 'Clases completas bajo demanda', desc: 'GAP, Full Body, Cardio HIIT y Fuerza de 30 a 45 min, sin límite de reproducciones.' },
@@ -62,6 +64,7 @@ export default function Membership() {
 
     setFormLoading(true);
     setFormError(null);
+    setFormInfo(null);
 
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -89,12 +92,11 @@ export default function Membership() {
       if (data.session) {
         await startCheckout();
       } else {
-        setFormError('Cuenta creada con éxito. Inicia sesión con tu correo para continuar al checkout.');
+        setFormInfo('¡Cuenta creada con éxito! Inicia sesión para continuar al checkout de Stripe.');
         setAuthMode('login');
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'No se pudo completar el registro';
-      setFormError(msg);
+      setFormError(formatAuthError(err));
     } finally {
       setFormLoading(false);
     }
@@ -105,13 +107,14 @@ export default function Membership() {
     e.preventDefault();
     setFormLoading(true);
     setFormError(null);
+    setFormInfo(null);
 
     try {
       await signIn(email.trim().toLowerCase(), password);
       // Tras login exitoso, lanzamos Stripe Checkout directamente
       await startCheckout();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Credenciales inválidas. Verifica tu correo y contraseña.');
+      setFormError(formatAuthError(err));
     } finally {
       setFormLoading(false);
     }
@@ -328,6 +331,12 @@ export default function Membership() {
                           : 'Inicia sesión con tu correo y contraseña.'}
                       </p>
                     </div>
+
+                    {formInfo && (
+                      <div role="status" className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs">
+                        {formInfo}
+                      </div>
+                    )}
 
                     {authMode === 'register' ? (
                       /* Formulario de Registro Inline */

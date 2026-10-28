@@ -30,29 +30,30 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 }));
 
-// Carga inicial de sesión + listener global (una sola vez, desde main.tsx)
+// Carga inicial de sesión + listener global (espera perfil antes de quitar estado initializing)
 export function initAuthListener() {
   const { setSession, setProfile } = useAuthStore.getState();
 
-  supabase.auth.getSession().then(({ data }) => {
+  supabase.auth.getSession().then(async ({ data }) => {
     setSession(data.session);
+    if (data.session?.user) {
+      await loadProfile(data.session.user.id);
+    }
     useAuthStore.setState({ initializing: false });
-    if (data.session?.user) loadProfile(data.session.user.id);
   });
 
-  supabase.auth.onAuthStateChange((_event, session) => {
+  supabase.auth.onAuthStateChange(async (_event, session) => {
     setSession(session);
-    if (session?.user) loadProfile(session.user.id);
-    else {
+    if (session?.user) {
+      await loadProfile(session.user.id);
+    } else {
       setProfile(null);
       useMembershipStore.getState().reset();
-      console.debug('authState: signed out');
     }
   });
 }
 
 async function loadProfile(userId: string) {
-  console.debug('loadProfile start for', userId);
   const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
 
   if (error) {
@@ -62,9 +63,7 @@ async function loadProfile(userId: string) {
     return;
   }
 
-  console.debug('loadProfile result:', data);
   const prof = (data ?? null) as Profile | null;
   useAuthStore.getState().setProfile(prof);
   useMembershipStore.getState().setFromProfile(prof);
 }
-

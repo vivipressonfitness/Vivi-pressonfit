@@ -26,3 +26,7 @@ prueba/
 *.rar
 *.7z
 *.tar.gz
+
+
+# Graphify knowledge graph
+graphify-out/

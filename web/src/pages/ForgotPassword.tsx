@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { formatAuthError } from '../lib/authErrors';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -25,7 +26,7 @@ export default function ForgotPassword() {
       if (resetError) throw resetError;
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo enviar el correo de recuperación.');
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
