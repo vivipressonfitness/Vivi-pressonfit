@@ -268,7 +268,19 @@ export function PreviewCard({
         )}
       </div>
 
-      {/* Título y descripción: sin repetir categoría abajo, adaptados armónicamente al contenedor */}
+      {/* Título y metadatos de duración y nivel (F-14) */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+        {item.duration && (
+          <span className="inline-flex items-center gap-1 font-mono text-[10px] sm:text-[11px] bg-background/90 border border-border px-2 py-0.5 rounded-pill text-text-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3 h-3 text-accent"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>{item.duration}</span>
+          </span>
+        )}
+        <span className="text-[10px] sm:text-[11px] text-text-secondary bg-background/50 border border-border/60 px-2 py-0.5 rounded-pill">
+          Progresivo · Sin equipo
+        </span>
+      </div>
+
       <h3 className="font-heading text-base sm:text-lg md:text-xl font-bold mb-1.5 md:mb-2 text-text-primary line-clamp-2">
         {item.title}
       </h3>

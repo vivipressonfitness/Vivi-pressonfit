@@ -37,10 +37,10 @@ export function Footer() {
             <h4 className="font-bold mb-4 text-text-primary text-sm uppercase tracking-wider">Estructura</h4>
             <ul className="space-y-3 text-text-secondary text-sm">
               <li><Link to="/#quien-soy" className="hover:text-accent transition-colors">¿Quién Soy?</Link></li>
-              <li><Link to="/#galeria" className="hover:text-accent transition-colors">El Método</Link></li>
-              <li><Link to="/#adelantos" className="hover:text-accent transition-colors">Adelantos Gratis</Link></li>
-              <li><Link to="/#pilares" className="hover:text-accent transition-colors">Plan de Fuerza 3x</Link></li>
-              <li><Link to="/#educativo" className="hover:text-accent transition-colors">Educación Alimentaria</Link></li>
+              <li><Link to="/#galeria" className="hover:text-accent transition-colors">El Método en Acción</Link></li>
+              <li><Link to="/#adelantos" className="hover:text-accent transition-colors">Clases Muestra</Link></li>
+              <li><Link to="/#educativo" className="hover:text-accent transition-colors">Nutrición y Hábitos</Link></li>
+              <li><Link to="/#faq" className="hover:text-accent transition-colors">Preguntas Frecuentes</Link></li>
               <li><Link to="/membresia" className="hover:text-accent transition-colors">Membresía {formatPrice(config.monthly_price)}</Link></li>
             </ul>
           </div>

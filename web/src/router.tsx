@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import { PublicLayout } from './layouts/PublicLayout';
 import { PrivateLayout } from './layouts/PrivateLayout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -16,6 +16,7 @@ const Membership = lazy(() => import('./pages/Membership'));
 const Admin = lazy(() => import('./pages/Admin'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 export const router = createBrowserRouter([
   // ---- Rutas públicas ----
@@ -33,6 +34,8 @@ export const router = createBrowserRouter([
       { path: '/cookies', element: <Legal defaultSection="cookies" /> },
       { path: '/aviso-legal', element: <Legal defaultSection="aviso-legal" /> },
       { path: '/legal', element: <Legal defaultSection="terminos" /> },
+      // 404 accesible y orientador dentro del layout público (F-15)
+      { path: '*', element: <NotFound /> },
     ],
   },
   // ---- Área privada (requiere login; videos/dashboard requieren membresía o admin) ----
@@ -67,5 +70,4 @@ export const router = createBrowserRouter([
     ),
     children: [{ path: '/admin', element: <Admin /> }], // Admin.tsx valida is_admin internamente + RLS en BD
   },
-  { path: '*', element: <Navigate to="/" replace /> },
 ]);

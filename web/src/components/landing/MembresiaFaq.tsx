@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { ExpandableCard } from './ExpandableCard';
 
-// FAQ del portal público. La oferta/suscripción ahora vive en la página /membresia
-// (componente PlanCard), no en el landing.
-
+// FAQ del portal público con CTA contextual de cierre (F-14).
 const FAQ_ITEMS = [
   {
     q: '¿Cómo funciona la prueba gratuita de 7 días?',
@@ -25,15 +23,19 @@ const FAQ_ITEMS = [
 
 export function Faq() {
   const [open, setOpen] = useState<number | null>(null);
+
   return (
     <section id="faq" className="py-12 md:py-16 bg-surface border-t border-border">
       <div className="container mx-auto px-6 max-w-3xl">
         <div className="text-center mb-8">
-          <span className="text-accent font-semibold tracking-widest uppercase text-xs">Preguntas Frecuentes</span>
+          <span className="text-accent font-semibold tracking-widest uppercase text-xs">
+            Preguntas Frecuentes
+          </span>
           <h2 className="font-heading text-3xl md:text-5xl font-bold mt-2 text-text-primary">
             ¿Tienes alguna duda?
           </h2>
         </div>
+
         <div className="space-y-4">
           {FAQ_ITEMS.map((f, i) => (
             <ExpandableCard
@@ -46,6 +48,19 @@ export function Faq() {
               {f.a}
             </ExpandableCard>
           ))}
+        </div>
+
+        {/* Cierre contextual tras resolver dudas (F-14) */}
+        <div className="mt-10 pt-8 border-t border-border text-center space-y-3">
+          <p className="text-text-secondary text-sm">
+            ¿Lista para transformar tu cuerpo y tu energía con hábitos sostenibles?
+          </p>
+          <a
+            href="/membresia"
+            className="inline-flex items-center justify-center bg-accent hover:bg-accent-hover text-background px-8 py-3.5 rounded-pill font-bold transition-all shadow-lg shadow-accent/20 text-sm sm:text-base min-h-[48px]"
+          >
+            Comenzar 7 días de prueba sin cargo →
+          </a>
         </div>
       </div>
     </section>

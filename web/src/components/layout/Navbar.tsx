@@ -9,17 +9,13 @@ const navLinkCls = ({ isActive }: { isActive: boolean }) =>
 const mobileNavLinkCls = ({ isActive }: { isActive: boolean }) =>
   `block px-4 py-3 text-base font-medium rounded-xl transition ${isActive ? 'bg-accent/15 text-accent font-semibold' : 'text-text-secondary hover:bg-white/5 hover:text-white'}`;
 
-// Anclas del portal público (scroll suave a secciones) — visibles solo en "/"
+// Anclas del portal público con correspondencia exacta de vocabulario (F-15)
 const landingAnchors = [
-  { href: '/#pilares', label: 'Programas' },
-  { href: '/#adelantos', label: 'Gratis' },
-  { href: '/#educativo', label: 'Nutrición' },
-  { href: '/#faq', label: 'FAQ' },
-];
-// Anchors que aparecen solo en pantallas extra‑large (≥1280 px)
-const secondaryAnchors = [
-  { href: '/#galeria', label: 'Métodos' },
+  { href: '/#galeria', label: 'El Método' },
   { href: '/#quien-soy', label: '¿Quién Soy?' },
+  { href: '/#adelantos', label: 'Clases Muestra' },
+  { href: '/#educativo', label: 'Nutrición' },
+  { href: '/#faq', label: 'Preguntas Frecuentes' },
 ];
 
 // F-10: Navbar con sistema visual coherente, tokens de contraste WCAG y léxico unificado de CTAs
@@ -77,7 +73,7 @@ export function Navbar() {
         <div className="hidden lg:flex items-center gap-1 xl:gap-2">
           {onHome && (
             <>
-              {/* Anclajes principales – siempre visibles en lg+ */}
+              {/* Anclajes principales con coincidencia de vocabulario (F-15) */}
               {landingAnchors.map((a) => (
                 <Link
                   key={a.href}
@@ -87,19 +83,6 @@ export function Navbar() {
                   {a.label}
                 </Link>
               ))}
-
-              {/* Anclajes secundarios – solo en xl (≥1280 px) */}
-              <div className="hidden xl:flex gap-2">
-                {secondaryAnchors.map((a) => (
-                  <Link
-                    key={a.href}
-                    to={a.href}
-                    className="px-3 py-1.5 text-sm xl:text-base font-medium text-text-secondary hover:text-accent transition whitespace-nowrap"
-                  >
-                    {a.label}
-                  </Link>
-                ))}
-              </div>
             </>
           )}
 
