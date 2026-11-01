@@ -8,12 +8,26 @@ import { formatAuthError } from '../lib/authErrors';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
+  const [touched, setTouched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailError = touched && !email.trim()
+    ? 'El correo electrónico es obligatorio'
+    : touched && !emailRegex.test(email.trim())
+    ? 'Ingresa un formato de correo válido (ej: nombre@correo.com)'
+    : undefined;
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    setTouched(true);
+
+    if (!emailRegex.test(email.trim())) {
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -41,8 +55,8 @@ export default function ForgotPassword() {
         </p>
 
         {submitted ? (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-accent/40 bg-accent/10 p-4 text-accent text-sm">
+          <div role="status" className="space-y-4">
+            <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-emerald-300 text-sm">
               <p className="font-semibold mb-1">¡Correo enviado con éxito!</p>
               <p className="text-text-secondary text-xs leading-relaxed">
                 Revisa tu bandeja de entrada en <strong className="text-text-primary">{email}</strong> (y también tu carpeta de spam o correo no deseado). Haz clic en el enlace para definir tu nueva contraseña.
@@ -55,7 +69,7 @@ export default function ForgotPassword() {
             </div>
           </div>
         ) : (
-          <form onSubmit={onSubmit}>
+          <form onSubmit={onSubmit} noValidate>
             <Input
               label="Email registrado"
               type="email"
@@ -63,10 +77,19 @@ export default function ForgotPassword() {
               autoComplete="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              error={emailError}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
+              onBlur={() => setTouched(true)}
               placeholder="ejemplo@correo.com"
             />
-            {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+            {error && (
+              <p role="alert" className="text-red-400 text-sm mb-4">
+                {error}
+              </p>
+            )}
             <Button loading={loading} type="submit" className="w-full">
               Enviar enlace de recuperación
             </Button>
@@ -82,4 +105,3 @@ export default function ForgotPassword() {
     </section>
   );
 }
-

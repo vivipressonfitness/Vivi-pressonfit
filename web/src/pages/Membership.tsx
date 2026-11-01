@@ -12,6 +12,7 @@ import { StatusCard } from '../components/membership/StatusCard';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { PasswordStrength } from '../components/ui/PasswordStrength';
 import { formatAuthError } from '../lib/authErrors';
 import { formatPrice, formatMonthlyRate } from '../lib/offer';
 
@@ -79,8 +80,8 @@ export default function Membership() {
       setFormError('Debes aceptar los Términos del Servicio y la Política de Privacidad');
       return;
     }
-    if (password.length < 6) {
-      setFormError('La contraseña debe tener al menos 6 caracteres');
+    if (password.length < 8) {
+      setFormError('La contraseña debe tener al menos 8 caracteres');
       return;
     }
 
@@ -447,11 +448,12 @@ export default function Membership() {
               name="password"
               autoComplete="new-password"
               required
-              minLength={6}
+              minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
             />
+            {password && <PasswordStrength password={password} />}
 
             <label className="flex items-start gap-2.5 text-xs text-text-secondary cursor-pointer pt-1 select-none">
               <input
@@ -464,12 +466,22 @@ export default function Membership() {
               />
               <span>
                 Acepto los{' '}
-                <Link to="/terminos" target="_blank" className="text-accent underline font-medium">
-                  Términos
+                <Link
+                  to="/terminos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent underline font-medium"
+                >
+                  Términos <span className="sr-only">(se abre en una nueva pestaña)</span>
                 </Link>{' '}
                 y la{' '}
-                <Link to="/privacidad" target="_blank" className="text-accent underline font-medium">
-                  Privacidad
+                <Link
+                  to="/privacidad"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent underline font-medium"
+                >
+                  Privacidad <span className="sr-only">(se abre en una nueva pestaña)</span>
                 </Link>.
               </span>
             </label>

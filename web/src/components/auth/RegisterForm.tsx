@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useLandingConfig } from '../../hooks/useLandingConfig';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { PasswordStrength } from '../ui/PasswordStrength';
 import { getAuthErrorDetails } from '../../lib/authErrors';
 import type { AuthErrorDetails } from '../../lib/authErrors';
 import { formatOfferWithTrial } from '../../lib/offer';
@@ -53,8 +54,8 @@ export function RegisterForm() {
     ? 'Ingresa una dirección de correo válida'
     : undefined;
 
-  const passwordError = touched.password && (!password || password.length < 6)
-    ? 'La contraseña debe tener al menos 6 caracteres'
+  const passwordError = touched.password && (!password || password.length < 8)
+    ? 'La contraseña debe tener al menos 8 caracteres'
     : undefined;
 
   const termsError = touched.terms && !acceptedTerms
@@ -65,7 +66,7 @@ export function RegisterForm() {
     e.preventDefault();
     setTouched({ fullName: true, email: true, password: true, terms: true });
 
-    if (fullName.trim().length < 2 || !emailRegex.test(email.trim()) || password.length < 6 || !acceptedTerms) {
+    if (fullName.trim().length < 2 || !emailRegex.test(email.trim()) || password.length < 8 || !acceptedTerms) {
       return;
     }
 
@@ -179,7 +180,7 @@ export function RegisterForm() {
         name="password"
         autoComplete="new-password"
         required
-        minLength={6}
+        minLength={8}
         value={password}
         error={passwordError}
         onChange={(e) => {
@@ -187,8 +188,9 @@ export function RegisterForm() {
           if (authError) setAuthError(null);
         }}
         onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
-        placeholder="Mínimo 6 caracteres"
+        placeholder="Mínimo 8 caracteres"
       />
+      {password && <PasswordStrength password={password} />}
 
       <div className="my-4">
         <label className="flex items-start gap-2.5 text-xs text-text-secondary cursor-pointer select-none">
@@ -206,12 +208,22 @@ export function RegisterForm() {
           />
           <span>
             Confirmo que he leído y acepto los{' '}
-            <Link to="/terminos" target="_blank" className="text-accent underline hover:text-accent-hover font-medium">
-              Términos del Servicio
+            <Link
+              to="/terminos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent underline hover:text-accent-hover font-medium"
+            >
+              Términos del Servicio <span className="sr-only">(se abre en una nueva pestaña)</span>
             </Link>{' '}
             y la{' '}
-            <Link to="/privacidad" target="_blank" className="text-accent underline hover:text-accent-hover font-medium">
-              Política de Privacidad
+            <Link
+              to="/privacidad"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent underline hover:text-accent-hover font-medium"
+            >
+              Política de Privacidad <span className="sr-only">(se abre en una nueva pestaña)</span>
             </Link>.
           </span>
         </label>
