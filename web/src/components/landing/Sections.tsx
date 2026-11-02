@@ -143,7 +143,13 @@ export function PreviewCard({
   const vimeoId = getVimeoId(item.video_url);
   const bunnyEmbed = getBunnyEmbed(item.video_url);
   const isDirectVideo = hasVideo && item.video_url && !ytId && !vimeoId && !bunnyEmbed;
-  const thumbnail = item.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null);
+  const defaultThumb =
+    item.category?.toLowerCase().includes('gap') || item.title?.toLowerCase().includes('gap')
+      ? '/landing/thumb-gap.jpg'
+      : item.category?.toLowerCase().includes('cardio') || item.title?.toLowerCase().includes('cardio')
+        ? '/landing/thumb-cardio.jpg'
+        : '/landing/thumb-fullbody.jpg';
+  const thumbnail = item.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null) || defaultThumb;
 
   useEffect(() => {
     const video = videoRef.current;

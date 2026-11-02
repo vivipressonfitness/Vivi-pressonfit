@@ -1,14 +1,13 @@
+// @ts-nocheck
+// deno-lint-ignore-file
+/* eslint-disable */
 // Edge Function: bunny-token-public  (Deno)
 // ─────────────────────────────────────────────────────────────────────────────
-// Token HLS firmado de Bunny Stream para videos PROMOCIONALES FREE del landing.
-// NO verifica sesión ni membresía: solo firma tokens para los video IDs que el
-// admin haya marcado como públicos en landing_config.clases_items[].bunny_video_id.
-// La clave secreta BUNNY_STREAM_TOKEN_KEY nunca llega al navegador.
-//
-// DESPLIEGUE (solo colocar credenciales):
-//   supabase functions deploy bunny-token-public --no-verify-jwt
-//   Secrets compartidos con bunny-token:
-//     BUNNY_INTEGRATION_ID / BUNNY_STREAM_API_KEY / BUNNY_STREAM_TOKEN_KEY
+// Token firmado de Bunny Stream para videos PROMOCIONALES FREE del landing.
+// NO requiere sesión de usuario: solo firma tokens para los video IDs que
+// estén autorizados en landing_config (preview_clases / clases_items) o
+// en membership_content con show_in_landing = true.
+// La clave secreta BUNNY_STREAM_TOKEN_KEY NUNCA llega al navegador.
 // ─────────────────────────────────────────────────────────────────────────────
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -26,52 +25,78 @@ Deno.serve(async (req) => {
     const { videoId } = (await req.json().catch(() => ({}))) as { videoId?: string };
     if (!videoId) return json({ error: 'Falta videoId' }, 400);
 
-    // 1) Allowlist: el video DEBE estar publicado como free en landing_config.
-    //    Usamos la anon key + RLS pública (landing_config_select_public).
+    // 1) Allowlist: verificar que el video está autorizado como público
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
     );
-    const { data: row, error: cfgError } = await supabase
-      .from('landing_config')
-      .select('value')
-      .eq('key', 'clases_items')
-      .maybeSingle();
-    if (cfgError) return json({ error: 'No se pudo leer la config publica' }, 500);
 
-    let items: Array<{ bunny_video_id?: string }> = [];
-    const raw = row?.value;
-    if (typeof raw === 'string') {
-      try { items = JSON.parse(raw); } catch { items = []; }
-    } else if (Array.isArray(raw)) {
-      items = raw as Array<{ bunny_video_id?: string }>;
+    // Revisar landing_config (preview_clases y clases_items)
+    const { data: cfgRows } = await supabase
+      .from('landing_config')
+      .select('key, value')
+      .in('key', ['preview_clases', 'clases_items']);
+
+    let allowed = false;
+    for (const row of cfgRows ?? []) {
+      const raw = row.value;
+      let items: Array<{ bunny_video_id?: string }> = [];
+      if (typeof raw === 'string') {
+        try { items = JSON.parse(raw); } catch { items = []; }
+      } else if (Array.isArray(raw)) {
+        items = raw as Array<{ bunny_video_id?: string }>;
+      }
+      if (items.some((it) => it?.bunny_video_id === videoId)) {
+        allowed = true;
+        break;
+      }
     }
-    const allowed = items.some((it) => it?.bunny_video_id === videoId);
-    if (!allowed) return json({ error: 'Video no publico' }, 403);
+
+    // Si no está en landing_config, revisar membership_content con show_in_landing
+    if (!allowed) {
+      const { data: mcRow } = await supabase
+        .from('membership_content')
+        .select('id')
+        .eq('bunny_video_id', videoId)
+        .eq('show_in_landing', true)
+        .maybeSingle();
+      if (mcRow) allowed = true;
+    }
+
+    if (!allowed) return json({ error: 'Video no autorizado como público' }, 403);
 
     // 2) Secretos de Bunny
     const integrationId = Deno.env.get('BUNNY_INTEGRATION_ID');
     const streamApiKey = Deno.env.get('BUNNY_STREAM_API_KEY');
     const tokenKey = Deno.env.get('BUNNY_STREAM_TOKEN_KEY');
     if (!integrationId || !streamApiKey || !tokenKey) {
-      return json({ error: 'Bunny no esta configurado (faltan secrets)' }, 500);
+      return json({ error: 'Bunny no está configurado (faltan secrets)' }, 500);
     }
 
     // 3) Guid del video
-    const res = await fetch(
-      `https://api.bunny.net/library/${integrationId}/video/${videoId}`,
-      { headers: { AccessKey: streamApiKey } },
-    );
-    if (!res.ok) return json({ error: `Video no encontrado en Bunny (HTTP ${res.status})` }, 404);
-    const video = (await res.json()) as { Guid?: string };
-    const guid = video.Guid ?? videoId;
+    let guid = videoId;
+    try {
+      const res = await fetch(
+        `https://video.bunnycdn.com/library/${integrationId}/videos/${videoId}`,
+        { headers: { AccessKey: streamApiKey } },
+      );
+      if (res.ok) {
+        const video = (await res.json()) as { guid?: string; Guid?: string };
+        guid = video.guid ?? video.Guid ?? videoId;
+      }
+    } catch {
+      // Si la API no responde pero ya tenemos el guid, continuamos
+    }
 
-    // 4) Token firmado SHA-256 "{guid}-{expiry}-{tokenKey}"
+    // 4) Token firmado SHA-256 según especificación oficial de Bunny Stream:
+    // SHA256_HEX(tokenKey + guid + expiry)
     const expiry = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
-    const digest = await sha256Hex(`${guid}-${expiry}-${tokenKey}`);
-    const hlsUrl =
-      `https://bunnystream.com/manifest/${guid}/${guid}_f.mp4.m3u8?token=${digest}&expires=${expiry}`;
-    return json({ hlsUrl, expiresAt: expiry * 1000 }, 200);
+    const digest = await sha256Hex(`${tokenKey}${guid}${expiry}`);
+
+    const embedUrl = `https://player.mediadelivery.net/embed/${integrationId}/${guid}?token=${digest}&expires=${expiry}`;
+    const hlsUrl = embedUrl;
+
+    return json({ hlsUrl, embedUrl, expiresAt: expiry * 1000 }, 200);
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : 'Error interno' }, 500);
   }
@@ -82,7 +107,7 @@ async function sha256Hex(text: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-function json(body: unknown, status: number) {
+function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },

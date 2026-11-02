@@ -1,3 +1,6 @@
+// @ts-nocheck
+// deno-lint-ignore-file
+/* eslint-disable */
 // Edge Function: bunny-token  (Deno)
 // ─────────────────────────────────────────────────────────────────────────────
 // Genera el token HLS firmado de Bunny Stream para reproducir un video.

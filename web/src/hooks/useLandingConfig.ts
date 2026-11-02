@@ -263,10 +263,12 @@ export function useLandingConfig() {
         if (parsedClases) setClases(parsedClases);
 
         // Si existen programas con show_in_landing = true en membership_content, integrarlos
+        // (CM-01 / CM-02: solo incluir publicados y que tengan preview_video_url para evitar fuga del video completo)
         supabase
           .from('membership_content')
           .select('*')
           .eq('show_in_landing', true)
+          .eq('is_published', true)
           .then(({ data: mcData, error: mcError }) => {
             if (!alive || mcError || !mcData || mcData.length === 0) return;
             const resolveUrl = (val: string | null | undefined) => {
@@ -275,12 +277,16 @@ export function useLandingConfig() {
               return getMemberMediaUrl(val);
             };
 
-            const dynamicItems: PreviewItem[] = mcData.map((m) => ({
+            // Filtrar únicamente los contenidos que tengan un teaser/adelanto o miniatura válida
+            const validTeasers = mcData.filter((m) => Boolean(m.preview_video_url || m.thumbnail_url));
+            if (validTeasers.length === 0) return;
+
+            const dynamicItems: PreviewItem[] = validTeasers.map((m) => ({
               category: m.category || 'Clase',
               title: m.title,
-              desc: m.description || '',
-              bunny_video_id: m.bunny_video_id,
-              video_url: resolveUrl(m.preview_video_url || m.content_url || m.storage_path),
+              desc: m.description ? (m.description.length > 120 ? `${m.description.slice(0, 117)}…` : m.description) : '',
+              bunny_video_id: null, // Seguridad: el ID privado de Bunny nunca se expone como teaser salvo que sea específico
+              video_url: resolveUrl(m.preview_video_url), // Seguridad CM-01: NUNCA fallback a content_url o storage_path
               thumbnail_url: resolveUrl(m.thumbnail_url || (m.preview_video_url ? null : m.storage_path)),
               duration: m.preview_duration || 'Adelanto gratis',
               locked: false,

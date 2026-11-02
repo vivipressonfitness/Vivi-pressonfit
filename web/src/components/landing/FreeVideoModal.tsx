@@ -33,6 +33,7 @@ export function FreeVideoModal({ item, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
+  const [iframeSrc, setIframeSrc] = useState<string | null>(null);
 
   const ytEmbed = item.video_url ? youtubeId(item.video_url) : null;
   const vimeoEmbed = item.video_url
@@ -116,6 +117,7 @@ export function FreeVideoModal({ item, onClose }: Props) {
     async function load() {
       setLoading(true);
       setError(null);
+      setIframeSrc(null);
       try {
         const base = import.meta.env.VITE_SUPABASE_URL as string;
         const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -124,10 +126,15 @@ export function FreeVideoModal({ item, onClose }: Props) {
           headers: { 'Content-Type': 'application/json', apikey: anon, Authorization: `Bearer ${anon}` },
           body: JSON.stringify({ videoId: item.bunny_video_id }),
         });
-        const json = (await res.json().catch(() => ({}))) as { hlsUrl?: string; error?: string };
+        const json = (await res.json().catch(() => ({}))) as { hlsUrl?: string; embedUrl?: string; error?: string };
         if (cancelled) return;
-        if (!res.ok || !json.hlsUrl) throw new Error(json.error ?? 'No se pudo cargar el video');
-        await attachSource(json.hlsUrl);
+        if (!res.ok || (!json.hlsUrl && !json.embedUrl)) throw new Error(json.error ?? 'No se pudo cargar el video');
+        if (json.embedUrl || (json.hlsUrl && json.hlsUrl.includes('player.mediadelivery.net'))) {
+          setIframeSrc(json.embedUrl || json.hlsUrl!);
+          setLoading(false);
+          return;
+        }
+        await attachSource(json.hlsUrl!);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Error cargando video');
       } finally {
@@ -220,15 +227,26 @@ export function FreeVideoModal({ item, onClose }: Props) {
         <div className="aspect-video bg-black relative w-full flex-1 md:flex-none flex items-center justify-center overflow-hidden">
           {item.bunny_video_id ? (
             <>
-              <video
-                ref={videoRef}
-                controls
-                playsInline
-                aria-label={item.title}
-                onEnded={() => setVideoEnded(true)}
-                onPlay={() => setVideoEnded(false)}
-                className="w-full h-full"
-              />
+              {iframeSrc ? (
+                <iframe
+                  src={iframeSrc}
+                  title={`Video de ${item.title}`}
+                  loading="lazy"
+                  className="w-full h-full border-0"
+                  allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                  allowFullScreen
+                />
+              ) : (
+                <video
+                  ref={videoRef}
+                  controls
+                  playsInline
+                  aria-label={item.title}
+                  onEnded={() => setVideoEnded(true)}
+                  onPlay={() => setVideoEnded(false)}
+                  className="w-full h-full"
+                />
+              )}
               {loading && (
                 <div role="status" className="absolute inset-0 flex items-center justify-center text-text-secondary">
                   Cargando video…

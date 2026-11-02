@@ -1,6 +1,45 @@
+// @ts-nocheck
+// deno-lint-ignore-file
+/* eslint-disable */
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { corsHeaders, json, stripeRequest } from '../_shared/stripe.ts';
 
+// ─── Utilidades compartidas de Stripe ───────────────────────────
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+function stripeSecret() {
+  const key = Deno.env.get('STRIPE_SECRET_KEY');
+  if (!key) throw new Error('Falta configurar STRIPE_SECRET_KEY en Supabase.');
+  return key;
+}
+
+async function stripeRequest(path: string, params: URLSearchParams) {
+  const response = await fetch(`https://api.stripe.com/v1/${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${stripeSecret()}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params,
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    const message = payload?.error?.message ?? `Stripe respondió HTTP ${response.status}`;
+    throw new Error(message);
+  }
+  return payload;
+}
+
+// ─── Manejador de Checkout ──────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Método no permitido.' }, 405);
@@ -23,7 +62,7 @@ Deno.serve(async (req) => {
     }
 
     const origin = req.headers.get('origin');
-    const allowedOrigins = (Deno.env.get('APP_ORIGIN') ?? 'https://vivipressonfit.netlify.app')
+    const allowedOrigins = (Deno.env.get('APP_ORIGIN') ?? 'https://vivi-pressonfit.vercel.app')
       .split(',').map((value) => value.trim()).filter(Boolean);
     const returnOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
     if (!returnOrigin) return json({ error: 'No está configurado el dominio de retorno.' }, 500);

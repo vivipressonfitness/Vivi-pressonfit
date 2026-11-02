@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { MembershipContent } from '../../types';
 import { MediaBucketManager } from './MediaBucketManager';
+import { Modal } from '../ui/Modal';
 import {
   SearchIcon,
   FilterIcon,
@@ -11,6 +12,15 @@ import {
   VideoIcon,
   FolderIcon,
 } from '../ui/Icons';
+
+type AssignTarget = 'private_video' | 'preview_video' | 'thumbnail' | 'pdf';
+
+const TARGET_LABELS: Record<AssignTarget, string> = {
+  private_video: 'Video privado de la clase (exclusivo miembros)',
+  preview_video: 'Video demo / Teaser público (Landing Page)',
+  thumbnail: 'Miniatura / Portada pública',
+  pdf: 'Documento PDF (Recetario / Guía)',
+};
 
 // CRUD de membership_content (contenido del mes con diferenciación pública vs privada).
 const EMPTY: Omit<MembershipContent, 'id' | 'created_at' | 'updated_at'> = {
@@ -24,7 +34,8 @@ const EMPTY: Omit<MembershipContent, 'id' | 'created_at' | 'updated_at'> = {
   target_mode: 'Ambos',
   class_type: null,
   month_year: null,
-  is_published: true,
+  // CM-02: Borrador por defecto para evitar publicaciones accidentales
+  is_published: false,
   // Gestión pública (Landing) y privada (Miembros):
   show_in_landing: false,
   preview_video_url: null,
@@ -36,12 +47,15 @@ const EMPTY: Omit<MembershipContent, 'id' | 'created_at' | 'updated_at'> = {
 
 export function ContentManager() {
   const [items, setItems] = useState<MembershipContent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; error?: boolean } | null>(null);
   const [showBucketDrawer, setShowBucketDrawer] = useState(false);
-  const [assignTarget, setAssignTarget] = useState<'private_video' | 'preview_video' | 'thumbnail' | 'pdf' | null>(null);
+  const [assignTarget, setAssignTarget] = useState<AssignTarget | null>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   // Estados de seguridad y filtros (F-13)
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -54,17 +68,37 @@ export function ContentManager() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [landingFilter, setLandingFilter] = useState<'all' | 'landing' | 'private_only'>('all');
 
-  const load = () => {
-    supabase
-      .from('membership_content')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (!error && data) setItems(data);
-      });
+  const load = async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const { data, error } = await supabase
+        .from('membership_content')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) {
+        setLoadError('No se pudo cargar el catálogo de contenidos.');
+      } else {
+        setItems(data ?? []);
+      }
+    } catch {
+      setLoadError('Error de red al consultar contenidos.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(load, []);
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const openBucketFor = (target: AssignTarget) => {
+    setAssignTarget(target);
+    setShowBucketDrawer(true);
+    setTimeout(() => {
+      drawerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
 
   const reset = () => {
     setForm({ ...EMPTY });
@@ -76,6 +110,30 @@ export function ContentManager() {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
+
+    // CM-01: Validación de seguridad para evitar fuga del video completo al landing
+    if (form.show_in_landing) {
+      if (!form.preview_video_url && !form.thumbnail_url) {
+        setBusy(false);
+        setMsg({
+          text: '⚠️ Seguridad: Para mostrar este contenido en el Landing debes asignar un video adelanto (teaser) o una miniatura.',
+          error: true,
+        });
+        return;
+      }
+      if (
+        form.preview_video_url &&
+        (form.preview_video_url === form.private_video_url ||
+          (form.content_url && form.preview_video_url === form.content_url))
+      ) {
+        setBusy(false);
+        setMsg({
+          text: '⚠️ Seguridad: El video de adelanto público no puede ser la clase completa privada.',
+          error: true,
+        });
+        return;
+      }
+    }
 
     const payload = {
       cycle_date: form.cycle_date,
@@ -255,28 +313,56 @@ export function ContentManager() {
 
   return (
     <div className="space-y-8">
-      {/* Botón para desplegar el gestor del bucket */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-raised/80 border border-border p-4 rounded-2xl">
-        <div>
-          <h3 className="font-heading font-bold text-base text-text-primary flex items-center gap-2">
-            <FolderIcon className="w-5 h-5 text-accent" />
-            <span>Bucket Multimedia de Miembros (<code>members-media</code>)</span>
-          </h3>
-          <p className="text-xs text-text-secondary mt-0.5">
-            Sube videos completos, demos del landing, miniaturas o PDFs y asígnalos con un clic.
-          </p>
+      {/* Botón para desplegar el gestor del bucket y asignador activo */}
+      <div ref={drawerRef} className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-raised/80 border border-border p-4 rounded-2xl">
+          <div>
+            <h3 className="font-heading font-bold text-base text-text-primary flex items-center gap-2">
+              <FolderIcon className="w-5 h-5 text-accent" />
+              <span>Bucket Multimedia de Miembros (<code>members-media</code>)</span>
+            </h3>
+            <p className="text-xs text-text-secondary mt-0.5">
+              Sube videos completos, demos del landing, miniaturas o PDFs y asígnalos con un clic.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowBucketDrawer(!showBucketDrawer)}
+            className={`px-4 py-2 rounded-pill font-bold text-xs transition flex items-center gap-2 ${
+              showBucketDrawer
+                ? 'bg-accent text-background'
+                : 'bg-background border border-border text-text-primary hover:border-accent'
+            }`}
+          >
+            <span>{showBucketDrawer ? '▲ Ocultar Gestor de Archivos' : '▼ Abrir Gestor de Archivos'}</span>
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowBucketDrawer(!showBucketDrawer)}
-          className={`px-4 py-2 rounded-pill font-bold text-xs transition flex items-center gap-2 ${
-            showBucketDrawer
-              ? 'bg-accent text-background'
-              : 'bg-background border border-border text-text-primary hover:border-accent'
-          }`}
-        >
-          <span>{showBucketDrawer ? '▲ Ocultar Gestor de Archivos' : '▼ Abrir Gestor de Archivos'}</span>
-        </button>
+
+        {/* Banner de asignación activa (CM-08) */}
+        {showBucketDrawer && assignTarget && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="bg-accent/15 border border-accent/40 rounded-xl p-3 flex items-center justify-between gap-3 text-xs text-text-primary animate-in fade-in"
+          >
+            <div>
+              <span className="font-bold text-accent uppercase tracking-wider text-[10px] block">
+                Modo Asignación Activo:
+              </span>
+              <span>
+                Selecciona un archivo del gestor para asignarlo a:{' '}
+                <strong className="text-white">{TARGET_LABELS[assignTarget]}</strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAssignTarget(null)}
+              className="px-2.5 py-1 bg-surface border border-border rounded-lg text-[11px] text-text-secondary hover:text-white transition"
+            >
+              ✕ Cancelar asignación
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Visor / Subidor del Bucket members-media */}
@@ -405,11 +491,8 @@ export function ContentManager() {
                   </label>
                   <button
                     type="button"
-                    onClick={() => {
-                      setAssignTarget('preview_video');
-                      setShowBucketDrawer(true);
-                    }}
-                    className="text-[11px] text-accent hover:underline"
+                    onClick={() => openBucketFor('preview_video')}
+                    className="text-[11px] text-accent hover:underline font-semibold"
                   >
                     Elegir del Bucket
                   </button>
@@ -429,11 +512,8 @@ export function ContentManager() {
                   </label>
                   <button
                     type="button"
-                    onClick={() => {
-                      setAssignTarget('thumbnail');
-                      setShowBucketDrawer(true);
-                    }}
-                    className="text-[11px] text-accent hover:underline"
+                    onClick={() => openBucketFor('thumbnail')}
+                    className="text-[11px] text-accent hover:underline font-semibold"
                   >
                     Elegir del Bucket
                   </button>
@@ -502,11 +582,8 @@ export function ContentManager() {
                 </label>
                 <button
                   type="button"
-                  onClick={() => {
-                    setAssignTarget('private_video');
-                    setShowBucketDrawer(true);
-                  }}
-                  className="text-[11px] text-accent hover:underline"
+                  onClick={() => openBucketFor('private_video')}
+                  className="text-[11px] text-accent hover:underline font-semibold"
                 >
                   Elegir del Bucket
                 </button>
@@ -540,11 +617,8 @@ export function ContentManager() {
                 </label>
                 <button
                   type="button"
-                  onClick={() => {
-                    setAssignTarget('pdf');
-                    setShowBucketDrawer(true);
-                  }}
-                  className="text-[11px] text-accent hover:underline"
+                  onClick={() => openBucketFor('pdf')}
+                  className="text-[11px] text-accent hover:underline font-semibold"
                 >
                   Elegir del Bucket
                 </button>
@@ -592,23 +666,44 @@ export function ContentManager() {
             </button>
           )}
 
-          <label className="flex items-center gap-2 text-sm text-text-secondary ml-auto cursor-pointer bg-background border border-border px-4 py-2 rounded-xl">
-            <input
-              type="checkbox"
-              checked={form.is_published}
-              onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
-              className="w-4 h-4 accent-accent rounded"
-            />
-            <span className="font-semibold text-text-primary">
-              {form.is_published ? '✅ Publicado (Visible a Miembros)' : '⏸️ Oculto (Borrador)'}
+          <div className="flex flex-wrap items-center gap-3 ml-auto">
+            <span className="text-xs text-text-secondary font-medium hidden sm:inline">
+              Destino:
             </span>
-          </label>
+            <span
+              className={`text-xs px-3 py-1 rounded-pill font-bold border transition ${
+                !form.is_published
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                  : form.show_in_landing
+                    ? 'bg-purple-500/15 border-purple-500/40 text-purple-300'
+                    : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+              }`}
+            >
+              {!form.is_published
+                ? '🟡 Borrador (Oculto)'
+                : form.show_in_landing
+                  ? '🟣 Miembros + Portada Landing'
+                  : '🟢 Solo Miembros'}
+            </span>
+
+            <label className="flex items-center gap-2 text-xs font-semibold text-text-primary cursor-pointer bg-background border border-border px-3.5 py-2 rounded-xl hover:border-accent transition">
+              <input
+                type="checkbox"
+                checked={form.is_published}
+                onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
+                className="w-4 h-4 accent-accent rounded"
+              />
+              <span>{form.is_published ? 'Publicar ahora' : 'Marcar como Borrador'}</span>
+            </label>
+          </div>
         </div>
       </form>
 
-      {/* Banner de mensajes y feedback */}
+      {/* Banner de mensajes y feedback con accesibilidad WCAG (CM-14) */}
       {msg && (
         <div
+          role="status"
+          aria-live="polite"
           className={`p-4 rounded-xl text-sm flex items-center justify-between border ${
             msg.error
               ? 'bg-red-500/15 border-red-500/30 text-red-200'
@@ -806,7 +901,28 @@ export function ContentManager() {
             </div>
           ))}
 
-          {filteredItems.length === 0 && (
+          {loading && (
+            <div role="status" className="bg-raised/50 border border-border rounded-2xl p-12 text-center text-text-secondary space-y-3">
+              <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-sm font-medium">Cargando catálogo de clases y programas…</p>
+            </div>
+          )}
+
+          {!loading && loadError && (
+            <div role="alert" className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-center text-red-300 space-y-3">
+              <AlertCircleIcon className="w-8 h-8 text-red-400 mx-auto" />
+              <p className="text-sm font-semibold">{loadError}</p>
+              <button
+                type="button"
+                onClick={load}
+                className="px-4 py-1.5 rounded-pill text-xs font-bold bg-surface border border-red-500/40 hover:bg-red-500/20 text-white transition"
+              >
+                Reintentar carga
+              </button>
+            </div>
+          )}
+
+          {!loading && !loadError && filteredItems.length === 0 && (
             <div className="bg-raised/50 border border-dashed border-border rounded-2xl p-8 text-center text-text-secondary text-sm space-y-1">
               <p className="font-semibold text-text-primary">No se encontraron contenidos</p>
               <p className="text-xs">
@@ -819,18 +935,23 @@ export function ContentManager() {
         </div>
       </div>
 
-      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN DE CONTENIDO (F-13) */}
-      {deleteModalTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-          <div className="bg-raised border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+      {/* MODAL ACCESIBLE DE CONFIRMACIÓN DE ELIMINACIÓN (CM-18) */}
+      <Modal
+        open={Boolean(deleteModalTarget)}
+        onClose={() => setDeleteModalTarget(null)}
+        title="Eliminar contenido permanentemente"
+        size="md"
+      >
+        {deleteModalTarget && (
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center shrink-0">
                 <TrashIcon className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-heading font-bold text-base text-text-primary">
-                  ¿Eliminar este contenido permanentemente?
-                </h3>
+                <h4 className="font-heading font-bold text-base text-text-primary">
+                  ¿Confirmas la eliminación?
+                </h4>
                 <p className="text-xs text-text-secondary">Esta acción no se puede deshacer</p>
               </div>
             </div>
@@ -854,7 +975,7 @@ export function ContentManager() {
                 type="button"
                 disabled={deleteLoading}
                 onClick={() => setDeleteModalTarget(null)}
-                className="px-4 py-2 rounded-pill text-xs border border-border text-text-secondary hover:text-text-primary transition"
+                className="px-4 py-2 rounded-pill text-xs border border-border text-text-secondary hover:text-white transition"
               >
                 Cancelar
               </button>
@@ -868,8 +989,8 @@ export function ContentManager() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

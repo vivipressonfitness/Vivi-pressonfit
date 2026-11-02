@@ -130,7 +130,21 @@ export function MuestrasSection({
 
                   <div>
                     <label className="text-[10px] uppercase font-bold text-text-secondary block">
-                      URL del Video (MP4 / Bunny / Vimeo)
+                      Bunny Stream Video ID (GUID)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="ej: c5bb515c-c5a5-4506-94cd-4dcfa6a28bca"
+                      value={item.bunny_video_id || ''}
+                      onChange={(e) => updateClase(idx, { bunny_video_id: e.target.value.trim() || null })}
+                      className="w-full bg-surface border border-border rounded px-2 py-1 text-[11px] focus:border-accent outline-none font-mono text-accent"
+                    />
+                    <span className="text-[9px] text-text-secondary">Pega el GUID de Bunny para reproducción segura con token automático.</span>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-text-secondary block">
+                      URL Alternativa del Video (MP4 / YouTube / Vimeo)
                     </label>
                     <input
                       type="text"
@@ -267,6 +281,19 @@ export function MuestrasSection({
                       value={item.thumbnail_url || ''}
                       onChange={(e) => updateRecurso(idx, { thumbnail_url: e.target.value })}
                       className="w-full bg-surface border border-border rounded px-2 py-1 text-[11px] focus:border-accent outline-none font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-text-secondary block">
+                      Bunny Stream Video ID (GUID)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="ej: c5bb515c-c5a5-4506-94cd-4dcfa6a28bca"
+                      value={item.bunny_video_id || ''}
+                      onChange={(e) => updateRecurso(idx, { bunny_video_id: e.target.value.trim() || null })}
+                      className="w-full bg-surface border border-border rounded px-2 py-1 text-[11px] focus:border-accent outline-none font-mono text-accent"
                     />
                   </div>
 
