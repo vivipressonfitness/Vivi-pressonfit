@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { getMemberMediaUrl } from '../lib/storage';
 import { LANDING_CLASES, LANDING_EDUCATIVO } from '../data/landingMedia';
@@ -25,6 +25,20 @@ export interface LandingConfig {
   carousel_filter: 'all' | 'image' | 'video';
 }
 
+export interface PreviewItem {
+  category: string;
+  title: string;
+  desc: string;
+  bunny_video_id: string | null;
+  video_url: string | null;
+  thumbnail_url?: string | null;
+  duration?: string | null;
+  locked?: boolean;
+}
+
+/** @deprecated alias histórico de PreviewItem (campo `tag` → `category`). */
+export type ClaseItem = PreviewItem & { tag?: string };
+
 export interface GalleryCardItem {
   id: number;
   image_url: string;
@@ -42,10 +56,10 @@ export interface QuienSoyImageItem {
 export const DEFAULT_GALLERY_CARDS: GalleryCardItem[] = [
   {
     id: 1,
-    image_url: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=1080&q=80',
-    tag: 'Fuerza 3x',
-    title: 'Entrenamientos Guiados',
-    desc: 'Rutinas planificadas con progresión semanal para casa o gimnasio.',
+    image_url: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=1080&q=80',
+    tag: 'Fuerza',
+    title: 'Entrenamiento Estructurado',
+    desc: 'Rutinas diseñadas progresivamente para desarrollar masa muscular y resistencia real.',
   },
   {
     id: 2,
@@ -70,17 +84,17 @@ export const DEFAULT_GALLERY_CARDS: GalleryCardItem[] = [
   },
   {
     id: 5,
-    image_url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=1080&q=80',
-    tag: 'Comunidad',
-    title: 'Acompañamiento VIP',
-    desc: 'Soporte y motivación constante directamente por WhatsApp.',
+    image_url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1080&q=80',
+    tag: 'Hábito',
+    title: 'Comunidad & Constancia',
+    desc: 'El respaldo diario para mantener la motivación y no abandonar.',
   },
   {
     id: 6,
-    image_url: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=1080&q=80',
-    tag: 'Resultados',
-    title: 'Constancia y Evolución',
-    desc: 'Un estilo de vida sostenible que disfrutarás mantener cada día.',
+    image_url: 'https://images.unsplash.com/photo-1550345332-09e3ac987658?auto=format&fit=crop&w=1080&q=80',
+    tag: 'Enfoque',
+    title: 'Salud Integral y Postura',
+    desc: 'Movilidad articular y técnica correcta para prevenir lesiones.',
   },
 ];
 
@@ -93,48 +107,6 @@ export const DEFAULT_QUIEN_SOY_IMAGES: QuienSoyImageItem[] = [
   { id: 6, image_url: '/landing/gallery/6.jpg', caption: 'Entrenando con Propósito' },
 ];
 
-// Item de contenido GRATIS del portal público (adelanto de la membresía).
-export interface PreviewItem {
-  category: string;      // categoría/etiqueta (ej. "Firmeza", "Nutrición")
-  title: string;
-  desc: string;
-  bunny_video_id: string | null; // HLS público vía Bunny Stream
-  video_url: string | null;      // mp4 local (/landing/...) o embed YouTube/Vimeo
-  thumbnail_url?: string | null;
-  duration?: string | null;      // ej. "19s · adelanto"
-  locked?: boolean;              // true → se muestra como "solo miembros" (sin reproducir)
-}
-
-/** @deprecated alias histórico de PreviewItem (campo `tag` → `category`). */
-export type ClaseItem = PreviewItem & { tag?: string };
-
-// Convierte items legados ({tag}) al formato portal ({category}).
-function normalizeItem(raw: Record<string, unknown>): PreviewItem {
-  return {
-    category: (raw.category as string) ?? (raw.tag as string) ?? 'Clase',
-    title: (raw.title as string) ?? '',
-    desc: (raw.desc as string) ?? '',
-    bunny_video_id: (raw.bunny_video_id as string) ?? null,
-    video_url: (raw.video_url as string) ?? null,
-    thumbnail_url: (raw.thumbnail_url as string) ?? null,
-    duration: (raw.duration as string) ?? null,
-    locked: Boolean(raw.locked),
-  };
-}
-
-function parseItems(value: unknown): PreviewItem[] | null {
-  let items: unknown = value;
-  if (typeof value === 'string') {
-    try {
-      items = JSON.parse(value);
-    } catch {
-      return null;
-    }
-  }
-  if (!Array.isArray(items) || items.length === 0) return null;
-  return items.map((i) => normalizeItem(i as Record<string, unknown>));
-}
-
 export const DEFAULT_CONFIG: LandingConfig = {
   monthly_price: BASE_OFFER.monthlyPrice,
   whatsapp_number: '5493415888117',
@@ -144,7 +116,6 @@ export const DEFAULT_CONFIG: LandingConfig = {
     'Un método completo y dinámico que combina clases grabadas bajo demanda, rutinas de fuerza estructuradas para casa o gimnasio, educación alimentaria y soporte directo por WhatsApp.',
   pilares_title: 'Todo lo que incluye tu membresía',
   membresias_title: 'Tu Membresía Mensual Todo Incluido',
-  // Imagen local del repo (web/public/landing) — reemplazable desde Admin con una URL externa.
   hero_image: '/landing/vivi.webp',
   educacion_image: '/landing/thumb-cardio.jpg',
   logo_url: '/landing/logo-vivipressonfit.jpg',
@@ -153,14 +124,72 @@ export const DEFAULT_CONFIG: LandingConfig = {
   quien_soy_title: '¿Quién Soy?',
   quien_soy_subtitle: 'Tu Coach & Mentora',
   quien_soy_bio:
-    '¡Hola! Soy Vivi. Mi enfoque no se basa en dietas extremas ni castigos, sino en construir fuerza, disciplina y bienestar paso a paso. Estoy aquí para acompañarte cada día y guiarte a lograr la mejor versión de ti misma.',
+    '¡Hola! Soy Vivi. Mi enfoque no se basa en dietas extremas ni castigos, sino en construir fuerza, disciplina y bienestar paso a paso. Estoy aquí para acompañarte todos los días y darte las herramientas reales para transformar tu energía y tu físico.',
   carousel_filter: 'all',
 };
 
-const CONFIG_KEYS = Object.keys(DEFAULT_CONFIG) as Array<keyof LandingConfig>;
+const CONFIG_KEYS: Array<keyof LandingConfig> = [
+  'monthly_price',
+  'whatsapp_number',
+  'hero_title',
+  'hero_title_sub',
+  'hero_sub',
+  'pilares_title',
+  'membresias_title',
+  'hero_image',
+  'educacion_image',
+  'logo_url',
+  'logo_height',
+  'gallery_title',
+  'quien_soy_title',
+  'quien_soy_subtitle',
+  'quien_soy_bio',
+  'carousel_filter',
+];
 
-export function useLandingConfig() {
-  // Inicialización inmediata desde localStorage para evitar salto/transición visual al cargar
+/** Función auxiliar para deduplicar recursos por título */
+function dedupeItems(items: PreviewItem[]): PreviewItem[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = (item.title || '').trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function parseItems(raw: unknown): PreviewItem[] | null {
+  if (!raw) return null;
+  try {
+    const arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!Array.isArray(arr)) return null;
+    return dedupeItems(
+      arr.map((x) => ({
+        category: String(x.category ?? x.tag ?? 'Clase'),
+        title: String(x.title ?? ''),
+        desc: String(x.desc ?? ''),
+        bunny_video_id: x.bunny_video_id ? String(x.bunny_video_id) : null,
+        video_url: x.video_url ? String(x.video_url) : null,
+        thumbnail_url: x.thumbnail_url ? String(x.thumbnail_url) : null,
+        duration: x.duration ? String(x.duration) : null,
+        locked: Boolean(x.locked),
+      })),
+    );
+  } catch {
+    return null;
+  }
+}
+
+export function useLandingConfig(): {
+  config: LandingConfig;
+  clases: PreviewItem[];
+  recursos: PreviewItem[];
+  galleryCards: GalleryCardItem[];
+  quienSoyImages: QuienSoyImageItem[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+} {
   const [config, setConfig] = useState<LandingConfig>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -191,123 +220,169 @@ export function useLandingConfig() {
     return DEFAULT_QUIEN_SOY_IMAGES;
   });
 
-  const [clases, setClases] = useState<PreviewItem[]>(LANDING_CLASES);
-  const [recursos, setRecursos] = useState<PreviewItem[]>(LANDING_EDUCATIVO);
+  const [clases, setClases] = useState<PreviewItem[]>(() => dedupeItems(LANDING_CLASES));
+  const [recursos, setRecursos] = useState<PreviewItem[]>(() => dedupeItems(LANDING_EDUCATIVO));
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let alive = true;
-    supabase
-      .from('landing_config')
-      .select('key, value')
-      .then(({ data }) => {
-        if (!alive) return;
-        const rows = (data ?? []) as Array<{ key: string; value: unknown }>;
-        const next: LandingConfig = { ...DEFAULT_CONFIG };
-        for (const row of rows) {
-          if (row.key === 'preview_clases' || row.key === 'preview_recursos' || row.key === 'clases_items' || row.key === 'gallery_cards' || row.key === 'quien_soy_images') continue;
-          if ((CONFIG_KEYS as string[]).includes(row.key)) {
-            const raw = typeof row.value === 'string' ? row.value : JSON.stringify(row.value);
-            const val = raw.replace(/^"|"$/g, '');
-            if (!val) continue;
-            if (row.key === 'monthly_price') {
-              const n = Number(val);
-              if (!Number.isNaN(n)) next.monthly_price = n;
-            } else if (row.key === 'logo_height') {
-              const n = Number(val);
-              if (!Number.isNaN(n) && n > 0) next.logo_height = n;
-            } else if (row.key === 'gallery_title') {
-              next.gallery_title = val.replace(/VIVIFIT/gi, 'VIVIPRESSONFIT');
-            } else if (row.key === 'whatsapp_number') {
-              const cleanWa = val.replace(/\D/g, '');
-              next.whatsapp_number = cleanWa && cleanWa !== '59178000000' ? cleanWa : '5493415888117';
-            } else if (row.key === 'educacion_image' && val.includes('uxpilot-auth.appspot.com')) {
-              next.educacion_image = '/landing/thumb-cardio.jpg';
-            } else if (row.key === 'carousel_filter') {
-              if (val === 'all' || val === 'image' || val === 'video') next.carousel_filter = val;
-            } else {
-              (next as unknown as Record<string, string>)[row.key] = val;
-            }
+  const fetchConfig = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: dbError } = await supabase
+        .from('landing_config')
+        .select('key, value');
+
+      if (dbError) {
+        setError(`Aviso de configuración: ${dbError.message}`);
+      }
+
+      const rows = (data ?? []) as Array<{ key: string; value: unknown }>;
+      const next: LandingConfig = { ...DEFAULT_CONFIG };
+
+      for (const row of rows) {
+        if (
+          row.key === 'preview_clases' ||
+          row.key === 'preview_recursos' ||
+          row.key === 'clases_items' ||
+          row.key === 'gallery_cards' ||
+          row.key === 'quien_soy_images'
+        ) {
+          continue;
+        }
+
+        if ((CONFIG_KEYS as string[]).includes(row.key)) {
+          const raw = typeof row.value === 'string' ? row.value : JSON.stringify(row.value);
+          const val = raw.replace(/^"|"$/g, '');
+          if (!val) continue;
+
+          if (row.key === 'monthly_price') {
+            const n = Number(val);
+            if (!Number.isNaN(n)) next.monthly_price = n;
+          } else if (row.key === 'logo_height') {
+            const n = Number(val);
+            if (!Number.isNaN(n) && n > 0) next.logo_height = n;
+          } else if (row.key === 'gallery_title') {
+            next.gallery_title = val.replace(/VIVIFIT/gi, 'VIVIPRESSONFIT');
+          } else if (row.key === 'whatsapp_number') {
+            const cleanWa = val.replace(/\D/g, '');
+            next.whatsapp_number =
+              cleanWa && cleanWa !== '59178000000' ? cleanWa : '5493415888117';
+          } else if (row.key === 'educacion_image' && val.includes('uxpilot-auth.appspot.com')) {
+            next.educacion_image = '/landing/thumb-cardio.jpg';
+          } else if (row.key === 'carousel_filter') {
+            if (val === 'all' || val === 'image' || val === 'video') next.carousel_filter = val;
+          } else {
+            (next as unknown as Record<string, string>)[row.key] = val;
           }
         }
+      }
 
-        // Galería de 6 fotos (El Método)
-        const rawGallery = rows.find((r) => r.key === 'gallery_cards')?.value;
-        if (rawGallery) {
-          try {
-            const parsed = typeof rawGallery === 'string' ? JSON.parse(rawGallery) : rawGallery;
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setGalleryCards(parsed);
-              if (typeof window !== 'undefined') localStorage.setItem('vivifit_gallery_cards', JSON.stringify(parsed));
+      // Galería de 6 fotos (El Método)
+      const rawGallery = rows.find((r) => r.key === 'gallery_cards')?.value;
+      if (rawGallery) {
+        try {
+          const parsed = typeof rawGallery === 'string' ? JSON.parse(rawGallery) : rawGallery;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setGalleryCards(parsed);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('vivifit_gallery_cards', JSON.stringify(parsed));
             }
-          } catch {}
-        }
+          }
+        } catch {}
+      }
 
-        // Galería ¿Quién Soy? (Fotos 1-6 de Vivi)
-        const rawQuienSoy = rows.find((r) => r.key === 'quien_soy_images')?.value;
-        if (rawQuienSoy) {
-          try {
-            const parsed = typeof rawQuienSoy === 'string' ? JSON.parse(rawQuienSoy) : rawQuienSoy;
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setQuienSoyImages(parsed);
-              if (typeof window !== 'undefined') localStorage.setItem('vivifit_quien_soy_images', JSON.stringify(parsed));
+      // Galería ¿Quién Soy? (Fotos 1-6 de Vivi)
+      const rawQuienSoy = rows.find((r) => r.key === 'quien_soy_images')?.value;
+      if (rawQuienSoy) {
+        try {
+          const parsed = typeof rawQuienSoy === 'string' ? JSON.parse(rawQuienSoy) : rawQuienSoy;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setQuienSoyImages(parsed);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('vivifit_quien_soy_images', JSON.stringify(parsed));
             }
-          } catch {}
-        }
+          }
+        } catch {}
+      }
 
-        // Adelantos de clases (desde landing_config o por defecto)
-        const rawClases =
-          rows.find((r) => r.key === 'preview_clases')?.value ??
-          rows.find((r) => r.key === 'clases_items')?.value;
-        const parsedClases = parseItems(rawClases);
-        if (parsedClases) setClases(parsedClases);
+      // Adelantos de clases (desde landing_config o por defecto)
+      const rawClases =
+        rows.find((r) => r.key === 'preview_clases')?.value ??
+        rows.find((r) => r.key === 'clases_items')?.value;
+      const parsedClases = parseItems(rawClases);
+      if (parsedClases) setClases(parsedClases);
 
-        // Si existen programas con show_in_landing = true en membership_content, integrarlos
-        // (CM-01 / CM-02: solo incluir publicados y que tengan preview_video_url para evitar fuga del video completo)
-        supabase
+      // Si existen programas con show_in_landing = true en membership_content, integrarlos
+      try {
+        const { data: mcData, error: mcError } = await supabase
           .from('membership_content')
           .select('*')
           .eq('show_in_landing', true)
-          .eq('is_published', true)
-          .then(({ data: mcData, error: mcError }) => {
-            if (!alive || mcError || !mcData || mcData.length === 0) return;
-            const resolveUrl = (val: string | null | undefined) => {
-              if (!val) return null;
-              if (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/landing/')) return val;
-              return getMemberMediaUrl(val);
-            };
+          .eq('is_published', true);
 
-            // Filtrar únicamente los contenidos que tengan un teaser/adelanto o miniatura válida
-            const validTeasers = mcData.filter((m) => Boolean(m.preview_video_url || m.thumbnail_url));
-            if (validTeasers.length === 0) return;
+        if (!mcError && mcData && mcData.length > 0) {
+          const resolveUrl = (val: string | null | undefined) => {
+            if (!val) return null;
+            if (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/landing/')) {
+              return val;
+            }
+            return getMemberMediaUrl(val);
+          };
 
+          const validTeasers = mcData.filter((m) => Boolean(m.preview_video_url || m.thumbnail_url));
+          if (validTeasers.length > 0) {
             const dynamicItems: PreviewItem[] = validTeasers.map((m) => ({
               category: m.category || 'Clase',
               title: m.title,
-              desc: m.description ? (m.description.length > 120 ? `${m.description.slice(0, 117)}…` : m.description) : '',
-              bunny_video_id: null, // Seguridad: el ID privado de Bunny nunca se expone como teaser salvo que sea específico
-              video_url: resolveUrl(m.preview_video_url), // Seguridad CM-01: NUNCA fallback a content_url o storage_path
+              desc: m.description
+                ? m.description.length > 120
+                  ? `${m.description.slice(0, 117)}…`
+                  : m.description
+                : '',
+              bunny_video_id: null,
+              video_url: resolveUrl(m.preview_video_url),
               thumbnail_url: resolveUrl(m.thumbnail_url || (m.preview_video_url ? null : m.storage_path)),
               duration: m.preview_duration || 'Adelanto gratis',
               locked: false,
             }));
-            setClases(dynamicItems);
-          });
 
-        // Recursos educativos gratis
-        const parsedRecursos = parseItems(rows.find((r) => r.key === 'preview_recursos')?.value);
-        if (parsedRecursos) setRecursos(parsedRecursos);
-
-        setConfig(next);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('vivifit_landing_config', JSON.stringify(next));
+            // Deduplicación para asegurar que no se repitan títulos
+            setClases(dedupeItems(dynamicItems));
+          }
         }
-        setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
+      } catch (e) {
+        console.warn('No se pudieron cargar muestras dinámicas de membership_content:', e);
+      }
+
+      // Recursos educativos gratis
+      const parsedRecursos = parseItems(rows.find((r) => r.key === 'preview_recursos')?.value);
+      if (parsedRecursos) setRecursos(parsedRecursos);
+
+      setConfig(next);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('vivifit_landing_config', JSON.stringify(next));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al conectar con la base de datos');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { config, clases, recursos, galleryCards, quienSoyImages, loading };
+  useEffect(() => {
+    void fetchConfig();
+  }, [fetchConfig]);
+
+  return {
+    config,
+    clases,
+    recursos,
+    galleryCards,
+    quienSoyImages,
+    loading,
+    error,
+    refetch: fetchConfig,
+  };
 }

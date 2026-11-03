@@ -203,10 +203,12 @@ export function FreeVideoModal({ item, onClose }: Props) {
       >
         <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 border-b border-border/40 md:border-border">
           <div className="pl-24 md:pl-0">
-            {/* Solo categoría del programa */}
-            <span className="inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-1 uppercase tracking-wider">
-              {item.category}
-            </span>
+            {/* Solo categoría del programa si es distinta al título */}
+            {item.category && item.category.trim().toLowerCase() !== item.title.trim().toLowerCase() && (
+              <span className="inline-block bg-accent/20 text-accent text-xs font-bold px-3 py-1 rounded-full mb-1 uppercase tracking-wider">
+                {item.category}
+              </span>
+            )}
             <h3 id={titleId} className="font-heading text-base md:text-xl font-bold text-text-primary line-clamp-1">
               {item.title}
             </h3>

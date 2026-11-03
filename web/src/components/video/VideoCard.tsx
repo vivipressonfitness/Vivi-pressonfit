@@ -8,6 +8,10 @@ interface Props {
 
 export function VideoCard({ content, onPlay }: Props) {
   const cycle = content.month_year ?? content.cycle_date;
+  const showCategoryBadge =
+    content.category &&
+    content.category.trim().toLowerCase() !== content.title.trim().toLowerCase();
+
   return (
     <Card className="flex flex-col gap-2 hover:border-accent/50 transition">
       {/* Superficie de marca en lugar de miniaturas inventadas */}
@@ -19,7 +23,9 @@ export function VideoCard({ content, onPlay }: Props) {
           ▶
         </span>
       </div>
-      <span className="text-xs uppercase tracking-wide text-accent">{content.category}</span>
+      {showCategoryBadge && (
+        <span className="text-xs uppercase tracking-wide text-accent">{content.category}</span>
+      )}
       <h3 className="font-semibold leading-snug">{content.title}</h3>
       {content.description && (
         <p className="text-sm text-text-secondary line-clamp-2">{content.description}</p>

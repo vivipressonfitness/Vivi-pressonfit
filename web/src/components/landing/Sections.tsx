@@ -230,7 +230,9 @@ export function PreviewCard({
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-surface to-raised flex flex-col items-center justify-center p-4 text-center">
-            <span className="text-accent text-xs font-bold uppercase tracking-wider mb-1">{item.category}</span>
+            {item.category && item.category.trim().toLowerCase() !== item.title.trim().toLowerCase() && (
+              <span className="text-accent text-xs font-bold uppercase tracking-wider mb-1">{item.category}</span>
+            )}
             <span className="text-text-primary text-sm font-semibold">{item.title}</span>
           </div>
         )}
@@ -260,10 +262,10 @@ export function PreviewCard({
           </button>
         )}
 
-        {/* Badges de estado: nombre del programa arriba en el lugar de 'Gratis' tanto en móvil como en desktop */}
-        {hasVideo && (
+        {/* Badges de estado: muestra categoría solo si no duplica el título del recurso */}
+        {hasVideo && item.category && item.category.trim().toLowerCase() !== item.title.trim().toLowerCase() && (
           <span className="absolute top-2.5 sm:top-3 right-2.5 sm:right-3 bg-accent/95 backdrop-blur-md text-background font-extrabold text-[11px] sm:text-xs px-2.5 sm:px-3 py-1 rounded-full shadow-lg tracking-wider uppercase select-none">
-            {item.category || item.title}
+            {item.category}
           </span>
         )}
         {item.locked && (

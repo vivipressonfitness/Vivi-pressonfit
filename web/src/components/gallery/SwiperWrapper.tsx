@@ -50,7 +50,7 @@ interface SwiperWrapperProps {
  * - Respeta prefers-reduced-motion para usuarios con sensibilidad al movimiento.
  */
 export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all' }) => {
-  const { media: filtered, loading } = useCarouselMedia(filterMode);
+  const { media: filtered, loading, error, refetch } = useCarouselMedia(filterMode);
   const [isPaused, setIsPaused] = useState(false);
 
   // Asegura suficientes tarjetas para duplicación sin saltos en el bucle continuo
@@ -78,6 +78,30 @@ export const SwiperWrapper: React.FC<SwiperWrapperProps> = ({ filterMode = 'all'
             <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
             <p className="text-text-secondary text-sm">Cargando experiencias…</p>
           </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error && filtered.length === 0) {
+    return (
+      <section id="galeria" className="w-full py-12 px-4">
+        <div className="max-w-md mx-auto flex flex-col items-center justify-center p-6 rounded-3xl bg-surface border border-border text-center space-y-3 shadow-sm">
+          <div
+            aria-hidden="true"
+            className="w-10 h-10 rounded-full bg-accent/15 border border-accent/30 text-accent flex items-center justify-center text-lg"
+          >
+            ⚠️
+          </div>
+          <p className="text-sm font-semibold text-text-primary">No se pudo cargar la galería de la comunidad</p>
+          <p className="text-xs text-text-secondary max-w-sm">{error}</p>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            className="btn-accent !py-2 !px-4 text-xs font-semibold min-h-[38px]"
+          >
+            Reintentar cargar galería
+          </button>
         </div>
       </section>
     );
