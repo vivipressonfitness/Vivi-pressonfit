@@ -5,10 +5,10 @@ import { MediaBucketManager } from './MediaBucketManager';
 type CarouselFilterMode = 'all' | 'image' | 'video';
 
 /**
- * Gestor del Carrusel y Bucket Multimedia para el Panel Admin:
- * - Control centralizado de qué tipo de contenido (Todo, Fotos, Videos) se muestra en la Landing.
- * - Información de exclusiones automáticas (LOGO_VIVI.png).
- * - Gestor completo del bucket con subida, eliminación y vista previa.
+ * Gestor del Carrusel "Viví la Experiencia" (Comunidad & Entrenamientos):
+ * - Control de qué tipo de multimedia (Todo, Fotos, Videos) se proyecta en la Landing.
+ * - Sube videos verticales (9:16) y fotos de alumnas/comunidad al bucket members-media.
+ * - Los archivos subidos aquí se integran automáticamente en el carrusel continuo.
  */
 export function MediaManager() {
   const [carouselFilter, setCarouselFilter] = useState<CarouselFilterMode>('all');
@@ -45,7 +45,6 @@ export function MediaManager() {
     if (error) {
       setSaveMsg(`Error al guardar: ${error.message}`);
     } else {
-      // Actualizar caché de localStorage para que la landing lo tome de inmediato
       try {
         const cached = localStorage.getItem('vivifit_landing_config');
         const parsed = cached ? JSON.parse(cached) : {};
@@ -62,65 +61,80 @@ export function MediaManager() {
   return (
     <div className="space-y-6">
       {/* Tarjeta de Control del Carrusel en la Landing */}
-      <div className="bg-raised border border-border rounded-2xl p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5 mb-5">
+      <div className="bg-raised border border-border rounded-3xl p-6 shadow-sm space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
           <div>
-            <h3 className="font-heading font-bold text-xl text-text-primary flex items-center gap-2">
-              <span>🎡</span> Selección de Contenido para el Carrusel
-            </h3>
-            <p className="text-sm text-text-secondary mt-1">
-              Seleccioná qué tipo de multimedia se proyecta públicamente en el carrusel de la página de inicio.
+            <div className="flex items-center gap-2.5">
+              <span className="text-2xl" aria-hidden="true">🎡</span>
+              <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-text-primary">
+                Carrusel: "Viví la Experiencia"
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-text-secondary mt-1">
+              Administra los videos y fotos de la sección <strong>Comunidad & Entrenamientos</strong> del Landing.
             </p>
           </div>
 
-          {/* Botones de selección / filtro */}
-          <div className="flex items-center gap-2 p-1 bg-background border border-border rounded-xl">
-            {(
-              [
-                { id: 'all', label: '✨ Todo (Fotos & Videos)' },
-                { id: 'image', label: '🖼️ Solo Fotos' },
-                { id: 'video', label: '🎬 Solo Videos' },
-              ] as const
-            ).map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                disabled={saving}
-                onClick={() => handleFilterChange(item.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  carouselFilter === item.id
-                    ? 'bg-accent text-background shadow-md'
-                    : 'text-text-secondary hover:text-white hover:bg-surface'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+          {/* Selector de modo del carrusel */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <span className="text-xs font-semibold text-text-secondary">Mostrar en Landing:</span>
+            <div className="flex items-center gap-1.5 p-1 bg-background border border-border rounded-2xl">
+              {(
+                [
+                  { id: 'all', label: '✨ Todo' },
+                  { id: 'video', label: '🎬 Solo Videos' },
+                  { id: 'image', label: '🖼️ Solo Fotos' },
+                ] as const
+              ).map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleFilterChange(item.id)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    carouselFilter === item.id
+                      ? 'bg-accent text-background shadow-md'
+                      : 'text-text-secondary hover:text-white hover:bg-surface'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Mensaje de confirmación en vivo */}
         {saveMsg && (
-          <div className="mb-4 p-3 rounded-xl bg-accent/10 border border-accent/30 text-accent text-sm font-medium animate-fadeIn">
+          <div className="p-3.5 rounded-2xl bg-accent/10 border border-accent/30 text-accent text-xs font-semibold">
             {saveMsg}
           </div>
         )}
 
-        {/* Aviso de exclusión de LOGO_VIVI.png */}
-        <div className="flex items-start gap-3 p-3.5 rounded-xl bg-surface border border-border/80 text-xs text-text-secondary">
-          <span className="text-base leading-none">🛡️</span>
-          <div>
-            <strong className="text-text-primary">Filtro de seguridad del carrusel:</strong> El archivo{' '}
-            <code className="bg-background px-1.5 py-0.5 rounded text-accent font-mono">LOGO_VIVI.png</code> y
-            los logos del sistema están <strong>excluidos permanentemente</strong> del carrusel público para que solo se
-            muestren tus fotos y videos de entrenamiento.
+        {/* Guía rápida para el administrador */}
+        <div className="grid md:grid-cols-2 gap-3 text-xs text-text-secondary">
+          <div className="p-3.5 rounded-2xl bg-surface border border-border/80 space-y-1">
+            <p className="font-bold text-text-primary flex items-center gap-1.5">
+              <span>📱</span> Formato Recomendado
+            </p>
+            <p className="leading-relaxed">
+              Sube videos o fotos verticales en formato <strong>9:16 (tipo Reel o historia)</strong>. Aparecerán automáticamente en el carrusel infinito del landing.
+            </p>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-surface border border-border/80 space-y-1">
+            <p className="font-bold text-text-primary flex items-center gap-1.5">
+              <span>🛡️</span> Filtro Automático
+            </p>
+            <p className="leading-relaxed">
+              El archivo <code className="text-accent font-mono">LOGO_VIVI.png</code> y los logos están protegidos y <strong>nunca aparecerán</strong> en el carrusel de la comunidad.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Gestor del Bucket Multimedia */}
+      {/* Gestor y Subidor Directo de Archivos para el Carrusel */}
       <MediaBucketManager
-        title="Gestor de Archivos Multimedia (Bucket: members-media)"
+        title="Subir y Administrar Archivos del Carrusel (Bucket: members-media)"
         compact={false}
       />
     </div>

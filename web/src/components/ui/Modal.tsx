@@ -7,7 +7,7 @@ interface Props {
   onClose: () => void;
   title?: string;
   children: ReactNode;
-  /** Ancho máximo del panel. Usa "max-w-4xl" para el reproductor de video. */
+  /** Ancho máximo del panel. Usa "max-w-4xl" para el formulario de contenidos o reproductor. */
   size?: 'md' | 'lg';
 }
 
@@ -25,19 +25,24 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
     onCloseRef.current = onClose;
   }, [onClose]);
 
-  // Bloquear el scroll de fondo (incluido el scroll suave de Lenis).
+  // Bloquear de forma estricta el scroll de fondo (incluido Lenis y html/body)
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     lenis?.stop();
+
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
       lenis?.start();
     };
   }, [open, lenis]);
 
-  // Cerrar con Escape y devolver el foco al elemento original.
+  // Cerrar con Escape y atrapar el foco dentro del diálogo (WAI-ARIA)
   useEffect(() => {
     if (!open) return;
     previouslyFocused.current = document.activeElement as HTMLElement | null;
@@ -48,7 +53,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
         onCloseRef.current();
         return;
       }
-      // Trampa simple de foco con Tab dentro del panel.
+      // Trampa de foco con Tab dentro del panel
       if (e.key === 'Tab' && panelRef.current) {
         const focusables = Array.from(
           panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
@@ -69,7 +74,6 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
     };
 
     window.addEventListener('keydown', onKey);
-    // Mover el foco al panel al abrir (tras el render).
     const raf = requestAnimationFrame(() => {
       const target =
         panelRef.current?.querySelector<HTMLElement>(FOCUSABLE) ?? panelRef.current;
@@ -83,9 +87,20 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
   }, [open]);
 
   if (!open) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70" onClick={onClose} aria-hidden />
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-hidden overscroll-contain"
+      data-lenis-prevent
+    >
+      {/* Fondo oscuro backdrop */}
+      <div
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Contenedor del Diálogo con scroll interno independiente */}
       <div
         ref={panelRef}
         role="dialog"
@@ -93,13 +108,15 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
         aria-labelledby={title ? titleId : undefined}
         aria-label={title ? undefined : 'Diálogo'}
         tabIndex={-1}
-        className={`relative bg-surface border border-border rounded-2xl p-6 w-full ${
+        data-lenis-prevent
+        className={`relative bg-surface border border-border rounded-3xl p-5 sm:p-6 w-full ${
           size === 'lg' ? 'max-w-4xl' : 'max-w-md'
-        } shadow-2xl outline-none focus-visible:ring-2 focus-visible:ring-accent`}
+        } max-h-[92vh] flex flex-col shadow-2xl outline-none focus-visible:ring-2 focus-visible:ring-accent overscroll-contain z-10`}
       >
-        <div className="flex items-start justify-between gap-4">
+        {/* Cabecera del Modal fija al tope */}
+        <div className="flex items-start justify-between gap-4 pb-3 border-b border-border/60 shrink-0">
           {title ? (
-            <h2 id={titleId} className="text-lg font-bold mb-4 pr-8">
+            <h2 id={titleId} className="text-base sm:text-lg font-bold text-text-primary pr-4 line-clamp-1">
               {title}
             </h2>
           ) : (
@@ -109,12 +126,19 @@ export function Modal({ open, onClose, title, children, size = 'md' }: Props) {
             type="button"
             onClick={onClose}
             aria-label="Cerrar ventana"
-            className="shrink-0 -mr-1 -mt-1 grid place-items-center w-10 h-10 rounded-full text-text-secondary hover:text-text-primary hover:bg-white/5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="shrink-0 -mr-1.5 -mt-1.5 grid place-items-center w-9 h-9 rounded-full text-text-secondary hover:text-text-primary hover:bg-white/10 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             ✕
           </button>
         </div>
-        {children}
+
+        {/* Cuerpo del Modal con scroll vertical propio y sin propagación al fondo */}
+        <div
+          className="overflow-y-auto overscroll-contain flex-1 pr-1.5 pt-3 scrollbar-thin scrollbar-thumb-border"
+          data-lenis-prevent
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

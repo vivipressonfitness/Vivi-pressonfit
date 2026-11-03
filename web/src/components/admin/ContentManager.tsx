@@ -13,6 +13,7 @@ import {
 } from '../ui/Icons';
 
 type AssignTarget = 'private_video' | 'preview_video' | 'thumbnail' | 'pdf';
+type ContentSectionTab = 'members' | 'landing' | 'all';
 
 const TARGET_LABELS: Record<AssignTarget, string> = {
   private_video: 'Video privado de la clase (exclusivo miembros)',
@@ -39,7 +40,7 @@ const EMPTY: Omit<MembershipContent, 'id' | 'created_at' | 'updated_at'> = {
   show_in_landing: false,
   preview_video_url: null,
   thumbnail_url: null,
-  preview_duration: '30s · adelanto',
+  preview_duration: '60s · adelanto',
   pdf_url: null,
   private_video_url: null,
 };
@@ -48,6 +49,9 @@ export function ContentManager() {
   const [items, setItems] = useState<MembershipContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Pestaña principal de separación: Miembros vs Gratis Landing vs Todo
+  const [sectionTab, setSectionTab] = useState<ContentSectionTab>('members');
 
   // Estados del Formulario Bajo Demanda (Modal)
   const [form, setForm] = useState({ ...EMPTY });
@@ -67,11 +71,10 @@ export function ContentManager() {
   const [deleteModalTarget, setDeleteModalTarget] = useState<MembershipContent | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Filtros de búsqueda en el catálogo
+  // Filtros secundarios de búsqueda en el catálogo
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
-  const [landingFilter, setLandingFilter] = useState<'all' | 'landing' | 'private_only'>('all');
 
   const showToast = (text: string, error = false) => {
     setToast({ text, error });
@@ -112,6 +115,12 @@ export function ContentManager() {
 
   const handleOpenNew = () => {
     resetForm();
+    // Si estamos en la pestaña de Adelantos Gratuitos, predeterminar show_in_landing = true
+    if (sectionTab === 'landing') {
+      setForm((prev) => ({ ...prev, show_in_landing: true, is_published: true }));
+    } else {
+      setForm((prev) => ({ ...prev, show_in_landing: false }));
+    }
     setIsFormModalOpen(true);
   };
 
@@ -131,7 +140,7 @@ export function ContentManager() {
       show_in_landing: Boolean(c.show_in_landing),
       preview_video_url: c.preview_video_url || null,
       thumbnail_url: c.thumbnail_url || null,
-      preview_duration: c.preview_duration || '30s · adelanto',
+      preview_duration: c.preview_duration || '60s · adelanto',
       pdf_url: c.pdf_url || null,
       private_video_url: c.private_video_url || c.content_url || null,
     });
@@ -281,7 +290,7 @@ export function ContentManager() {
       setItems((prev) =>
         prev.map((item) => (item.id === c.id ? { ...item, is_published: nextVal } : item)),
       );
-      showToast(nextVal ? '✅ Clase publicada para miembros' : '🟡 Clase marcada como borrador');
+      showToast(nextVal ? '✅ Publicado para miembros' : '🟡 Marcado como borrador');
     }
   };
 
@@ -303,13 +312,22 @@ export function ContentManager() {
       setItems((prev) =>
         prev.map((item) => (item.id === c.id ? { ...item, show_in_landing: nextVal } : item)),
       );
-      showToast(nextVal ? '🌐 Mostrándose en el Landing' : '🔒 Exclusivo para miembros');
+      showToast(nextVal ? '🌐 Añadido a Adelantos del Landing' : '🔒 Exclusivo para miembros');
     }
   };
 
-  // Filtrado de contenidos en el catálogo
+  // Conteo de elementos por sección
+  const membersOnlyCount = useMemo(() => items.filter((c) => !c.show_in_landing).length, [items]);
+  const landingTeasersCount = useMemo(() => items.filter((c) => c.show_in_landing).length, [items]);
+
+  // Filtrado de contenidos según pestaña principal (Miembros / Landing / Todos) y filtros secundarios
   const filteredItems = useMemo(() => {
     return items.filter((c) => {
+      // 1. Filtro primario de sección (Separación explícita solicitada)
+      if (sectionTab === 'members' && c.show_in_landing) return false;
+      if (sectionTab === 'landing' && !c.show_in_landing) return false;
+
+      // 2. Filtros secundarios de búsqueda y categoría
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchTitle = c.title.toLowerCase().includes(q);
@@ -319,33 +337,41 @@ export function ContentManager() {
       if (categoryFilter !== 'all' && c.category !== categoryFilter) return false;
       if (statusFilter === 'published' && !c.is_published) return false;
       if (statusFilter === 'draft' && c.is_published) return false;
-      if (landingFilter === 'landing' && !c.show_in_landing) return false;
-      if (landingFilter === 'private_only' && c.show_in_landing) return false;
 
       return true;
     });
-  }, [items, searchQuery, categoryFilter, statusFilter, landingFilter]);
+  }, [items, sectionTab, searchQuery, categoryFilter, statusFilter]);
 
   const inputCls =
     'w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:border-accent outline-none text-text-primary transition';
 
   return (
     <div className="space-y-6">
-      {/* 1. CABECERA PRINCIPAL DEL CATÁLOGO (Inversión de jerarquía visual) */}
-      <div className="bg-raised border border-border rounded-3xl p-5 sm:p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* 1. SEPARADOR PRINCIPAL: CLASES DE MIEMBROS VS ADELANTOS GRATUITOS */}
+      <div className="bg-raised border border-border rounded-3xl p-5 sm:p-6 shadow-sm space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="w-9 h-9 rounded-xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center font-bold text-lg">
-                📚
+              <span className="w-10 h-10 rounded-2xl bg-accent/15 border border-accent/30 text-accent flex items-center justify-center font-bold text-lg">
+                {sectionTab === 'members' ? '🔒' : sectionTab === 'landing' ? '🌐' : '📑'}
               </span>
-              <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-text-primary">
-                Catálogo de Clases y Contenidos
-              </h2>
+              <div>
+                <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-text-primary">
+                  {sectionTab === 'members'
+                    ? 'Clases Exclusivas para Miembros'
+                    : sectionTab === 'landing'
+                    ? 'Adelantos Gratuitos (Landing Page)'
+                    : 'Catálogo Completo de Contenidos'}
+                </h2>
+                <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
+                  {sectionTab === 'members'
+                    ? 'Videos completos de 30-45 min, rutinas y recetarios privados para alumnas activas.'
+                    : sectionTab === 'landing'
+                    ? 'Fragmentos de 30-60s y muestras gratuitas promocionales en la portada pública.'
+                    : 'Vista unificada de todos los contenidos registrados en la plataforma.'}
+                </p>
+              </div>
             </div>
-            <p className="text-xs sm:text-sm text-text-secondary mt-1">
-              Administra publicaciones, visibilidad en el Landing y recursos para miembros ({filteredItems.length} de {items.length} disponibles).
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
@@ -358,7 +384,7 @@ export function ContentManager() {
               className="px-3.5 py-2 rounded-pill border border-border bg-background text-text-secondary hover:text-white hover:border-accent text-xs font-semibold transition inline-flex items-center gap-1.5 min-h-[40px]"
             >
               <FolderIcon className="w-4 h-4 text-accent" />
-              <span>Explorar Bucket (Archivos)</span>
+              <span>Explorar Bucket</span>
             </button>
 
             <button
@@ -366,16 +392,74 @@ export function ContentManager() {
               onClick={handleOpenNew}
               className="btn-accent !px-4 !py-2 text-xs sm:text-sm font-bold inline-flex items-center gap-2 min-h-[40px] shadow-lg shadow-accent/20"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                className="w-4 h-4"
+                aria-hidden="true"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              <span>+ Nuevo Contenido</span>
+              <span>
+                {sectionTab === 'members'
+                  ? '+ Nueva Clase Miembros'
+                  : sectionTab === 'landing'
+                  ? '+ Nuevo Adelanto Gratis'
+                  : '+ Nuevo Contenido'}
+              </span>
             </button>
           </div>
         </div>
 
-        {/* 2. BARRA DE FILTROS Y BÚSQUEDA RÁPIDA */}
-        <div className="mt-5 pt-4 border-t border-border/60 flex flex-wrap items-center gap-2 text-xs">
+        {/* Pestañas de separación explícita de vistas */}
+        <div className="flex flex-wrap gap-2 border-b border-border/60 pb-3">
+          <button
+            type="button"
+            onClick={() => setSectionTab('members')}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition inline-flex items-center gap-2 ${
+              sectionTab === 'members'
+                ? 'bg-accent text-background shadow-md'
+                : 'bg-background border border-border text-text-secondary hover:text-white'
+            }`}
+          >
+            <span>🔒 Clases de Miembros</span>
+            <span className="text-[11px] px-1.5 py-0.2 rounded-md bg-black/30">
+              {membersOnlyCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSectionTab('landing')}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition inline-flex items-center gap-2 ${
+              sectionTab === 'landing'
+                ? 'bg-purple-500 text-white shadow-md'
+                : 'bg-background border border-border text-text-secondary hover:text-white'
+            }`}
+          >
+            <span>🌐 Adelantos Gratuitos</span>
+            <span className="text-[11px] px-1.5 py-0.2 rounded-md bg-black/30">
+              {landingTeasersCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSectionTab('all')}
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition inline-flex items-center gap-2 ml-auto ${
+              sectionTab === 'all'
+                ? 'bg-surface border-accent text-accent'
+                : 'bg-background border border-border text-text-secondary hover:text-white'
+            }`}
+          >
+            <span>📑 Ver Todos ({items.length})</span>
+          </button>
+        </div>
+
+        {/* Barra de Filtros y Búsqueda */}
+        <div className="flex flex-wrap items-center gap-2 text-xs pt-1">
           <div className="flex items-center gap-1.5 text-text-secondary mr-1">
             <FilterIcon className="w-3.5 h-3.5 text-accent" />
             <span className="font-bold uppercase tracking-wider text-[10px]">Filtros:</span>
@@ -415,24 +499,13 @@ export function ContentManager() {
             <option value="draft">Solo Borradores</option>
           </select>
 
-          <select
-            value={landingFilter}
-            onChange={(e) => setLandingFilter(e.target.value as 'all' | 'landing' | 'private_only')}
-            className="bg-background border border-border rounded-xl px-3 py-1.5 text-text-primary focus:border-accent outline-none"
-          >
-            <option value="all">Exposición: Todos</option>
-            <option value="landing">En Landing</option>
-            <option value="private_only">Solo Miembros</option>
-          </select>
-
-          {(searchQuery || categoryFilter !== 'all' || statusFilter !== 'all' || landingFilter !== 'all') && (
+          {(searchQuery || categoryFilter !== 'all' || statusFilter !== 'all') && (
             <button
               type="button"
               onClick={() => {
                 setSearchQuery('');
                 setCategoryFilter('all');
                 setStatusFilter('all');
-                setLandingFilter('all');
               }}
               className="text-accent hover:underline ml-auto font-semibold"
             >
@@ -442,33 +515,39 @@ export function ContentManager() {
         </div>
       </div>
 
-      {/* 3. LISTADO DE CONTENIDOS DEL MES */}
+      {/* 2. LISTADO DE CONTENIDOS FILTRADOS */}
       <div className="space-y-3">
         {filteredItems.map((c) => (
           <div
             key={c.id}
-            className="bg-raised border border-border hover:border-accent/40 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition shadow-sm"
+            className={`bg-raised border rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition shadow-sm ${
+              c.show_in_landing ? 'border-purple-500/30 hover:border-purple-500/60' : 'border-border hover:border-accent/40'
+            }`}
           >
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`text-xs px-2.5 py-0.5 rounded-pill font-bold ${
+                    c.show_in_landing
+                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                      : 'bg-accent/15 text-accent border border-accent/30'
+                  }`}
+                >
+                  {c.show_in_landing ? '🌐 Adelanto Landing' : '🔒 Exclusivo Miembros'}
+                </span>
                 <h4 className="font-bold text-text-primary text-sm sm:text-base break-words">
                   {c.title}
                 </h4>
-                <span className="text-[10px] sm:text-[11px] bg-background border border-border px-2.5 py-0.5 rounded-pill text-text-secondary font-mono shrink-0">
+                <span className="text-[10px] sm:text-[11px] bg-background border border-border px-2 py-0.5 rounded-pill text-text-secondary font-mono shrink-0">
                   {c.category}
                 </span>
-                {c.target_mode && (
-                  <span className="text-[10px] sm:text-[11px] bg-background border border-border px-2.5 py-0.5 rounded-pill text-text-secondary shrink-0">
-                    {c.target_mode}
-                  </span>
-                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-text-secondary">
                 <span>📅 {c.month_year ?? c.cycle_date}</span>
                 <span>•</span>
                 {c.private_video_url || c.content_url ? (
-                  <span className="text-emerald-400 font-medium">🎬 Video Privado Listo</span>
+                  <span className="text-emerald-400 font-medium">🎬 Video Privado OK</span>
                 ) : c.bunny_video_id ? (
                   <span className="text-accent font-medium">🐰 Bunny Stream</span>
                 ) : (
@@ -477,7 +556,7 @@ export function ContentManager() {
                 {c.preview_video_url && (
                   <>
                     <span>•</span>
-                    <span className="text-purple-400 font-medium">👁️ Teaser Landing</span>
+                    <span className="text-purple-400 font-medium">👁️ Teaser: {c.preview_duration || '60s'}</span>
                   </>
                 )}
                 {c.pdf_url && (
@@ -545,7 +624,7 @@ export function ContentManager() {
         {loading && (
           <div role="status" className="bg-raised/50 border border-border rounded-2xl p-12 text-center text-text-secondary space-y-3">
             <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-sm font-medium">Cargando catálogo de clases y programas…</p>
+            <p className="text-sm font-medium">Cargando catálogo de contenidos…</p>
           </div>
         )}
 
@@ -565,35 +644,71 @@ export function ContentManager() {
 
         {!loading && !loadError && filteredItems.length === 0 && (
           <div className="bg-raised/50 border border-dashed border-border rounded-2xl p-10 text-center text-text-secondary space-y-3">
-            <div className="text-3xl" aria-hidden="true">📂</div>
-            <p className="font-semibold text-text-primary">No se encontraron contenidos</p>
+            <div className="text-3xl" aria-hidden="true">
+              {sectionTab === 'members' ? '🔒' : sectionTab === 'landing' ? '🌐' : '📂'}
+            </div>
+            <p className="font-semibold text-text-primary">
+              No hay {sectionTab === 'members' ? 'clases de miembros' : sectionTab === 'landing' ? 'adelantos gratuitos' : 'contenidos'} registrados
+            </p>
             <p className="text-xs max-w-sm mx-auto">
-              {searchQuery || categoryFilter !== 'all' || statusFilter !== 'all' || landingFilter !== 'all'
+              {searchQuery || categoryFilter !== 'all' || statusFilter !== 'all'
                 ? 'Prueba modificando los filtros aplicados arriba.'
-                : 'Aún no has registrado clases o programas. Haz clic en "+ Nuevo Contenido" para crear el primero.'}
+                : 'Haz clic abajo para registrar el primero.'}
             </p>
             <button
               type="button"
               onClick={handleOpenNew}
-              className="btn-accent !py-2 !px-4 text-xs font-bold mt-2"
+              className="btn-accent !py-2 !px-5 text-xs font-bold mt-2"
             >
-              + Crear primer contenido
+              {sectionTab === 'members'
+                ? '+ Crear Clase de Miembros'
+                : sectionTab === 'landing'
+                ? '+ Crear Adelanto Gratuito'
+                : '+ Crear Contenido'}
             </button>
           </div>
         )}
       </div>
 
-      {/* 4. MODAL BAJO DEMANDA: CREAR O EDITAR CONTENIDO (Foco inmediato y sin scroll disruptivo) */}
+      {/* 3. MODAL BAJO DEMANDA: CREAR O EDITAR CONTENIDO (Con scroll interno independiente) */}
       <Modal
         open={isFormModalOpen}
         onClose={() => {
           setIsFormModalOpen(false);
           resetForm();
         }}
-        title={editingId ? `Editar: "${form.title || 'Contenido'}"` : 'Nuevo Contenido del Programa'}
+        title={editingId ? `Editar: "${form.title || 'Contenido'}"` : 'Nuevo Contenido'}
         size="lg"
       >
-        <form onSubmit={submit} className="space-y-5 pt-2">
+        <form onSubmit={submit} className="space-y-5">
+          {/* Selector de Destino: Miembros vs Gratis Landing */}
+          <div className="grid grid-cols-2 gap-2.5 p-1.5 bg-background border border-border rounded-2xl">
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, show_in_landing: false }))}
+              className={`py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 ${
+                !form.show_in_landing
+                  ? 'bg-accent text-background shadow-md'
+                  : 'text-text-secondary hover:text-white'
+              }`}
+            >
+              <span>🔒</span>
+              <span>Clase para Miembros (Privado)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, show_in_landing: true, is_published: true }))}
+              className={`py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 ${
+                form.show_in_landing
+                  ? 'bg-purple-500 text-white shadow-md'
+                  : 'text-text-secondary hover:text-white'
+              }`}
+            >
+              <span>🌐</span>
+              <span>Adelanto Gratuito (Landing)</span>
+            </button>
+          </div>
+
           {/* Datos Principales Generales */}
           <div className="grid md:grid-cols-3 gap-3.5">
             <div className="md:col-span-2 space-y-1">
@@ -664,113 +779,112 @@ export function ContentManager() {
             </div>
           </div>
 
-          {/* SECCIÓN PRIVADA: MIEMBROS ACTIVOS */}
-          <div className="bg-background/80 border border-border rounded-2xl p-4 space-y-3">
-            <div className="flex items-center gap-2 border-b border-border/70 pb-2.5">
-              <span className="text-base">🔒</span>
-              <h4 className="font-heading font-bold text-sm text-text-primary">
-                Contenido Exclusivo para Miembros (Privado)
-              </h4>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-3.5">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-text-secondary">
-                    Video Completo (Bucket members-media o URL)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => openBucketFor('private_video')}
-                    className="text-[11px] text-accent hover:underline font-bold inline-flex items-center gap-1"
-                  >
-                    <span>📁 Seleccionar del Bucket</span>
-                  </button>
+          {/* VISTA 1: CAMPOS PARA CLASE DE MIEMBROS (PRIVADA) */}
+          {!form.show_in_landing ? (
+            <div className="bg-background/80 border border-border rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-border/70 pb-2.5">
+                <span className="text-base">🔒</span>
+                <div>
+                  <h4 className="font-heading font-bold text-sm text-text-primary">
+                    Configuración de Clase Privada para Miembros
+                  </h4>
+                  <p className="text-[11px] text-text-secondary">
+                    Solo alumnas con membresía activa o prueba vigente podrán ver este video.
+                  </p>
                 </div>
-                <input
-                  placeholder="URL en members-media o HLS"
-                  className={inputCls}
-                  value={form.private_video_url ?? ''}
-                  onChange={(e) =>
-                    setForm({ ...form, private_video_url: e.target.value, content_url: e.target.value })
-                  }
-                />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-text-secondary">
-                  GUID Bunny Stream (Opcional)
-                </label>
-                <input
-                  placeholder="ID Bunny Stream (ej: 4a2d-b8...)"
-                  className={inputCls}
-                  value={form.bunny_video_id ?? ''}
-                  onChange={(e) => setForm({ ...form, bunny_video_id: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-text-secondary">
-                    Documento PDF / Recetario
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => openBucketFor('pdf')}
-                    className="text-[11px] text-accent hover:underline font-bold inline-flex items-center gap-1"
-                  >
-                    <span>📁 Seleccionar del Bucket</span>
-                  </button>
-                </div>
-                <input
-                  placeholder="URL del PDF en members-media"
-                  className={inputCls}
-                  value={form.pdf_url ?? ''}
-                  onChange={(e) => setForm({ ...form, pdf_url: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-text-secondary">
-                  Descripción e Instrucciones
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Instrucciones, series, repeticiones..."
-                  className={inputCls}
-                  value={form.description ?? ''}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* SECCIÓN PÚBLICA: LANDING PAGE */}
-          <div className="bg-background/80 border border-purple-500/30 rounded-2xl p-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-2.5">
-              <div className="flex items-center gap-2">
-                <span className="text-base">🌐</span>
-                <h4 className="font-heading font-bold text-sm text-purple-300">
-                  Adelanto Promocional en Landing (Público)
-                </h4>
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer bg-purple-500/15 border border-purple-500/40 px-3 py-1 rounded-pill text-xs font-bold text-purple-200">
-                <input
-                  type="checkbox"
-                  checked={form.show_in_landing}
-                  onChange={(e) => setForm({ ...form, show_in_landing: e.target.checked })}
-                  className="w-4 h-4 accent-purple-500 rounded"
-                />
-                Mostrar en Landing
-              </label>
-            </div>
-
-            {form.show_in_landing && (
-              <div className="grid md:grid-cols-2 gap-3.5 pt-1">
+              <div className="grid md:grid-cols-2 gap-3.5">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-text-secondary">
-                      Video Demo / Teaser (Corto)
+                      Video Completo (Bucket members-media o URL)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => openBucketFor('private_video')}
+                      className="text-[11px] text-accent hover:underline font-bold inline-flex items-center gap-1"
+                    >
+                      <span>📁 Seleccionar del Bucket</span>
+                    </button>
+                  </div>
+                  <input
+                    placeholder="URL completa en members-media o HLS"
+                    className={inputCls}
+                    value={form.private_video_url ?? ''}
+                    onChange={(e) =>
+                      setForm({ ...form, private_video_url: e.target.value, content_url: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-text-secondary">
+                    GUID Bunny Stream (Opcional)
+                  </label>
+                  <input
+                    placeholder="ID Bunny Stream (ej: 4a2d-b8...)"
+                    className={inputCls}
+                    value={form.bunny_video_id ?? ''}
+                    onChange={(e) => setForm({ ...form, bunny_video_id: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-text-secondary">
+                      Documento PDF / Recetario
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => openBucketFor('pdf')}
+                      className="text-[11px] text-accent hover:underline font-bold inline-flex items-center gap-1"
+                    >
+                      <span>📁 Seleccionar del Bucket</span>
+                    </button>
+                  </div>
+                  <input
+                    placeholder="URL del PDF en members-media"
+                    className={inputCls}
+                    value={form.pdf_url ?? ''}
+                    onChange={(e) => setForm({ ...form, pdf_url: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-text-secondary">
+                    Instrucciones / Descripción para la Alumna
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Repeticiones, descansos, consejos de técnica..."
+                    className={inputCls}
+                    value={form.description ?? ''}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* VISTA 2: CAMPOS PARA ADELANTO GRATUITO (LANDING) */
+            <div className="bg-background/80 border-2 border-purple-500/40 rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center gap-2 border-b border-border/70 pb-2.5">
+                <span className="text-base">🌐</span>
+                <div>
+                  <h4 className="font-heading font-bold text-sm text-purple-300">
+                    Configuración de Muestra Gratuita (Landing Page)
+                  </h4>
+                  <p className="text-[11px] text-text-secondary">
+                    Visible sin login para convencer a nuevas visitantes a probar el programa.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-3.5">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-text-secondary">
+                      Video Teaser / Demo Corto (30-60s)
                     </label>
                     <button
                       type="button"
@@ -791,7 +905,7 @@ export function ContentManager() {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-text-secondary">
-                      Miniatura / Portada
+                      Miniatura de Portada
                     </label>
                     <button
                       type="button"
@@ -811,7 +925,7 @@ export function ContentManager() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-text-secondary">
-                    Duración / Etiqueta del Teaser
+                    Duración / Badge del Teaser
                   </label>
                   <input
                     placeholder="Ej: 60s · adelanto"
@@ -820,11 +934,24 @@ export function ContentManager() {
                     onChange={(e) => setForm({ ...form, preview_duration: e.target.value })}
                   />
                 </div>
-              </div>
-            )}
-          </div>
 
-          {/* ACCIONES DEL FORMULARIO DENTRO DEL MODAL */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-text-secondary">
+                    Descripción Breve para el Landing
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Enfoque de la clase, beneficios principales..."
+                    className={inputCls}
+                    value={form.description ?? ''}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ACCIONES DEL FORMULARIO */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
             <label className="flex items-center gap-2 text-xs font-semibold text-text-primary cursor-pointer bg-background border border-border px-3.5 py-2 rounded-xl hover:border-accent transition">
               <input
@@ -859,7 +986,7 @@ export function ContentManager() {
         </form>
       </Modal>
 
-      {/* 5. MODAL SELECTOR DEL BUCKET MULTIMEDIA (Se abre bajo demanda desde cada campo) */}
+      {/* 4. MODAL SELECTOR DEL BUCKET MULTIMEDIA */}
       <Modal
         open={isBucketModalOpen}
         onClose={() => setIsBucketModalOpen(false)}
@@ -893,7 +1020,7 @@ export function ContentManager() {
         </div>
       </Modal>
 
-      {/* 6. MODAL ACCESIBLE DE CONFIRMACIÓN DE ELIMINACIÓN */}
+      {/* 5. MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
       <Modal
         open={Boolean(deleteModalTarget)}
         onClose={() => setDeleteModalTarget(null)}
@@ -917,7 +1044,10 @@ export function ContentManager() {
             <div className="bg-background border border-border rounded-xl p-3 space-y-1 text-xs">
               <p className="font-bold text-text-primary">{deleteModalTarget.title}</p>
               <p className="text-text-secondary">
-                Categoría: <span className="text-text-primary font-semibold">{deleteModalTarget.category}</span>
+                Tipo:{' '}
+                <span className="text-text-primary font-semibold">
+                  {deleteModalTarget.show_in_landing ? 'Adelanto Gratis' : 'Clase de Miembros'}
+                </span>
                 {deleteModalTarget.month_year && (
                   <> · Ciclo: <span className="text-text-primary font-semibold">{deleteModalTarget.month_year}</span></>
                 )}
@@ -950,7 +1080,7 @@ export function ContentManager() {
         )}
       </Modal>
 
-      {/* 7. TOAST FLOTANTE DE FEEDBACK (No invasivo, WAI-ARIA) */}
+      {/* 6. TOAST FLOTANTE */}
       {toast && (
         <div
           role="status"
