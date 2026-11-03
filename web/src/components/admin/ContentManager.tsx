@@ -188,10 +188,10 @@ export function ContentManager() {
 
     // CM-01: Validación de seguridad para evitar fuga del video completo al landing
     if (form.show_in_landing) {
-      if (!form.preview_video_url && !form.thumbnail_url) {
+      if (!form.preview_video_url && !form.thumbnail_url && !form.bunny_video_id) {
         setBusy(false);
         showToast(
-          '⚠️ Para mostrar este contenido en el Landing debes asignar un video adelanto o miniatura.',
+          '⚠️ Para mostrar este contenido en el Landing debes asignar un video adelanto, un ID de Bunny Stream o una miniatura.',
           true,
         );
         return;
@@ -210,14 +210,20 @@ export function ContentManager() {
       }
     }
 
+    const cleanBunnyId = form.bunny_video_id?.trim() || null;
+    const autoBunnyThumbnail =
+      cleanBunnyId && !form.thumbnail_url?.trim()
+        ? `https://vz-796132.b-cdn.net/${cleanBunnyId}/thumbnail.jpg`
+        : null;
+
     const payload = {
       ...form,
       preview_video_url: form.preview_video_url?.trim() || null,
-      thumbnail_url: form.thumbnail_url?.trim() || null,
+      thumbnail_url: form.thumbnail_url?.trim() || autoBunnyThumbnail || null,
       pdf_url: form.pdf_url?.trim() || null,
       private_video_url: form.private_video_url?.trim() || null,
       content_url: form.private_video_url?.trim() || form.content_url?.trim() || null,
-      bunny_video_id: form.bunny_video_id?.trim() || null,
+      bunny_video_id: cleanBunnyId,
       updated_at: new Date().toISOString(),
     };
 
@@ -548,15 +554,21 @@ export function ContentManager() {
                 <span>•</span>
                 {c.private_video_url || c.content_url ? (
                   <span className="text-emerald-400 font-medium">🎬 Video Privado OK</span>
-                ) : c.bunny_video_id ? (
+                ) : !c.show_in_landing && c.bunny_video_id ? (
                   <span className="text-accent font-medium">🐰 Bunny Stream</span>
-                ) : (
-                  <span className="text-zinc-500">Sin video</span>
-                )}
+                ) : !c.show_in_landing ? (
+                  <span className="text-zinc-500">Sin video privado</span>
+                ) : null}
                 {c.preview_video_url && (
                   <>
                     <span>•</span>
                     <span className="text-purple-400 font-medium">👁️ Teaser: {c.preview_duration || '60s'}</span>
+                  </>
+                )}
+                {c.bunny_video_id && (
+                  <>
+                    <span>•</span>
+                    <span className="text-purple-300 font-medium">🐰 Bunny ({c.bunny_video_id.slice(0, 8)}…)</span>
                   </>
                 )}
                 {c.pdf_url && (
@@ -884,7 +896,7 @@ export function ContentManager() {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-text-secondary">
-                      Video Teaser / Demo Corto (30-60s)
+                      Video Teaser / Demo Corto (Bucket o URL)
                     </label>
                     <button
                       type="button"
@@ -903,9 +915,28 @@ export function ContentManager() {
                 </div>
 
                 <div className="space-y-1">
+                  <label className="text-xs font-semibold text-text-secondary">
+                    GUID Bunny Stream para Adelanto (Opcional)
+                  </label>
+                  <input
+                    placeholder="GUID de Bunny (ej: 4a2d-b8... o enlace de embed)"
+                    className={inputCls}
+                    value={form.bunny_video_id ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value.trim();
+                      const match = val.match(/(?:embed|play)\/\d+\/([a-zA-Z0-9-]+)/);
+                      setForm({ ...form, bunny_video_id: match ? match[1] : val });
+                    }}
+                  />
+                  <p className="text-[10px] text-purple-300">
+                    🐰 Usa tu galería pública de Bunny (Librería 796132) sin consumir espacio de Supabase.
+                  </p>
+                </div>
+
+                <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-text-secondary">
-                      Miniatura de Portada
+                      Miniatura de Portada (Opcional si usas Bunny)
                     </label>
                     <button
                       type="button"
@@ -916,7 +947,7 @@ export function ContentManager() {
                     </button>
                   </div>
                   <input
-                    placeholder="/landing/thumb-gap.jpg o URL"
+                    placeholder="/landing/thumb-gap.jpg o URL (auto-generada con Bunny)"
                     className={inputCls}
                     value={form.thumbnail_url ?? ''}
                     onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })}
@@ -935,7 +966,7 @@ export function ContentManager() {
                   />
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1 md:col-span-2">
                   <label className="text-xs font-semibold text-text-secondary">
                     Descripción Breve para el Landing
                   </label>

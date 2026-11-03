@@ -18,6 +18,14 @@ const MediaCard: React.FC<MediaCardProps> = ({ item }) => {
           width={280}
           height={498}
         />
+      ) : item.bunnyVideoId ? (
+        <iframe
+          src={`https://iframe.mediadelivery.net/embed/796132/${item.bunnyVideoId}?autoplay=true&loop=true&muted=true&controls=false&preload=true`}
+          className="w-full h-full object-cover pointer-events-none border-0 scale-125"
+          loading="lazy"
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+          title={item.alt || 'Video de la comunidad'}
+        />
       ) : (
         <video
           src={item.src}

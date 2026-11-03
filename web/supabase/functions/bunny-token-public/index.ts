@@ -31,22 +31,22 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY')!,
     );
 
-    // Revisar landing_config (preview_clases y clases_items)
+    // Revisar landing_config (preview_clases, clases_items, carousel_bunny_videos)
     const { data: cfgRows } = await supabase
       .from('landing_config')
       .select('key, value')
-      .in('key', ['preview_clases', 'clases_items']);
+      .in('key', ['preview_clases', 'clases_items', 'carousel_bunny_videos']);
 
     let allowed = false;
     for (const row of cfgRows ?? []) {
       const raw = row.value;
-      let items: Array<{ bunny_video_id?: string }> = [];
+      let items: Array<{ bunny_video_id?: string; videoId?: string }> = [];
       if (typeof raw === 'string') {
         try { items = JSON.parse(raw); } catch { items = []; }
       } else if (Array.isArray(raw)) {
-        items = raw as Array<{ bunny_video_id?: string }>;
+        items = raw as Array<{ bunny_video_id?: string; videoId?: string }>;
       }
-      if (items.some((it) => it?.bunny_video_id === videoId)) {
+      if (items.some((it) => it?.bunny_video_id === videoId || it?.videoId === videoId)) {
         allowed = true;
         break;
       }

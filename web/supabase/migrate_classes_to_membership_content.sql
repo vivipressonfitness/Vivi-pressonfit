@@ -206,3 +206,4 @@ ON CONFLICT (id) DO UPDATE SET
   class_type = EXCLUDED.class_type,
   month_year = EXCLUDED.month_year,
   is_published = EXCLUDED.is_published;
+

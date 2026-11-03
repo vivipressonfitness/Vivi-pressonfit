@@ -331,22 +331,32 @@ export function useLandingConfig(): {
             return getMemberMediaUrl(val);
           };
 
-          const validTeasers = mcData.filter((m) => Boolean(m.preview_video_url || m.thumbnail_url));
+          const validTeasers = mcData.filter((m) =>
+            Boolean(m.preview_video_url || m.thumbnail_url || m.bunny_video_id),
+          );
           if (validTeasers.length > 0) {
-            const dynamicItems: PreviewItem[] = validTeasers.map((m) => ({
-              category: m.category || 'Clase',
-              title: m.title,
-              desc: m.description
-                ? m.description.length > 120
-                  ? `${m.description.slice(0, 117)}…`
-                  : m.description
-                : '',
-              bunny_video_id: null,
-              video_url: resolveUrl(m.preview_video_url),
-              thumbnail_url: resolveUrl(m.thumbnail_url || (m.preview_video_url ? null : m.storage_path)),
-              duration: m.preview_duration || 'Adelanto gratis',
-              locked: false,
-            }));
+            const dynamicItems: PreviewItem[] = validTeasers.map((m) => {
+              const bunnyId = m.bunny_video_id ? m.bunny_video_id.trim() : null;
+              const bunnyThumb = bunnyId
+                ? `https://vz-796132.b-cdn.net/${bunnyId}/thumbnail.jpg`
+                : null;
+              return {
+                category: m.category || 'Clase',
+                title: m.title,
+                desc: m.description
+                  ? m.description.length > 120
+                    ? `${m.description.slice(0, 117)}…`
+                    : m.description
+                  : '',
+                bunny_video_id: bunnyId,
+                video_url: resolveUrl(m.preview_video_url),
+                thumbnail_url:
+                  resolveUrl(m.thumbnail_url || (m.preview_video_url ? null : m.storage_path)) ||
+                  bunnyThumb,
+                duration: m.preview_duration || 'Adelanto gratis',
+                locked: false,
+              };
+            });
 
             // Deduplicación para asegurar que no se repitan títulos
             setClases(dedupeItems(dynamicItems));
