@@ -1,9 +1,19 @@
 module.exports = [
   {
-    ignores: ['dist', 'node_modules', 'supabase', 'vite.config.ts'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'supabase/**',
+      '*.config.{js,cjs,ts}',
+      '*.config.d.ts',
+      'tailwind.config.js',
+      'postcss.config.js',
+      'eslint.config.cjs',
+      'vite.config.ts',
+    ],
   },
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: ['src/**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
       parser: require('@typescript-eslint/parser'),
       parserOptions: {
@@ -22,7 +32,7 @@ module.exports = [
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'react/react-in-jsx-scope': 'off',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn'
-    }
+      'react-hooks/exhaustive-deps': 'warn',
+    },
   },
 ];
