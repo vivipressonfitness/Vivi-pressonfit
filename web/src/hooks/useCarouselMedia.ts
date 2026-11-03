@@ -9,7 +9,7 @@ interface BunnyCarouselEntry {
   title?: string;
 }
 
-const BUNNY_LIBRARY_ID = '796132';
+const BUNNY_LIBRARY_ID = '797766';
 
 /**
  * Hook que carga los archivos multimedia del carrusel "Viví la Experiencia":

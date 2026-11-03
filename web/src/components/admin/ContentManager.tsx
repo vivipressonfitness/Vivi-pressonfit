@@ -213,7 +213,7 @@ export function ContentManager() {
     const cleanBunnyId = form.bunny_video_id?.trim() || null;
     const autoBunnyThumbnail =
       cleanBunnyId && !form.thumbnail_url?.trim()
-        ? `https://vz-796132.b-cdn.net/${cleanBunnyId}/thumbnail.jpg`
+        ? `https://vz-797766.b-cdn.net/${cleanBunnyId}/thumbnail.jpg`
         : null;
 
     const payload = {
@@ -929,7 +929,7 @@ export function ContentManager() {
                     }}
                   />
                   <p className="text-[10px] text-purple-300">
-                    🐰 Usa tu galería pública de Bunny (Librería 796132) sin consumir espacio de Supabase.
+                    🐰 Usa tu galería pública de Bunny (Librería 797766) sin consumir espacio de Supabase.
                   </p>
                 </div>
 

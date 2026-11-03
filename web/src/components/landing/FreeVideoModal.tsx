@@ -109,69 +109,12 @@ export function FreeVideoModal({ item, onClose }: Props) {
     };
   }, [onClose, lenis]);
 
-  // HLS público desde Bunny (token vía Edge Function anon)
+  // Reproductor público para videos de Bunny Stream (Librería pública 797766)
   useEffect(() => {
-    if (!item.bunny_video_id || !videoRef.current) return;
-    let cancelled = false;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-      setIframeSrc(null);
-      try {
-        const base = import.meta.env.VITE_SUPABASE_URL as string;
-        const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-        const res = await fetch(`${base.replace(/\/$/, '')}/functions/v1/bunny-token-public`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', apikey: anon, Authorization: `Bearer ${anon}` },
-          body: JSON.stringify({ videoId: item.bunny_video_id }),
-        });
-        const json = (await res.json().catch(() => ({}))) as { hlsUrl?: string; embedUrl?: string; error?: string };
-        if (cancelled) return;
-        if (!res.ok || (!json.hlsUrl && !json.embedUrl)) throw new Error(json.error ?? 'No se pudo cargar el video');
-        if (json.embedUrl || (json.hlsUrl && json.hlsUrl.includes('player.mediadelivery.net'))) {
-          setIframeSrc(json.embedUrl || json.hlsUrl!);
-          setLoading(false);
-          return;
-        }
-        await attachSource(json.hlsUrl!);
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Error cargando video');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    async function attachSource(url: string) {
-      const video = videoRef.current;
-      if (!video) return;
-      hlsRef.current?.destroy();
-      if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = url;
-      } else {
-        const { default: HlsClass } = await import('hls.js');
-        if (cancelled) return;
-        if (HlsClass.isSupported()) {
-          const hls = new HlsClass({ enableWorker: true });
-          hls.loadSource(url);
-          hls.attachMedia(video);
-          hls.on(HlsClass.Events.ERROR, (_evt, data) => {
-            if (data.fatal && data.type === HlsClass.ErrorTypes.NETWORK_ERROR) {
-              setError('El video no está disponible por ahora.');
-            }
-          });
-          hlsRef.current = hls;
-        } else {
-          setError('Tu navegador no soporta HLS');
-        }
-      }
-      void video.play().catch(() => undefined);
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
+    if (!item.bunny_video_id) return;
+    setError(null);
+    setLoading(false);
+    setIframeSrc(`https://iframe.mediadelivery.net/embed/797766/${item.bunny_video_id}?autoplay=true`);
   }, [item.bunny_video_id]);
 
   return (

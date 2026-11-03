@@ -338,7 +338,7 @@ export function useLandingConfig(): {
             const dynamicItems: PreviewItem[] = validTeasers.map((m) => {
               const bunnyId = m.bunny_video_id ? m.bunny_video_id.trim() : null;
               const bunnyThumb = bunnyId
-                ? `https://vz-796132.b-cdn.net/${bunnyId}/thumbnail.jpg`
+                ? `https://vz-797766.b-cdn.net/${bunnyId}/thumbnail.jpg`
                 : null;
               return {
                 category: m.category || 'Clase',

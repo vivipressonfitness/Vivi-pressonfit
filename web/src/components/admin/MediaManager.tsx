@@ -11,7 +11,7 @@ interface BunnyCarouselItem {
   createdAt?: string;
 }
 
-const BUNNY_LIBRARY_ID = '796132';
+const BUNNY_LIBRARY_ID = '797766';
 
 /**
  * Gestor del Carrusel "Viví la Experiencia" (Comunidad & Entrenamientos):
