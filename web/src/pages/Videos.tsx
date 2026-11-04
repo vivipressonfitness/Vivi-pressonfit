@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useVideos } from '../hooks/useVideos';
+import { useLandingConfig } from '../hooks/useLandingConfig';
 import { VideoList } from '../components/video/VideoList';
 import { VideoPlayer } from '../components/video/VideoPlayer';
 import { Modal } from '../components/ui/Modal';
@@ -10,6 +11,7 @@ const norm = (s: string) =>
 
 export default function Videos() {
   const { allContent, loading, error } = useVideos();
+  const { config } = useLandingConfig();
   const [selected, setSelected] = useState<MembershipContent | null>(null);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('todas');
@@ -58,6 +60,11 @@ export default function Videos() {
   const selectCls =
     'rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent';
 
+  const cleanPhone = (config.whatsapp_number || '').replace(/\D/g, '') || '59178000000';
+  const waViviUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+    '¡Hola Vivi! Tengo una observación o sugerencia sobre la reproducción de videos en la prueba: '
+  )}`;
+
   return (
     <div className="space-y-6">
       <header className="space-y-1">
@@ -76,6 +83,32 @@ export default function Videos() {
           )}
         </p>
       </header>
+
+      {/* Banner de Ayuda Visual y Feedback durante la Prueba */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-surface to-accent/10 border border-purple-500/30 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3">
+          <span className="relative flex h-3 w-3 shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-accent"></span>
+          </span>
+          <div>
+            <p className="font-bold text-text-primary text-sm flex items-center gap-1.5">
+              <span>🎬</span> ¡Prueba la reproducción en tu pantalla!
+            </p>
+            <p className="text-text-secondary mt-0.5">
+              Haz clic en cualquier clase para comprobar la velocidad de carga, sonido y pantalla completa.
+            </p>
+          </div>
+        </div>
+        <a
+          href={waViviUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-accent hover:text-white font-bold inline-flex items-center justify-center gap-1.5 bg-accent/15 border border-accent/30 px-3.5 py-2 rounded-xl hover:bg-accent/25 transition shrink-0 self-start md:self-auto"
+        >
+          <span>💬 Enviar Sugerencia</span>
+        </a>
+      </div>
 
       {/* Búsqueda y filtros locales */}
       <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3" role="search">

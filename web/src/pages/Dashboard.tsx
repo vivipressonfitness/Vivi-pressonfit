@@ -8,6 +8,7 @@ import { MembershipBadge } from '../components/membership/MembershipBadge';
 import { StatusCard } from '../components/membership/StatusCard';
 import { PlayIcon } from '../components/ui/Icons';
 import { formatMonthlyRate } from '../lib/offer';
+import { BetaTesterBanner } from '../components/dashboard/BetaTesterBanner';
 
 // F-10: Dashboard sin emojis funcionales, con iconos SVG de trazo y léxico unificado
 export default function Dashboard() {
@@ -28,22 +29,34 @@ export default function Dashboard() {
           </h1>
           <p className="text-text-secondary mt-1">Esto es lo que tienes disponible este ciclo.</p>
         </div>
-        {/* Acción principal directa hacia el catálogo de clases */}
+        {/* Acción principal directa hacia el catálogo de clases con ayuda visual sutil */}
         <Link
           to="/videos"
-          className="btn-accent shrink-0 min-h-[48px] inline-flex items-center gap-2"
+          className="btn-accent shrink-0 min-h-[48px] inline-flex items-center gap-2 relative shadow-lg hover:shadow-accent/25 transition-all"
         >
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+          </span>
           <PlayIcon className="w-4 h-4" />
-          <span>Explorar clases</span>
+          <span>Explorar clases y videos</span>
         </Link>
       </div>
+
+      {/* Banner de Bienvenida y Misión de Prueba con Feedback */}
+      <BetaTesterBanner />
 
       <StatusCard />
 
       {/* Últimas clases publicadas */}
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-lg text-white">Últimas clases</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold text-lg text-white">Últimas clases</h2>
+            <span className="text-[11px] bg-accent/15 text-accent border border-accent/30 font-semibold px-2 py-0.5 rounded-full">
+              Pruébalas en tu pantalla
+            </span>
+          </div>
           <Link to="/videos" className="text-accent text-sm font-semibold hover:underline">
             Ver todas →
           </Link>
@@ -70,8 +83,12 @@ export default function Dashboard() {
                 <Link
                   to="/videos"
                   aria-label={`Ver clase: ${v.title}`}
-                  className="btn-accent !px-4 !py-2 text-sm shrink-0 min-h-[44px] inline-flex items-center gap-1.5"
+                  className="btn-accent !px-4 !py-2 text-sm shrink-0 min-h-[44px] inline-flex items-center gap-2 group hover:scale-[1.02] transition-transform"
                 >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                  </span>
                   <PlayIcon className="w-3.5 h-3.5" />
                   <span>Ver clase</span>
                 </Link>
