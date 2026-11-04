@@ -1,6 +1,4 @@
-import Hls from 'hls.js';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { requestBunnyToken } from '../../lib/bunny';
+import { useEffect, useState, useCallback } from 'react';
 
 interface Props {
   bunnyVideoId: string;
@@ -10,17 +8,15 @@ interface Props {
   showTitle?: boolean;
 }
 
-// Reproductor HLS con token firmado obtenido de la Edge Function bunny-token.
-// El token dura 120 min; si el usuario sigue viendo cerca de la expiración,
-// se renueva automáticamente (onError con tipo networkError suele indicar 403).
+const BUNNY_LIBRARY_ID = '797766';
+
+// Reproductor oficial de Bunny Stream para las clases y contenidos de miembros (Librería 797766).
 export function VideoPlayer({
   bunnyVideoId,
   title,
   autoplay = false,
   showTitle = false,
 }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
@@ -40,67 +36,35 @@ export function VideoPlayer({
       setError(null);
       setIframeSrc(null);
       try {
-        const resp = await requestBunnyToken(bunnyVideoId);
-        if (cancelled) return;
-
-        // Si tenemos embedUrl oficial de Bunny, usamos el iframe oficial (más rápido, seguro y con todos los controles optimizados)
-        if (resp.embedUrl || (resp.hlsUrl && resp.hlsUrl.includes('player.mediadelivery.net'))) {
-          setIframeSrc(resp.embedUrl || resp.hlsUrl);
-          setLoading(false);
-          return;
+        if (!bunnyVideoId || !bunnyVideoId.trim()) {
+          throw new Error('Identificador de video no especificado.');
         }
 
-        if (!videoRef.current) return;
-        attachSource(resp.hlsUrl);
+        const cleanId = bunnyVideoId.trim();
+        // Cargar reproductor oficial de Bunny Stream para la biblioteca 797766
+        const embed = `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${cleanId}?autoplay=${
+          autoplay ? 'true' : 'false'
+        }&preload=true&responsive=true`;
+
+        if (!cancelled) {
+          setIframeSrc(embed);
+          setLoading(false);
+        }
       } catch (e) {
         if (!cancelled) {
           setError(
             e instanceof Error
               ? e.message
-              : 'Error al solicitar el acceso seguro al video. Verifica tu conexión.',
+              : 'Error al solicitar el acceso al video. Verifica tu conexión.',
           );
+          setLoading(false);
         }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
-    }
-
-    function attachSource(url: string) {
-      const video = videoRef.current!;
-      hlsRef.current?.destroy();
-
-      if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Safari nativo: HLS sin hls.js
-        video.src = url;
-      } else if (Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true });
-        hls.loadSource(url);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.ERROR, (_evt, data) => {
-          // 403 por token expirado → renovar una vez
-          if (data.fatal && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            void requestBunnyToken(bunnyVideoId)
-              .then(({ hlsUrl }) => {
-                hls.destroy();
-                attachSource(hlsUrl);
-              })
-              .catch(() => setError('No se pudo reanudar la reproducción del video.'));
-          } else if (data.fatal) {
-            setError('Error en el flujo de transmisión de video.');
-          }
-        });
-        hlsRef.current = hls;
-      } else {
-        setError('Tu navegador no soporta reproducción HLS.');
-      }
-      if (autoplay) void video.play().catch(() => undefined);
     }
 
     void load();
     return () => {
       cancelled = true;
-      hlsRef.current?.destroy();
-      hlsRef.current = null;
     };
   }, [bunnyVideoId, autoplay, retryTrigger]);
 
@@ -114,7 +78,7 @@ export function VideoPlayer({
             className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 backdrop-blur-sm text-text-secondary z-10"
           >
             <div className="w-8 h-8 border-3 border-accent border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-medium">Cargando video seguro…</span>
+            <span className="text-xs font-medium">Cargando video…</span>
           </div>
         )}
 
@@ -157,7 +121,7 @@ export function VideoPlayer({
           </div>
         )}
 
-        {iframeSrc ? (
+        {iframeSrc && (
           <iframe
             src={iframeSrc}
             title={title}
@@ -165,14 +129,6 @@ export function VideoPlayer({
             className="w-full h-full border-0"
             allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;"
             allowFullScreen
-          />
-        ) : (
-          <video
-            ref={videoRef}
-            controls
-            playsInline
-            aria-label={title}
-            className="w-full h-full"
           />
         )}
       </div>
