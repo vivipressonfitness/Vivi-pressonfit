@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { requestBunnyToken } from '../../lib/bunny';
 
 interface Props {
   bunnyVideoId: string;
@@ -8,9 +9,10 @@ interface Props {
   showTitle?: boolean;
 }
 
-const BUNNY_LIBRARY_ID = '797766';
+const PUBLIC_BUNNY_LIBRARY_ID = '797766';
 
-// Reproductor oficial de Bunny Stream para las clases y contenidos de miembros (Librería 797766).
+// Reproductor oficial de Bunny Stream para miembros con token firmado (Librería privada 796132)
+// y fallback seguro a biblioteca pública (797766) si es necesario.
 export function VideoPlayer({
   bunnyVideoId,
   title,
@@ -41,13 +43,30 @@ export function VideoPlayer({
         }
 
         const cleanId = bunnyVideoId.trim();
-        // Cargar reproductor oficial de Bunny Stream para la biblioteca 797766
-        const embed = `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${cleanId}?autoplay=${
-          autoplay ? 'true' : 'false'
-        }&preload=true&responsive=true`;
+
+        // 1. Intentar obtener el token firmado oficial de la Edge Function (para librería privada 796132)
+        let resolvedEmbedUrl: string | null = null;
+        try {
+          const resp = await requestBunnyToken(cleanId);
+          if (resp?.embedUrl) {
+            const sep = resp.embedUrl.includes('?') ? '&' : '?';
+            resolvedEmbedUrl = `${resp.embedUrl}${sep}autoplay=${
+              autoplay ? 'true' : 'false'
+            }&preload=true&responsive=true`;
+          }
+        } catch (tokenErr) {
+          console.warn('bunny-token privado no disponible, intentando biblioteca pública:', tokenErr);
+        }
+
+        // 2. Si no es video privado o no requirió token firmado, usar reproductor estándar de librería 797766
+        if (!resolvedEmbedUrl) {
+          resolvedEmbedUrl = `https://iframe.mediadelivery.net/embed/${PUBLIC_BUNNY_LIBRARY_ID}/${cleanId}?autoplay=${
+            autoplay ? 'true' : 'false'
+          }&preload=true&responsive=true`;
+        }
 
         if (!cancelled) {
-          setIframeSrc(embed);
+          setIframeSrc(resolvedEmbedUrl);
           setLoading(false);
         }
       } catch (e) {
@@ -55,7 +74,7 @@ export function VideoPlayer({
           setError(
             e instanceof Error
               ? e.message
-              : 'Error al solicitar el acceso al video. Verifica tu conexión.',
+              : 'Error al solicitar el acceso seguro al video. Verifica tu conexión.',
           );
           setLoading(false);
         }

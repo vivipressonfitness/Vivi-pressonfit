@@ -10,7 +10,7 @@ export function StatusCard() {
   const isAdmin = useMembershipStore((s) => s.isAdmin);
   const [portalError, setPortalError] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
-  const hasStripeSubscription = /^cus_[A-Za-z0-9]+$/.test(stripeCustomerId ?? '') && /^sub_[A-Za-z0-9]+$/.test(stripeSubscriptionId ?? '');
+  const hasStripeSubscription = /^cus_[A-Za-z0-9_]+$/.test(stripeCustomerId ?? '') && /^sub_[A-Za-z0-9_]+$/.test(stripeSubscriptionId ?? '');
 
   const trialDaysLeft = (() => {
     if (status !== 'trial' || !trialEndDate) return null;
@@ -83,11 +83,16 @@ export function StatusCard() {
         >
           {status === 'trial' ? 'Gestionar método de pago' : 'Gestionar / cancelar suscripción'}
         </Button>
-      ) : (status === 'active' || status === 'past_due') && !hasStripeSubscription && !isAdmin ? (
-        <p className="text-sm text-amber-400">Esta cuenta no tiene una suscripción de Stripe válida asociada. Contacta con soporte antes de intentar otro pago.</p>
+      ) : status === 'active' ? (
+        <p className="text-sm text-emerald-400 flex items-center gap-1.5 font-medium">
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          Suscripción activa · Acceso completo a todas las clases y entrenamientos.
+        </p>
+      ) : status === 'past_due' && !hasStripeSubscription && !isAdmin ? (
+        <p className="text-sm text-amber-400">Esta cuenta tiene un pago pendiente sin suscripción automática. Contacta con soporte para reactivarla.</p>
       ) : status === 'trial' && !hasStripeSubscription ? (
         <p className="text-sm text-sky-400">Completa tu suscripción para conservar el acceso completo tras la prueba.</p>
-      ) : !isAdmin && status !== 'trial' && status !== 'active' && status !== 'past_due' && (
+      ) : !isAdmin && status !== 'trial' && status !== 'past_due' && (
         <p className="text-sm text-amber-400">Tu membresía no está activa. Reactívala para ver los videos del mes.</p>
       )}
       {portalError && (
