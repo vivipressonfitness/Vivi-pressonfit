@@ -32,26 +32,28 @@ export function AboutMe({ config, images }: AboutMeProps) {
         {/* Galería Mosaico de las 6 Fotos Personales de Vivi (1.jpg - 6.jpg) */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
           {images.map((item) => (
-            <div
+            <button
               key={item.id}
+              type="button"
               onClick={() => setSelectedPhoto(item)}
-              className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-background border border-border hover:border-accent cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-md"
+              aria-label={`Ver foto ampliada: ${item.caption || `Coach Vivi #${item.id}`}`}
+              className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-background border border-border hover:border-accent cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <img
                 src={item.image_url}
                 alt={item.caption || `Coach Vivi #${item.id}`}
                 loading="lazy"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 pointer-events-none"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = `/landing/gallery/${item.id}.jpg`;
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3 pointer-events-none">
                 <span className="text-xs font-semibold text-text-primary">
                   {item.caption || 'Ver foto ↗'}
                 </span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 
@@ -69,11 +71,14 @@ export function AboutMe({ config, images }: AboutMeProps) {
         </div>
       </div>
 
-      {/* Modal Visor en Pantalla Completa */}
+      {/* Modal Visor en Pantalla Completa Accesible (F-06) */}
       {selectedPhoto && (
         <div
           className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setSelectedPhoto(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={selectedPhoto.caption || 'Foto ampliada de Coach Vivi'}
         >
           <div
             className="relative max-w-md w-full bg-surface border border-border rounded-3xl overflow-hidden shadow-2xl"
@@ -88,8 +93,8 @@ export function AboutMe({ config, images }: AboutMeProps) {
               <button
                 type="button"
                 onClick={() => setSelectedPhoto(null)}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-accent hover:text-background transition"
-                aria-label="Cerrar"
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-accent hover:text-background transition focus-visible:ring-2 focus-visible:ring-accent"
+                aria-label="Cerrar visor de foto"
               >
                 ✕
               </button>
