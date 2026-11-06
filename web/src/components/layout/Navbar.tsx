@@ -119,7 +119,7 @@ export function Navbar() {
           {!user && (
             <Link
               to="/membresia"
-              className="bg-accent hover:bg-accent-hover text-background font-bold text-xs sm:text-sm px-3.5 py-2 rounded-pill shadow-sm whitespace-nowrap min-h-[38px] inline-flex items-center"
+              className="bg-accent hover:bg-accent-hover text-background font-bold text-xs sm:text-sm px-3.5 py-2 rounded-pill shadow-sm whitespace-nowrap min-h-[44px] inline-flex items-center"
             >
               7 días gratis
             </Link>
@@ -131,7 +131,7 @@ export function Navbar() {
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
             aria-haspopup="true"
-            className="p-2 rounded-xl text-text-primary hover:bg-white/10 transition focus:outline-none min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-2 rounded-xl text-text-primary hover:bg-white/10 transition focus:outline-none min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-accent"
           >
             {mobileMenuOpen ? (
               <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">

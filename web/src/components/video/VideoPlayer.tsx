@@ -119,7 +119,7 @@ export function VideoPlayer({
             <button
               type="button"
               onClick={handleRetry}
-              className="btn-accent !py-2 !px-4 text-xs font-semibold inline-flex items-center gap-2 min-h-[38px]"
+              className="btn-accent !py-2 !px-4 text-xs font-semibold inline-flex items-center gap-2 min-h-[44px]"
             >
               <svg
                 viewBox="0 0 24 24"
